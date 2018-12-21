@@ -1,14 +1,10 @@
 package param
 
 import (
-	"github.com/SUSE/saptune/system"
 	"testing"
 )
 
 func TestIOElevators(t *testing.T) {
-	if !system.IsUserRoot() {
-		t.Skip("the test requires root access")
-	}
 	inspected, err := BlockDeviceSchedulers{}.Inspect()
 	if err != nil {
 		t.Fatal(err, inspected)
@@ -36,9 +32,6 @@ func TestIOElevators(t *testing.T) {
 }
 
 func TestNrRequests(t *testing.T) {
-	if !system.IsUserRoot() {
-		t.Skip("the test requires root access")
-	}
 	inspected, err := BlockDeviceNrRequests{}.Inspect()
 	if err != nil {
 		t.Fatal(err, inspected)
@@ -64,3 +57,21 @@ func TestNrRequests(t *testing.T) {
 		}
 	}
 }
+
+func TestIsValidScheduler(t *testing.T) {
+	if !IsValidScheduler("sda", "cfq") {
+		t.Fatal("'cfq' is not a valid scheduler for 'sda'")
+	}
+	if IsValidScheduler("sda", "hugo") {
+		t.Fatal("'hugo' is a valid scheduler for 'sda'")
+	}
+}
+
+func TestIsValidforNrRequests(t *testing.T) {
+	if !IsValidforNrRequests("sda", "1024") {
+		t.Log("'1024' is not a valid number of requests for 'sda'")
+	} else {
+		t.Log("'1024' is not a valid number of requests for 'sda'")
+	}
+}
+

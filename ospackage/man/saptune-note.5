@@ -198,13 +198,18 @@ Syntax:
 .br
 Add one line for each SLE version a package should be checked for, even if the package version is the same.
 .br
-The SLE version should be noted in the same format as the '\fBVERSION=\fR' entry in \fI/etc/os-release\fR. 
+The SLE version has to be noted in the same format as the '\fBVERSION=\fR' entry in \fI/etc/os-release\fR. 
 
 e.g
 systemd 12-SP2 228-142.1
 sapinit-systemd-compat 12 1.0-2.1
 sapinit-systemd-compat 12-SP1 1.0-2.1
 util-linux 12-SP1 2.25-22.1
+
+Only the lines where the SLE version is matching the running system OS are checked and displayed during the 'verify' and 'simulate' option.
+.btionr
+That means, if there is no matching SLE version for the running OS no rpm entries are listed during the 'verify' and 'simulate' operation.
+
 .SH "[grub]"
 The section "[grub]" is checking kernel commandline settings for grub.
 The values from the Note definition files are only checked against \fI/proc/cmdline\fR. Changing the grub configuration is not supported by saptune.

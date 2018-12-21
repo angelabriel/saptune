@@ -186,7 +186,8 @@ func (vend INISettings) Optimise() (Note, error) {
 		case INISectionReminder:
 			vend.SysctlParams[param.Key] = param.Value
 		case INISectionPagecache:
-			vend.SysctlParams[param.Key] = OptPagecacheVal(param.Key, param.Value, &pc, ini.KeyValue)
+			//vend.SysctlParams[param.Key] = OptPagecacheVal(param.Key, param.Value, &pc, ini.KeyValue)
+			vend.SysctlParams[param.Key] = OptPagecacheVal(param.Key, param.Value, &pc)
 		default:
 			log.Printf("3rdPartyTuningOption %s: skip unknown section %s", vend.ConfFilePath, param.Section)
 			continue
@@ -254,7 +255,7 @@ func (vend INISettings) Apply() error {
 		case INISectionMEM:
 			errs = append(errs, SetMemVal(param.Key, vend.SysctlParams[param.Key]))
 		case INISectionCPU:
-			errs = append(errs, SetCpuVal(param.Key, vend.SysctlParams[param.Key], revertValues))
+			errs = append(errs, SetCpuVal(param.Key, vend.SysctlParams[param.Key], revertValues, vend.ID))
 		case INISectionRpm:
 			//nothing to do here
 		case INISectionGrub:

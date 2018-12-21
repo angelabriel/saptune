@@ -68,7 +68,7 @@ func TestCalculateOptimumValue(t *testing.T) {
 }
 
 func TestVendorSettings(t *testing.T) {
-	iniPath := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/sap/note/ini_test.ini")
+	iniPath := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/ini_test.ini")
 	ini := INISettings{ConfFilePath: iniPath}
 
 	if ini.Name() == "" {

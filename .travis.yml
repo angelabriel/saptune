@@ -2,9 +2,14 @@ language: go
 go_import_path: github.com/SUSE/saptune
 go:
   - 1.7.x
-os:
-  - linux
 sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker --version
+  - docker pull opensuse/leap:15
+
 script:
-  - sudo -E env "PATH=$PATH" go test -v -cover ./...
-  - go build
+  - docker run -it -e TRAVIS="$TRAVIS" -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_HOME="$TRAVIS_HOME" -v "$(pwd):/app" opensuse/leap:15 /bin/sh -c "systemctl start dbus; cd /app; ls -a; ./run_travis_tst.sh"
