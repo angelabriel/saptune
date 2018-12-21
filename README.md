@@ -1,5 +1,5 @@
 
-[![Build Status](https://travis-ci.org/SUSE/saptune.svg?branch=saptune_test)](https://travis-ci.org/SUSE/saptune)
+[![Build Status](https://travis-ci.org/angelabriel/saptune.svg?branch=saptune_test)](https://travis-ci.org/angelabriel/saptune)
 [![Coverage Status](https://coveralls.io/repos/github/angelabriel/saptune/badge.svg?branch=saptune_test)](https://coveralls.io/github/angelabriel/saptune?branch=saptune_test)
 
 # saptune
