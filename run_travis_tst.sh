@@ -50,7 +50,8 @@ go get github.com/mattn/goveralls
 
 cd saptune
 echo "run go tests"
-sudo -E env "PATH=$PATH" go test -v -cover ./...
+#sudo -E env "PATH=$PATH" go test -v -cover ./...
+go test -v -cover ./...
 go build
 echo "run goveralls"
 $GOPATH/bin/goveralls -service=travis-ci
