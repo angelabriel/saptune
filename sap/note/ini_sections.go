@@ -573,7 +573,7 @@ func OptServiceVal(key, cfgval string) string {
 		}
 	case "Sysstat":
 		if sval != "start" && sval != "stop" {
-			log.Print("wrong selection for '%s'. Now set to 'start' to start the service\n", key)
+			log.Printf("wrong selection for '%s'. Now set to 'start' to start the service\n", key)
 			sval = "start"
 		}
 	default:
