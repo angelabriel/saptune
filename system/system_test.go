@@ -23,7 +23,10 @@ func TestGetOsName(t *testing.T) {
 
 func TestGetOsVers(t *testing.T) {
 	actualVal := GetOsVers()
-	if actualVal != "12" || actualVal != "12-SP1" || actualVal != "12-SP2" || actualVal != "12-SP3" || actualVal != "12-SP4" || actualVal != "15" || actualVal != "15-SP1" {
+	switch actualVal {
+	case "12", "12-SP1", "12-SP2", "12-SP3", "12-SP4", "15", "15-SP1":
+		t.Logf("expected OS version '%s' found\n", actualVal)
+	default:
 		t.Logf("unexpected OS version '%s'\n", actualVal)
 	}
 }

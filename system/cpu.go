@@ -328,7 +328,7 @@ func GetdmaLatency() string {
 	}
 	_, err = dmaLatency.Read(latency)
 	if err != nil {
-		log.Printf("GetForceLatency: reading from '/dev/cpu_dma_latency' failed:", err)
+		log.Printf("GetForceLatency: reading from '/dev/cpu_dma_latency' failed: %v", err)
 	}
 	// Close the file handle after the latency value is no longer maintained
 	defer dmaLatency.Close()

@@ -17,6 +17,7 @@ func TestGetSolutionDefintion(t *testing.T) {
 	solcount := 2
 	if system.IsPagecacheAvailable() {
 		solcount = 4
+		nwsols = "941735 1771258 1980196 1984787 2534844 1557506"
 	}
 
 	solutions := GetSolutionDefintion(solutionFile)
