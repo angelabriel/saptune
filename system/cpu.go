@@ -292,14 +292,6 @@ func SetForceLatency(noteId, value string, revert bool) error {
 		dmaLat := GetdmaLatency()
 		if value != dmaLat {
 			log.Printf("SetForceLatency: reverted value for force latency (%s) differs from /dev/cpu_dma_latency setting (%s).", value, dmaLat)
-			//_, err := os.Stat(forceLatFile);
-			//if os.IsNotExist(err) {
-			//	err = nil
-			//} else if err == nil {
-			//	os.Remove(forceLatFile)
-			//}
-		//} else {
-			//ioutil.WriteFile(forceLatFile, []byte(value), 0644)
 		}
 		ioutil.WriteFile(forceLatFile, []byte(value), 0644)
 

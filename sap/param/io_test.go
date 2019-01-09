@@ -1,6 +1,7 @@
 package param
 
 import (
+	"io/ioutil"
 	"testing"
 )
 
@@ -59,19 +60,49 @@ func TestNrRequests(t *testing.T) {
 }
 
 func TestIsValidScheduler(t *testing.T) {
-	if !IsValidScheduler("sda", "cfq") {
-		t.Fatal("'cfq' is not a valid scheduler for 'sda'")
+	dirCont, err := ioutil.ReadDir("/sys/block")
+	if err != nil {
+		t.Skip("no block files available. Skip test.")
 	}
-	if IsValidScheduler("sda", "hugo") {
-		t.Fatal("'hugo' is a valid scheduler for 'sda'")
+	for _, entry := range dirCont {
+		if entry.Name() == "sda" {
+			if !IsValidScheduler("sda", "cfq") {
+				t.Fatal("'cfq' is not a valid scheduler for 'sda'")
+			}
+			if IsValidScheduler("sda", "hugo") {
+				t.Fatal("'hugo' is a valid scheduler for 'sda'")
+			}
+		}
+		if entry.Name() == "vda" {
+			if !IsValidScheduler("vda", "none") {
+				t.Fatal("'none' is not a valid scheduler for 'vda'")
+			}
+			if IsValidScheduler("vda", "hugo") {
+				t.Fatal("'hugo' is a valid scheduler for 'vda'")
+			}
+		}
 	}
 }
 
 func TestIsValidforNrRequests(t *testing.T) {
-	if !IsValidforNrRequests("sda", "1024") {
-		t.Log("'1024' is not a valid number of requests for 'sda'")
-	} else {
-		t.Log("'1024' is not a valid number of requests for 'sda'")
+	dirCont, err := ioutil.ReadDir("/sys/block")
+	if err != nil {
+		t.Skip("no block files available. Skip test.")
+	}
+	for _, entry := range dirCont {
+		if entry.Name() == "sda" {
+			if !IsValidforNrRequests("sda", "1024") {
+				t.Log("'1024' is not a valid number of requests for 'sda'")
+			} else {
+				t.Log("'1024' is a valid number of requests for 'sda'")
+			}
+		}
+		if entry.Name() == "vda" {
+			if !IsValidforNrRequests("vda", "128") {
+				t.Log("'128' is not a valid number of requests for 'vda'")
+			} else {
+				t.Log("'128' is a valid number of requests for 'vda'")
+			}
+		}
 	}
 }
-
