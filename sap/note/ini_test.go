@@ -223,6 +223,12 @@ func TestAllSettings(t *testing.T) {
 	if optimisedINI.SysctlParams["grub:transparent_hugepage"] != "never" {
 		t.Fatal(optimisedINI.SysctlParams)
 	}
+	if optimisedINI.SysctlParams["rpm:glibc"] != "2.22-51.6" {
+		t.Fatal(optimisedINI.SysctlParams)
+	}
+	if optimisedINI.SysctlParams["UserTasksMax"] != "setinpostinstall" {
+		t.Fatal(optimisedINI.SysctlParams)
+	}
 	if i, err := strconv.ParseInt(optimisedINI.SysctlParams["vm.nr_hugepages"], 10, 64); err != nil || i != 128 {
 		t.Fatal(i, err)
 	}
@@ -231,6 +237,39 @@ func TestAllSettings(t *testing.T) {
 # which parameters are NOT handled and the reason.
 `
 	if optimisedINI.SysctlParams["reminder"] != txt2chk {
+		t.Fatal(optimisedINI.SysctlParams)
+	}
+}
+
+func TestPageCacheSettings(t *testing.T) {
+	iniPath := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/pcTest6/usr/share/saptune/notes/1557506")
+	ini := INISettings{ConfFilePath: iniPath}
+
+	if ini.Name() == "" {
+		t.Fatal(ini.Name())
+	}
+	if ini.Name() != fmt.Sprintf("Linux paging improvements\n\t\t\tVersion 14 from 10.08.2015 ") {
+		t.Fatal(ini.Name())
+	}
+
+	initialised, err := ini.Initialise()
+	if err != nil {
+		t.Fatal(err)
+	}
+	initialisedINI := initialised.(INISettings)
+
+	optimised, err := initialisedINI.Optimise()
+	if err != nil {
+		t.Fatal(err)
+	}
+	optimisedINI := optimised.(INISettings)
+	if optimisedINI.SysctlParams["ENABLE_PAGECACHE_LIMIT"] != "yes" {
+		t.Fatal(optimisedINI.SysctlParams)
+	}
+	if optimisedINI.SysctlParams["PAGECACHE_LIMIT_IGNORE_DIRTY"] != "1" {
+		t.Fatal(optimisedINI.SysctlParams)
+	}
+	if optimisedINI.SysctlParams["OVERRIDE_PAGECACHE_LIMIT_MB"] != "641" {
 		t.Fatal(optimisedINI.SysctlParams)
 	}
 }
