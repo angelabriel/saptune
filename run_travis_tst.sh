@@ -8,7 +8,7 @@ env
 echo "zypper in ..."
 zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in systemd
 /bin/systemctl start dbus
-zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go1.7 go cpupower uuidd git tuned
+zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go1.7 go1.10 go cpupower uuidd git tuned
 
 echo "PATH is $PATH, GOPATH is $GOPATH, TRAVIS_HOME is $TRAVIS_HOME"
 
