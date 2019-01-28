@@ -10,7 +10,6 @@ import (
 )
 
 //ANGI TODO 2018/11/27 14:48:47 Failed to read solution definition from file '/usr/share/saptune/solutions'
-
 func TestGetSolutionDefintion(t *testing.T) {
 	solutionFile := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/saptune-test-solutions")
 	nwsols := "941735 1771258 1980196 1984787 2534844"
@@ -38,9 +37,9 @@ func TestGetOverrideSolution(t *testing.T) {
 	ovsolutionFile := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/saptune-test-override-sols")
 	noteFiles := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata") + "/"
 	hansol := "HANA1 NEWNOTE HANA2"
-	solcount := 1
+	solcount := 2
 	if system.IsPagecacheAvailable() {
-		solcount = 2
+		solcount = 4
 	}
 
 	ovsolutions := GetOverrideSolution(ovsolutionFile, noteFiles)

@@ -6,6 +6,7 @@ import (
 	"github.com/SUSE/saptune/txtparser"
 	"os"
 	"path"
+	"runtime"
 	"strconv"
 	"testing"
 )
@@ -115,12 +116,13 @@ func TestOptLimitsVal(t *testing.T) {
 //SetLimitsVal
 
 func TestGetVmVal(t *testing.T) {
-	//ANGI TODO - check, if 'THP' and 'KSM' are available on the Travis VM
-	val := GetVmVal("THP")
-	if val != "always" && val != "madvise" && val != "never" {
-		t.Fatalf("wrong value '%+v' for THP.\n", val)
+	if runtime.GOARCH != "ppc64le" {
+		val := GetVmVal("THP")
+		if val != "always" && val != "madvise" && val != "never" {
+			t.Fatalf("wrong value '%+v' for THP.\n", val)
+		}
 	}
-	val = GetVmVal("KSM")
+	val := GetVmVal("KSM")
 	if val != "1" && val != "0" {
 		t.Fatalf("wrong value '%+v' for KSM.\n", val)
 	}
@@ -356,7 +358,6 @@ func TestOptUuiddVal(t *testing.T) {
 //SetUuiddVal
 
 func TestGetServiceVal(t *testing.T) {
-// ANGI TODO - add test, if I found the services from travis or the docker
 	val := GetServiceVal("UnkownService")
 	if val != "" {
 		t.Fatal(val)

@@ -8,7 +8,7 @@ env
 echo "zypper in ..."
 zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in systemd
 /bin/systemctl start dbus
-zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go1.7 go1.10 go cpupower uuidd git tuned
+zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go1.10 go cpupower uuidd git tuned
 
 echo "PATH is $PATH, GOPATH is $GOPATH, TRAVIS_HOME is $TRAVIS_HOME"
 
@@ -43,7 +43,9 @@ go get github.com/mattn/goveralls
 cd saptune
 echo "run go tests"
 #sudo -E env "PATH=$PATH" go test -v -cover ./...
-go test -v -cover ./...
+# https://docs.codeclimate.com/docs/configuring-test-coverage#section-supported-languages-and-formats
+# https://github.com/SUSE/shaptools/blob/master/.travis.yml
+go test -v -cover ./... -coverprofile=cover.out
 go build
 echo "run goveralls"
 $GOPATH/bin/goveralls -service=travis-ci
