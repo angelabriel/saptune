@@ -45,7 +45,8 @@ echo "run go tests"
 #sudo -E env "PATH=$PATH" go test -v -cover ./...
 # https://docs.codeclimate.com/docs/configuring-test-coverage#section-supported-languages-and-formats
 # https://github.com/SUSE/shaptools/blob/master/.travis.yml
-go test -v -cover ./... -coverprofile=cover.out
+#go test -v -cover ./... -coverprofile=cover.out
+go test -v -cover ./...
 go build
 echo "run goveralls"
 $GOPATH/bin/goveralls -service=travis-ci
