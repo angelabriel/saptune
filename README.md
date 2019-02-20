@@ -1,5 +1,7 @@
 
-[![Build Status](https://travis-ci.org/SUSE/saptune.svg?branch=master)](https://travis-ci.org/SUSE/saptune)
+[![Build Status](https://travis-ci.org/angelabriel/saptune.svg?branch=saptune_test)](https://travis-ci.org/angelabriel/saptune)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/c159575e62a6de1a2ac3/test_coverage)](https://codeclimate.com/github/angelabriel/saptune/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/c159575e62a6de1a2ac3/maintainability)](https://codeclimate.com/github/angelabriel/saptune/maintainability)
 
 # saptune
 The utility adjusts system parameters such as kernel parameters and resource limits
