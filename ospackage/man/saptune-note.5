@@ -1,3 +1,20 @@
+.\"/* 
+.\" * Copyright (c) 2018 SUSE LLC.
+.\" * All rights reserved
+.\" * Authors: Angela Briel
+.\" *
+.\" * This program is free software; you can redistribute it and/or
+.\" * modify it under the terms of the GNU General Public License
+.\" * as published by the Free Software Foundation; either version 2
+.\" * of the License, or (at your option) any later version.
+.\" *
+.\" * This program is distributed in the hope that it will be useful,
+.\" * but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" * GNU General Public License for more details.
+.\" */
+.\" 
+
 .TH "saptune-note" "5" "November 2018" "" "saptune note file format description"
 .SH NAME
 saptune\-note - saptune note definition files
@@ -125,11 +142,7 @@ If system does not support Intel's performance bias setting - '\fBall:none\fR' i
 
 When set as 'energy_perf_bias=<performance|normal|powersave> in the Note definition file, the value will be set for \fBall\fR available CPUs.
 .br
-The command '\fBcpupower -c all set -b <value>\fR' is used to set the value.
-.br
-When set as 'energy_perf_bias=cpu0:performance cpu1:normal cpu2:performance cpu3:powersave' in the Note definition file, the values will be set individual for each CPU.
-.br
-The command '\fBcpupower -c <cpu> set -b <value>\fR' is used to set the value.
+The command '\fBcpupower -c all set -b <value>\fR' or '\fBcpupower -c <cpu> set -b <value>\fR' is used to set the value.
 .TP
 .BI governor
 CPU Frequency/Voltage scaling (applies to Intel-based systems only)
@@ -143,11 +156,7 @@ If the governor settings of all available CPUs are equal, '\fBall:<governor>\fR'
 
 When set as 'governor=<performance|powersave> in the Note definition file, the value will be set for \fBall\fR available CPUs.
 .br
-The command '\fBcpupower -c all frequency-set -g <value>\fR' is used to set the value.
-.br
-When set as 'governor==cpu0:performance cpu1:powersave cpu2:performance cpu3:powersave' in the Note definition file, the values will be set individual for each CPU.
-.br
-The command '\fBcpupower -c <cpu> frequency-set -g <value>\fR' is used to set the value.
+The command '\fBcpupower -c all frequency-set -g <value>\fR' or '\fBcpupower -c <cpu> frequency-set -g <value>\fR' is used to set the value.
 .TP
 .BI force_latency= STRING
 
@@ -181,16 +190,20 @@ Syntax:
 .br
 Add one line for each SLE version a package should be checked for, even if the package version is the same.
 .br
-The SLE version has to be noted in the same format as the '\fBVERSION=\fR' entry in \fI/etc/os-release\fR. 
+The SLE version has to be noted in the same format as the '\fBVERSION=\fR' entry in \fI/etc/os-release\fR.
 
 e.g
+.br
 systemd 12-SP2 228-142.1
+.br
 sapinit-systemd-compat 12 1.0-2.1
+.br
 sapinit-systemd-compat 12-SP1 1.0-2.1
+.br
 util-linux 12-SP1 2.25-22.1
 
 Only the lines where the SLE version is matching the running system OS are checked and displayed during the 'verify' and 'simulate' option.
-.btionr
+.br
 That means, if there is no matching SLE version for the running OS no rpm entries are listed during the 'verify' and 'simulate' operation.
 
 .SH "[grub]"
@@ -212,7 +225,9 @@ Turn off autoNUMA balancing - see kernel.numa_balancing in section [sysctl]
 .BI transparent_hugepage=never
 Disable transparent hugepages - see THP in section [vm]
 .SH "[pagecache]"
-The section "[pagecache]" is dealing with the pagecache limit feature, which is only availabe on SLE12.
+The section "[pagecache]" is dealing with the pagecache limit feature as descibed in SAP Note 1557506, which is only availabe on SLE12.
+.br
+ATTENTION: The pagecache limit Note will NOT be part of any solution definition by default. As it is essential to configure this feature really carefully, you need to customize the note definition file first to enable the feature and then you can apply the note settings manually. After that, the settings will be applied automatically during each startup of the system.
 .br
 This section can contain the following options:
 .TP

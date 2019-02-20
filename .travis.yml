@@ -2,14 +2,18 @@ language: go
 go_import_path: github.com/SUSE/saptune
 go:
   - 1.10.x
+os:
+  - linux
 sudo: required
 
-services:
-  - docker
-
-before_install:
-  - docker --version
-  - docker pull opensuse/leap:15
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
 
 script:
-  - docker run -it -e TRAVIS="$TRAVIS" -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_HOME="$TRAVIS_HOME" -v "$(pwd):/app" opensuse/leap:15 /bin/sh -c "systemctl start dbus; cd /app; ls -a; ./run_travis_tst.sh"
+  - sudo -E env "PATH=$PATH" go test -v -coverprofile=c.out -cover ./...
+  - go build
+
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT

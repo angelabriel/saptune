@@ -9,14 +9,13 @@ import (
 	"testing"
 )
 
-//ANGI TODO 2018/11/27 14:48:47 Failed to read solution definition from file '/usr/share/saptune/solutions'
 func TestGetSolutionDefintion(t *testing.T) {
 	solutionFile := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/saptune-test-solutions")
 	nwsols := "941735 1771258 1980196 1984787 2534844"
 	solcount := 2
 	if system.IsPagecacheAvailable() {
 		solcount = 4
-		nwsols = "941735 1771258 1980196 1984787 2534844 1557506"
+		nwsols = "941735 1771258 1980196 1984787 2534844"
 	}
 
 	solutions := GetSolutionDefintion(solutionFile)

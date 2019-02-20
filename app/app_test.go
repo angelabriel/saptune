@@ -12,7 +12,6 @@ import (
 	"testing"
 )
 
-// ANGI TODO 2018/11/27 14:48:43 Failed to read solution definition from file '/usr/share/saptune/solutions'
 var OSPackageInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/")
 var SampleNoteDataDir = "/tmp/saptunetest"
 var SampleParamFile = path.Join(SampleNoteDataDir, "saptune-sample-param")

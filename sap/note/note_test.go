@@ -6,7 +6,6 @@ import (
 	"path"
 	"testing"
 )
-//ANGI TODO 2018/11/27 14:48:46 GetTuningOptions: failed to read 3rd party tuning definitions - open : no such file or directory
 
 var OSNotesInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/usr/share/saptune/notes")
 var OSPackageInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/")
