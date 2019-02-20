@@ -1,6 +1,5 @@
 
 [![Build Status](https://travis-ci.org/angelabriel/saptune.svg?branch=saptune_test)](https://travis-ci.org/angelabriel/saptune)
-[![Coverage Status](https://coveralls.io/repos/github/angelabriel/saptune/badge.svg?branch=saptune_test)](https://coveralls.io/github/angelabriel/saptune?branch=saptune_test)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/c159575e62a6de1a2ac3/test_coverage)](https://codeclimate.com/github/angelabriel/saptune/test_coverage)
 [![Maintainability](https://api.codeclimate.com/v1/badges/c159575e62a6de1a2ac3/maintainability)](https://codeclimate.com/github/angelabriel/saptune/maintainability)
 
