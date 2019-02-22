@@ -15,6 +15,7 @@ import (
 	"math"
 )
 
+// section name definition
 const (
 	INISectionSysctl    = "sysctl"
 	INISectionVM        = "vm"
@@ -43,6 +44,7 @@ UserTasksMax=infinity
 `
 )
 
+// GetServiceName returns the systemd service name for supported services
 func GetServiceName(service string) string {
         switch service {
         case "UuiddSocket":
