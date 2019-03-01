@@ -27,15 +27,13 @@ const (
 	ExitNotTuned          = 3
 	NoteTuningSheets      = "/usr/share/saptune/notes/"
 	OverrideTuningSheets  = "/etc/saptune/override/"
-	// ExtraTuningSheets is a directory located on file system for external parties to place their tuning option files.
-	ExtraTuningSheets     = "/etc/saptune/extra/"
+	ExtraTuningSheets     = "/etc/saptune/extra/" // ExtraTuningSheets is a directory located on file system for external parties to place their tuning option files.
 	SetGreenText          = "\033[32m"
 	SetRedText            = "\033[31m"
 	ResetTextColor        = "\033[0m"
 	footnote1             = "[1] setting is not supported by the system"
-	footnote2             = "[2] setting is not availabel on the system"
+	footnote2             = "[2] setting is not available on the system"
 	footnote3             = "[3] value is only checked, but NOT set"
-
 )
 
 // PrintHelpAndExit Print the usage and exit
@@ -127,7 +125,7 @@ func RevertAction(actionName string) {
 	fmt.Println("Parameters tuned by the notes and solutions have been successfully reverted.")
 }
 
-// Handle daemon actions like start, stop, status asm.
+// DaemonAction handles daemon actions like start, stop, status asm.
 func DaemonAction(actionName string) {
 	switch actionName {
 	case "start":
@@ -194,21 +192,21 @@ func DaemonAction(actionName string) {
 }
 
 // PrintNoteFields Print mismatching fields in the note comparison result.
-func PrintNoteFields(header string, noteComparisons map[string]map[string]note.NoteFieldComparison, printComparison bool) {
+func PrintNoteFields(header string, noteComparisons map[string]map[string]note.FieldComparison, printComparison bool) {
 
 	var fmtlen0, fmtlen1, fmtlen2, fmtlen3, fmtlen4 int
 	// initialise
-	printHead := ""
-	sortkeys  := make([]string, 0, len(noteComparisons))
-	remskeys  := make([]string, 0, len(noteComparisons))
-	footnote  := make([]string, 3, 3)
-	hasDiff   := false
 	compliant := "yes"
-	comment   := ""
-	override  := ""
-	format    := "\t%s : %s\n"
+	printHead := ""
 	noteField := ""
-	reminder  := make(map[string]string)
+	sortkeys := make([]string, 0, len(noteComparisons))
+	remskeys := make([]string, 0, len(noteComparisons))
+	footnote := make([]string, 3, 3)
+	reminder := make(map[string]string)
+	override := ""
+	comment := ""
+	hasDiff := false
+	format := "\t%s : %s\n"
 
 	if printComparison {
 		// verify
@@ -230,9 +228,9 @@ func PrintNoteFields(header string, noteComparisons map[string]map[string]note.N
 		for _, comparison := range comparisons {
 			if len(comparison.ReflectMapKey) != 0 && comparison.ReflectFieldName != "OverrideParams" {
 				if comparison.ReflectMapKey != "reminder" {
-					sortkeys = append(sortkeys, noteID + "@" + comparison.ReflectMapKey)
+					sortkeys = append(sortkeys, noteID+"@"+comparison.ReflectMapKey)
 				} else {
-					remskeys = append(remskeys, noteID + "@" + comparison.ReflectMapKey)
+					remskeys = append(remskeys, noteID+"@"+comparison.ReflectMapKey)
 				}
 			}
 		}
@@ -392,7 +390,7 @@ func PrintNoteFields(header string, noteComparisons map[string]map[string]note.N
 	for noteID, reminde := range reminder {
 		if reminde != "" {
 			reminderHead := fmt.Sprintf("Attention for SAP Note %s:\nHints or values not yet handled by saptune. So please read carefully, check and set manually, if needed:\n", noteID)
-			fmt.Printf("%s\n", SetRedText + reminderHead + reminde + ResetTextColor)
+			fmt.Printf("%s\n", SetRedText+reminderHead+reminde+ResetTextColor)
 		}
 	}
 }
@@ -468,7 +466,7 @@ func NoteAction(actionName, noteID string) {
 			if err != nil {
 				errorExit("Failed to test the current system against the specified note: %v", err)
 			}
-			noteComp := make(map[string]map[string]note.NoteFieldComparison)
+			noteComp := make(map[string]map[string]note.FieldComparison)
 			noteComp[noteID] = comparisons
 			PrintNoteFields("HEAD", noteComp, true)
 			if !conforming {
@@ -486,7 +484,7 @@ func NoteAction(actionName, noteID string) {
 			errorExit("Failed to test the current system against the specified note: %v", err)
 		} else {
 			fmt.Printf("If you run `saptune note apply %s`, the following changes will be applied to your system:\n", noteID)
-			noteComp := make(map[string]map[string]note.NoteFieldComparison)
+			noteComp := make(map[string]map[string]note.FieldComparison)
 			noteComp[noteID] = comparisons
 			PrintNoteFields("HEAD", noteComp, false)
 		}

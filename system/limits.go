@@ -1,5 +1,6 @@
-// Implement a parser for /etc/security/limits.conf.
 package system
+
+// Implement a parser for /etc/security/limits.conf.
 
 import (
 	"bytes"
@@ -12,7 +13,8 @@ import (
 
 var consecutiveSpaces = regexp.MustCompile("[[:space:]]+")
 
-type SecurityLimitInt int // SecurityLimitInt is an integer number where -1 represents unlimited value.
+// SecurityLimitInt is an integer number where -1 represents unlimited value.
+type SecurityLimitInt int
 
 // SecurityLimitUnlimitedValue is the constant integer value that represents unrestricted limit.
 const SecurityLimitUnlimitedValue = SecurityLimitInt(-1)
@@ -40,7 +42,7 @@ func ToSecurityLimitInt(in string) SecurityLimitInt {
 	return SecurityLimitInt(i)
 }
 
-// A single entry in security/limits.conf file.
+// SecLimitsEntry is a single entry in security/limits.conf file.
 type SecLimitsEntry struct {
 	LeadingComments    []string // The comment lines leading to the key-value pair, including prefix '#', excluding end-of-line.
 	Domain, Type, Item string
@@ -117,7 +119,7 @@ func (limits *SecLimits) Get(domain, typeName, item string) (string, bool) {
 	return "", false
 }
 
-// GetOr0 retrieves an integer limit value and return. 
+// GetOr0 retrieves an integer limit value and return.
 // If the value is not specified or cannot be parsed correctly, 0 will be returned.
 func (limits *SecLimits) GetOr0(domain, typeName, item string) SecurityLimitInt {
 	val, _ := limits.Get(domain, typeName, item)
@@ -150,7 +152,7 @@ func (limits *SecLimits) ToText() string {
 			ret.WriteRune('\n')
 		}
 		// prevent useless empty lines
-		if entry.Domain != "" && entry.Type != "" && entry.Item != "" {
+		if entry.Domain != "" && entry.Type != "" && entry.Item != "" && entry.Value != "" {
 			ret.WriteString(fmt.Sprintf("%s %s %s %s\n", entry.Domain, entry.Type, entry.Item, entry.Value))
 		}
 	}
