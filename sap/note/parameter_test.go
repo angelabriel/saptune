@@ -283,6 +283,11 @@ func TestPositionInParameterList(t *testing.T) {
 		CleanUpParamFile("TEST_PARAMETER_1")
 		t.Fatalf("wrong position for note '%s': '%v'\n", "start", val)
 	}
+	val = PositionInParameterList("TEST_NON_EXIST",  noteList.AllNotes)
+	if val != 0 {
+		CleanUpParamFile("TEST_PARAMETER_1")
+		t.Fatalf("wrong position for note '%s': '%v'\n", "TEST_NON_EXIST", val)
+	}
 	CleanUpParamFile("TEST_PARAMETER_1")
 }
 
