@@ -292,12 +292,18 @@ func TestPositionInParameterList(t *testing.T) {
 }
 
 func TestRevertParameter(t *testing.T) {
+	val := RevertParameter("TEST_PARAMETER_1", "4712")
+	if val != "" {
+		CleanUpParamFile("TEST_PARAMETER_1")
+		t.Fatalf("wrong parameter '%s' reverted from parameter file '%s'\n", val, "TEST_PARAMETER_1")
+	}
+
 	CreateParameterStartValues("TEST_PARAMETER_1", "TestStartValue1")
 	AddParameterNoteValues("TEST_PARAMETER_1", "TestAddValue1", "4711")
 	AddParameterNoteValues("TEST_PARAMETER_1", "TestAddValue2", "4712")
 	AddParameterNoteValues("TEST_PARAMETER_1", "TestAddValue3", "4713")
 	AddParameterNoteValues("TEST_PARAMETER_1", "TestAddValue4", "4714")
-	val := RevertParameter("TEST_PARAMETER_1", "4712")
+	val = RevertParameter("TEST_PARAMETER_1", "4712")
 	if val != "TestAddValue4" {
 		CleanUpParamFile("TEST_PARAMETER_1")
 		t.Fatalf("wrong parameter '%s' reverted for note '%s'\n", val, "4712")
@@ -339,7 +345,13 @@ func TestRevertLimitsParameter(t *testing.T) {
 	SaveLimitsParameter(tkey, tdom, titem, aval3, "add", "4713")
 	SaveLimitsParameter(tkey, tdom, titem, aval4, "add", "4714")
 
-	val := RevertLimitsParameter(tkey, tdom, titem, "4712")
+	val := RevertLimitsParameter("LIMIT_TEST_KEY", tdom, titem, "4712")
+	if val != "" {
+		CleanUpParamFile(paramFile)
+		t.Fatalf("wrong parameter '%s' reverted for key 'LIMIT_TEST_KEY' and for note '%s'\n", val, "4712")
+	}
+
+	val = RevertLimitsParameter(tkey, tdom, titem, "4712")
 	if val != "TDOMAIN:TestLimitAddValue4 " {
 		CleanUpParamFile(paramFile)
 		t.Fatalf("wrong parameter '%s' reverted for note '%s'\n", val, "4712")
