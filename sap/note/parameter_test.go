@@ -283,7 +283,7 @@ func TestPositionInParameterList(t *testing.T) {
 		CleanUpParamFile("TEST_PARAMETER_1")
 		t.Fatalf("wrong position for note '%s': '%v'\n", "start", val)
 	}
-	val = PositionInParameterList("TEST_NON_EXIST",  noteList.AllNotes)
+	val = PositionInParameterList("TEST_NON_EXIST", noteList.AllNotes)
 	if val != 0 {
 		CleanUpParamFile("TEST_PARAMETER_1")
 		t.Fatalf("wrong position for note '%s': '%v'\n", "TEST_NON_EXIST", val)
@@ -292,6 +292,7 @@ func TestPositionInParameterList(t *testing.T) {
 }
 
 func TestRevertParameter(t *testing.T) {
+	// test with non existing parameter file
 	val := RevertParameter("TEST_PARAMETER_1", "4712")
 	if val != "" {
 		CleanUpParamFile("TEST_PARAMETER_1")
@@ -345,6 +346,7 @@ func TestRevertLimitsParameter(t *testing.T) {
 	SaveLimitsParameter(tkey, tdom, titem, aval3, "add", "4713")
 	SaveLimitsParameter(tkey, tdom, titem, aval4, "add", "4714")
 
+	// test with 'wrong' key, return should be an empty string
 	val := RevertLimitsParameter("LIMIT_TEST_KEY", tdom, titem, "4712")
 	if val != "" {
 		CleanUpParamFile(paramFile)
