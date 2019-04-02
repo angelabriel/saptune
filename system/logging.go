@@ -28,17 +28,21 @@ func calledFrom() string {
 
 // detectTesting returns true, if 'go test' is running
 func detectTesting() bool {
+	fmt.Printf("ANGI: logging - detectTesting\n")
 	i := 0
 	for i < 10 {
 		i++
 		_, file, _, ok := runtime.Caller(i)
 		if ok {
 			_, relfile := filepath.Split(file)
+			fmt.Printf("ANGI: i is '%+v', relfile is '%+v'\n", i, relfile)
 			if relfile == "testing.go" {
+				fmt.Printf("ANGI: found testing\n")
 				return true
 			}
 		}
 	}
+	fmt.Printf("ANGI: No testing found\n")
 	return false
 }
 
@@ -65,6 +69,7 @@ func WarningLog(txt string, stuff ...interface{}) {
 
 // ErrorLog sents text to the ErrorLogWriter
 func ErrorLog(txt string, stuff ...interface{}) {
+	fmt.Printf("ANGI: ErrorLog - txt is '%+v', stuff is '%+v'\n", txt, stuff)
 	if !detectTesting() {
 		errorLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
