@@ -62,17 +62,17 @@ func InfoLog(txt string, stuff ...interface{}) {
 
 // WarningLog sents text to the WarningLogWriter
 func WarningLog(txt string, stuff ...interface{}) {
-	if !detectTesting() {
+	//if !detectTesting() {
 		warningLogger.Printf(calledFrom()+txt+"\n", stuff...)
-	}
+	//}
 }
 
 // ErrorLog sents text to the ErrorLogWriter
 func ErrorLog(txt string, stuff ...interface{}) {
 	fmt.Printf("ANGI: ErrorLog - txt is '%+v', stuff is '%+v'\n", txt, stuff)
-	if !detectTesting() {
+	//if !detectTesting() {
 		errorLogger.Printf(calledFrom()+txt+"\n", stuff...)
-	}
+	//}
 }
 
 // LogInit initialise the different log writer saptune will use

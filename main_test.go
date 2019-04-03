@@ -7,6 +7,11 @@ import (
 	"testing"
 )
 
+func TestMain(m *testing.M) {
+  log.SetOutput(ioutil.Discard)
+  m.Run()
+}
+
 func TestPrintHelpAndExit(t *testing.T) {
 	exitCode := 0
 	if os.Getenv("DO_EXIT") == "1" {
