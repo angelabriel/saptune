@@ -26,43 +26,25 @@ func calledFrom() string {
 	return ret
 }
 
-// detectTesting returns true, if 'go test' is running
-func detectTesting() bool {
-	fmt.Printf("ANGI: logging - detectTesting\n")
-	i := 0
-	for i < 10 {
-		i++
-		_, file, _, ok := runtime.Caller(i)
-		if ok {
-			_, relfile := filepath.Split(file)
-			fmt.Printf("ANGI: i is '%+v', relfile is '%+v'\n", i, relfile)
-			if relfile == "testing.go" {
-				fmt.Printf("ANGI: found testing\n")
-				return true
-			}
-		}
-	}
-	fmt.Printf("ANGI: No testing found\n")
-	return false
-}
-
 // DebugLog sents text to the DebugLogWriter
 func DebugLog(txt string, stuff ...interface{}) {
-	if !detectTesting() {
+	if debugLogger != nil {
 		debugLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
 }
 
 // InfoLog sents text to the InfoLogWriter
 func InfoLog(txt string, stuff ...interface{}) {
-	if !detectTesting() {
+	if infoLogger != nil {
 		infoLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
 }
 
 // WarningLog sents text to the WarningLogWriter
 func WarningLog(txt string, stuff ...interface{}) {
-	if !detectTesting() {
+	fmt.Printf("ANGI: WarningLog - txt is '%+v', stuff is '%+v'\n", txt, stuff)
+	fmt.Printf("ANGI: warningLogger is '%+v'\n", warningLogger)
+	if warningLogger != nil {
 		warningLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
 }
@@ -70,7 +52,8 @@ func WarningLog(txt string, stuff ...interface{}) {
 // ErrorLog sents text to the ErrorLogWriter
 func ErrorLog(txt string, stuff ...interface{}) {
 	fmt.Printf("ANGI: ErrorLog - txt is '%+v', stuff is '%+v'\n", txt, stuff)
-	if !detectTesting() {
+	fmt.Printf("ANGI: ErrorLogger is '%+v'\n", errorLogger)
+	if errorLogger != nil {
 		errorLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
 }
