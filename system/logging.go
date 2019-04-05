@@ -42,8 +42,6 @@ func InfoLog(txt string, stuff ...interface{}) {
 
 // WarningLog sents text to the WarningLogWriter
 func WarningLog(txt string, stuff ...interface{}) {
-	fmt.Printf("ANGI: WarningLog - txt is '%+v', stuff is '%+v'\n", txt, stuff)
-	fmt.Printf("ANGI: warningLogger is '%+v'\n", warningLogger)
 	if warningLogger != nil {
 		warningLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
@@ -51,8 +49,6 @@ func WarningLog(txt string, stuff ...interface{}) {
 
 // ErrorLog sents text to the ErrorLogWriter
 func ErrorLog(txt string, stuff ...interface{}) {
-	fmt.Printf("ANGI: ErrorLog - txt is '%+v', stuff is '%+v'\n", txt, stuff)
-	fmt.Printf("ANGI: ErrorLogger is '%+v'\n", errorLogger)
 	if errorLogger != nil {
 		errorLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
