@@ -13,15 +13,19 @@ import (
 var PCTestBaseConf = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/usr/share/saptune/note/1557506")
 
 func TestGetServiceName(t *testing.T) {
-	val := GetServiceName("UuiddSocket")
-	if val != "uuidd.socket" {
+	val := system.GetServiceName("uuidd.socket")
+	if val != "uuidd.socket" && val != "" {
 		t.Fatal(val)
 	}
-	val = GetServiceName("Sysstat")
-	if val != "sysstat" {
+	val = system.GetServiceName("sysstat")
+	if val != "sysstat.service" && val != "" {
 		t.Fatal(val)
 	}
-	val = GetServiceName("UnkownService")
+	val = system.GetServiceName("sysstat.service")
+	if val != "sysstat.service" && val != "" {
+		t.Fatal(val)
+	}
+	val = system.GetServiceName("UnkownService")
 	if val != "" {
 		t.Fatal(val)
 	}
@@ -310,68 +314,44 @@ func TestSetGrubVal(t *testing.T) {
 	}
 }
 
-func TestGetUuiddVal(t *testing.T) {
-	val := GetUuiddVal()
-	if val != "start" && val != "stop" {
-		t.Fatal(val)
-	}
-}
-
-func TestOptUuiddVal(t *testing.T) {
-	val := OptUuiddVal("start")
-	if val != "start" {
-		t.Fatal(val)
-	}
-	val = OptUuiddVal("stop")
-	if val != "start" {
-		t.Fatal(val)
-	}
-	val = OptUuiddVal("unknown")
-	if val != "start" {
-		t.Fatal(val)
-	}
-}
-
-//SetUuiddVal
-
 func TestGetServiceVal(t *testing.T) {
 	val := GetServiceVal("UnkownService")
-	if val != "" {
+	if val != "NA" {
 		t.Fatal(val)
 	}
-	val = GetServiceVal("UuiddSocket")
-	if val != "start" && val != "stop" && val != "" {
+	val = GetServiceVal("uuidd.socket")
+	if val != "start" && val != "stop" && val != "NA" {
 		t.Fatal(val)
 	}
 }
 
 func TestOptServiceVal(t *testing.T) {
 	val := OptServiceVal("UnkownService", "start")
-	if val != "" {
+	if val != "NA" {
 		t.Fatal(val)
 	}
-	val = OptServiceVal("UuiddSocket", "start")
-	if val != "start" {
+	val = OptServiceVal("uuidd.socket", "start")
+	if val != "start" && val != "NA" {
 		t.Fatal(val)
 	}
-	val = OptServiceVal("UuiddSocket", "stop")
-	if val != "start" {
+	val = OptServiceVal("uuidd.socket", "stop")
+	if val != "start" && val != "NA" {
 		t.Fatal(val)
 	}
-	val = OptServiceVal("UuiddSocket", "unknown")
-	if val != "start" {
+	val = OptServiceVal("uuidd.socket", "unknown")
+	if val != "start" && val != "NA" {
 		t.Fatal(val)
 	}
-	val = OptServiceVal("Sysstat", "start")
-	if val != "start" {
+	val = OptServiceVal("sysstat", "start")
+	if val != "start" && val != "NA" {
 		t.Fatal(val)
 	}
-	val = OptServiceVal("Sysstat", "stop")
-	if val != "stop" {
+	val = OptServiceVal("sysstat.service", "stop")
+	if val != "stop" && val != "NA" {
 		t.Fatal(val)
 	}
-	val = OptServiceVal("Sysstat", "unknown")
-	if val != "start" {
+	val = OptServiceVal("sysstat", "unknown")
+	if val != "start" && val != "NA" {
 		t.Fatal(val)
 	}
 }
@@ -434,7 +414,7 @@ func TestGetPagecacheVal(t *testing.T) {
 	}
 
 	prepare = LinuxPagingImprovements{PagingConfig: PCTestBaseConf}
-	val = GetPagecacheVal("PAGECACHE_LIMIT_IGNORE_DIRTY", &prepare)
+	val = GetPagecacheVal(system.SysctlPagecacheLimitIgnoreDirty, &prepare)
 	if val != strconv.Itoa(prepare.VMPagecacheLimitIgnoreDirty) {
 		t.Fatal(val)
 	}
@@ -475,28 +455,28 @@ func TestOptPagecacheVal(t *testing.T) {
 	if val != "no" {
 		t.Fatal(val)
 	}
-	val = OptPagecacheVal("PAGECACHE_LIMIT_IGNORE_DIRTY", "2", &prepare)
+	val = OptPagecacheVal(system.SysctlPagecacheLimitIgnoreDirty, "2", &prepare)
 	if val != "2" {
 		t.Fatal(val)
 	}
 	if val != strconv.Itoa(prepare.VMPagecacheLimitIgnoreDirty) {
 		t.Fatal(val, prepare.VMPagecacheLimitIgnoreDirty)
 	}
-	val = OptPagecacheVal("PAGECACHE_LIMIT_IGNORE_DIRTY", "1", &prepare)
+	val = OptPagecacheVal(system.SysctlPagecacheLimitIgnoreDirty, "1", &prepare)
 	if val != "1" {
 		t.Fatal(val)
 	}
 	if val != strconv.Itoa(prepare.VMPagecacheLimitIgnoreDirty) {
 		t.Fatal(val, prepare.VMPagecacheLimitIgnoreDirty)
 	}
-	val = OptPagecacheVal("PAGECACHE_LIMIT_IGNORE_DIRTY", "0", &prepare)
+	val = OptPagecacheVal(system.SysctlPagecacheLimitIgnoreDirty, "0", &prepare)
 	if val != "0" {
 		t.Fatal(val)
 	}
 	if val != strconv.Itoa(prepare.VMPagecacheLimitIgnoreDirty) {
 		t.Fatal(val, prepare.VMPagecacheLimitIgnoreDirty)
 	}
-	val = OptPagecacheVal("PAGECACHE_LIMIT_IGNORE_DIRTY", "unknown", &prepare)
+	val = OptPagecacheVal(system.SysctlPagecacheLimitIgnoreDirty, "unknown", &prepare)
 	if val != "1" {
 		t.Fatal(val)
 	}

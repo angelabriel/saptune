@@ -2,6 +2,7 @@ package note
 
 import (
 	"fmt"
+	"github.com/SUSE/saptune/system"
 	"github.com/SUSE/saptune/txtparser"
 	"os"
 	"path"
@@ -130,9 +131,9 @@ func TestVendorSettings(t *testing.T) {
 
 func TestAllSettings(t *testing.T) {
 	cleanUp()
-	testString := []string{"vm.nr_hugepages", "THP", "KSM", "Sysstat"}
+	testString := []string{"vm.nr_hugepages", "THP", "KSM", "sysstat"}
 	if runtime.GOARCH == "ppc64le" {
-		testString = []string{"KSM", "Sysstat"}
+		testString = []string{"KSM", "sysstat"}
 	}
 	iniPath := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/ini_all_test.ini")
 	ini := INISettings{ConfFilePath: iniPath}
@@ -218,13 +219,13 @@ func TestAllSettings(t *testing.T) {
 	if optimisedINI.SysctlParams["VSZ_TMPFS_PERCENT"] != "60" {
 		t.Fatal(optimisedINI.SysctlParams)
 	}
-	if optimisedINI.SysctlParams["Sysstat"] != "stop" {
+	if optimisedINI.SysctlParams["sysstat"] != "stop" && optimisedINI.SysctlParams["sysstat"] != "NA" {
 		t.Fatal(optimisedINI.SysctlParams)
 	}
-	if optimisedINI.SysctlParams["UuiddSocket"] != "start" {
+	if optimisedINI.SysctlParams["uuidd.socket"] != "start" && optimisedINI.SysctlParams["uuidd.socket"] != "NA" {
 		t.Fatal(optimisedINI.SysctlParams)
 	}
-	if optimisedINI.SysctlParams["UnkownService"] != "" {
+	if optimisedINI.SysctlParams["UnkownService"] != "NA" {
 		t.Fatal(optimisedINI.SysctlParams)
 	}
 	if optimisedINI.SysctlParams["grub:transparent_hugepage"] != "never" {
@@ -276,7 +277,7 @@ func TestPageCacheSettings(t *testing.T) {
 	if optimisedINI.SysctlParams["ENABLE_PAGECACHE_LIMIT"] != "yes" {
 		t.Fatal(optimisedINI.SysctlParams)
 	}
-	if optimisedINI.SysctlParams["PAGECACHE_LIMIT_IGNORE_DIRTY"] != "1" {
+	if optimisedINI.SysctlParams[system.SysctlPagecacheLimitIgnoreDirty] != "1" {
 		t.Fatal(optimisedINI.SysctlParams)
 	}
 	if optimisedINI.SysctlParams["OVERRIDE_PAGECACHE_LIMIT_MB"] != "641" {

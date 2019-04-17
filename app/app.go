@@ -56,11 +56,18 @@ func InitialiseApp(sysconfigPrefix, stateDirPrefix string, allNotes map[string]n
 	return
 }
 
+// PrintNoteApplyOrder prints out the order of the currently applied notes
+func (app *App) PrintNoteApplyOrder() {
+	if len(app.NoteApplyOrder) != 0 {
+		fmt.Printf("\ncurrent order of applied notes is: %s\n\n", strings.Join(app.NoteApplyOrder, " "))
+	}
+}
+
 // PositionInNoteApplyOrder returns the position of the note within the slice.
 // for a given noteID get the position in the slice NoteApplyOrder
 // do not sort the slice
-func PositionInNoteApplyOrder(list []string, noteID string) int {
-	for cnt, note := range list {
+func (app *App) PositionInNoteApplyOrder(noteID string) int {
+	for cnt, note := range app.NoteApplyOrder {
 		if note == noteID {
 			return cnt
 		}
@@ -134,7 +141,7 @@ func (app *App) TuneNote(noteID string) error {
 		sort.Strings(app.TuneForNotes)
 	}
 	// to prevent double noteIDs in the apply order list
-	i := PositionInNoteApplyOrder(app.NoteApplyOrder, noteID)
+	i := app.PositionInNoteApplyOrder(noteID)
 	if i < 0 { // noteID not yet available
 		app.NoteApplyOrder = append(app.NoteApplyOrder, noteID)
 	}
@@ -184,18 +191,18 @@ func (app *App) TuneNote(noteID string) error {
 		return fmt.Errorf("Failed to save current state of note %s - %v", noteID, err)
 	}
 
-	if conforming {
-		// Do not apply the Note, if the system already complies with
-		// the requirements.
-		return nil
-	}
-
 	optimised, err := currentState.Optimise()
 	if err != nil {
 		return fmt.Errorf("Failed to calculate optimised parameters for note %s - %v", noteID, err)
 	}
 	if len(valApplyList) != 0 {
 		optimised = optimised.(note.INISettings).SetValuesToApply(valApplyList)
+	}
+
+	if conforming {
+		// Do not apply the Note, if the system already complies with
+		// the requirements.
+		return nil
 	}
 	if err := optimised.Apply(); err != nil {
 		return fmt.Errorf("Failed to apply note %s - %v", noteID, err)
@@ -260,7 +267,7 @@ func (app *App) RevertNote(noteID string, permanent bool) error {
 		if i < len(app.TuneForNotes) && app.TuneForNotes[i] == noteID {
 			app.TuneForNotes = append(app.TuneForNotes[0:i], app.TuneForNotes[i+1:]...)
 		}
-		i = PositionInNoteApplyOrder(app.NoteApplyOrder, noteID)
+		i = app.PositionInNoteApplyOrder(noteID)
 		if i < 0 {
 			system.WarningLog("noteID '%s' not found in configuration 'NoteApplyOrder'", noteID)
 		} else if i < len(app.NoteApplyOrder) && app.NoteApplyOrder[i] == noteID {
