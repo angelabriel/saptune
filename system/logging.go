@@ -30,32 +30,32 @@ func calledFrom() string {
 func DebugLog(txt string, stuff ...interface{}) {
 	if debugLogger != nil {
 		debugLogger.Printf(calledFrom()+txt+"\n", stuff...)
+		fmt.Fprintf(os.Stderr, "DEBUG: "+txt+"\n", stuff...)
 	}
-	fmt.Fprintf(os.Stderr, "DEBUG: "+txt+"\n", stuff...)
 }
 
 // InfoLog sents text to the InfoLogWriter
 func InfoLog(txt string, stuff ...interface{}) {
 	if infoLogger != nil {
 		infoLogger.Printf(calledFrom()+txt+"\n", stuff...)
+		fmt.Fprintf(os.Stdout, "INFO: "+txt+"\n", stuff...)
 	}
-	fmt.Fprintf(os.Stdout, "INFO: "+txt+"\n", stuff...)
 }
 
 // WarningLog sents text to the WarningLogWriter
 func WarningLog(txt string, stuff ...interface{}) {
 	if warningLogger != nil {
 		warningLogger.Printf(calledFrom()+txt+"\n", stuff...)
+		fmt.Fprintf(os.Stderr, "    WARNING: "+txt+"\n", stuff...)
 	}
-	fmt.Fprintf(os.Stderr, "    WARNING: "+txt+"\n", stuff...)
 }
 
 // ErrorLog sents text to the ErrorLogWriter
 func ErrorLog(txt string, stuff ...interface{}) {
 	if errorLogger != nil {
 		errorLogger.Printf(calledFrom()+txt+"\n", stuff...)
+		fmt.Fprintf(os.Stderr, "ERROR: "+txt+"\n", stuff...)
 	}
-	fmt.Fprintf(os.Stderr, "ERROR: "+txt+"\n", stuff...)
 }
 
 // LogInit initialise the different log writer saptune will use
