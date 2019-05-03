@@ -31,6 +31,7 @@ func DebugLog(txt string, stuff ...interface{}) {
 	if debugLogger != nil {
 		debugLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
+	fmt.Fprintf(os.Stderr, "DEBUG: "+txt+"\n", stuff...)
 }
 
 // InfoLog sents text to the InfoLogWriter
@@ -38,6 +39,7 @@ func InfoLog(txt string, stuff ...interface{}) {
 	if infoLogger != nil {
 		infoLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
+	fmt.Fprintf(os.Stdout, "INFO: "+txt+"\n", stuff...)
 }
 
 // WarningLog sents text to the WarningLogWriter
@@ -45,6 +47,7 @@ func WarningLog(txt string, stuff ...interface{}) {
 	if warningLogger != nil {
 		warningLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
+	fmt.Fprintf(os.Stderr, "    WARNING: "+txt+"\n", stuff...)
 }
 
 // ErrorLog sents text to the ErrorLogWriter
@@ -52,6 +55,7 @@ func ErrorLog(txt string, stuff ...interface{}) {
 	if errorLogger != nil {
 		errorLogger.Printf(calledFrom()+txt+"\n", stuff...)
 	}
+	fmt.Fprintf(os.Stderr, "ERROR: "+txt+"\n", stuff...)
 }
 
 // LogInit initialise the different log writer saptune will use
@@ -68,15 +72,20 @@ func LogInit() {
 	//saptuneWriter := io.MultiWriter(os.Stderr, saptuneLog)
 	//log.SetOutput(saptuneWriter)
 
-	debugLogWriter := io.MultiWriter(os.Stderr, saptuneLog)
-	infoLogWriter := io.MultiWriter(os.Stdout, saptuneLog)
-	warningLogWriter := io.MultiWriter(os.Stderr, saptuneLog)
-	errorLogWriter := io.MultiWriter(os.Stderr, saptuneLog)
+	//debugLogWriter := io.MultiWriter(os.Stderr, saptuneLog)
+	//infoLogWriter := io.MultiWriter(os.Stdout, saptuneLog)
+	//warningLogWriter := io.MultiWriter(os.Stderr, saptuneLog)
+	//errorLogWriter := io.MultiWriter(os.Stderr, saptuneLog)
 
-	debugLogger = log.New(debugLogWriter, logTimeFormat+"DEBUG    saptune.", 0)
-	infoLogger = log.New(infoLogWriter, logTimeFormat+"INFO     saptune.", 0)
-	warningLogger = log.New(warningLogWriter, logTimeFormat+"WARNING  saptune.", 0)
-	errorLogger = log.New(errorLogWriter, logTimeFormat+"ERROR    saptune.", 0)
+	//debugLogger = log.New(debugLogWriter, logTimeFormat+"DEBUG    saptune.", 0)
+	//infoLogger = log.New(infoLogWriter, logTimeFormat+"INFO     saptune.", 0)
+	//warningLogger = log.New(warningLogWriter, logTimeFormat+"WARNING  saptune.", 0)
+	//errorLogger = log.New(errorLogWriter, logTimeFormat+"ERROR    saptune.", 0)
 	//errorLogger = log.New(errorLogWriter, logTimeFormat+"ERROR    saptune.", log.Lshortfile)
 	//log.SetFlags(0)
+
+	debugLogger = log.New(saptuneLog, logTimeFormat+"DEBUG    saptune.", 0)
+	infoLogger = log.New(saptuneLog, logTimeFormat+"INFO     saptune.", 0)
+	warningLogger = log.New(saptuneLog, logTimeFormat+"WARNING  saptune.", 0)
+	errorLogger = log.New(saptuneLog, logTimeFormat+"ERROR    saptune.", 0)
 }
