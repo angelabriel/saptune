@@ -57,10 +57,8 @@ func SystemctlEnableStart(thing string) error {
 	if err := SystemctlEnable(thing); err != nil {
 		return err
 	}
-	if err := SystemctlStart(thing); err != nil {
-		return err
-	}
-	return nil
+	err := SystemctlStart(thing)
+	return err
 }
 
 // SystemctlDisableStop call systemctl disable and then systemctl stop on thing.
@@ -69,10 +67,8 @@ func SystemctlDisableStop(thing string) error {
 	if err := SystemctlDisable(thing); err != nil {
 		return err
 	}
-	if err := SystemctlStop(thing); err != nil {
-		return err
-	}
-	return nil
+	err := SystemctlStop(thing)
+	return err
 }
 
 // SystemctlIsRunning return true only if systemctl suggests that the thing is
