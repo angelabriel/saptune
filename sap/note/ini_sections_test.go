@@ -400,7 +400,41 @@ func TestOptLoginVal(t *testing.T) {
 	}
 }
 
-// SetLoginVal
+func TestSetLoginVal(t *testing.T) {
+	utmFile := "/etc/systemd/logind.conf.d/saptune-UserTasksMax.conf"
+	val := "18446744073709"
+
+	err := SetLoginVal("UserTasksMax", val, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = os.Stat(utmFile); err != nil {
+		t.Fatal(err)
+	}
+	if !system.CheckForPattern(utmFile, val) {
+		t.Fatalf("wrong value in file '%s'\n", utmFile)
+	}
+	val = "infinity"
+	err = SetLoginVal("UserTasksMax", val, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = os.Stat(utmFile); err != nil {
+		t.Fatal(err)
+	}
+	if !system.CheckForPattern(utmFile, val) {
+		t.Fatalf("wrong value in file '%s'\n", utmFile)
+	}
+	val = "10813"
+	err = SetLoginVal("UserTasksMax", val, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = os.Stat(utmFile); err == nil {
+		os.Remove(utmFile)
+		t.Fatalf("file '%s' still exists\n", utmFile)
+	}
+}
 
 func TestGetPagecacheVal(t *testing.T) {
 	prepare := LinuxPagingImprovements{PagingConfig: PCTestBaseConf}
