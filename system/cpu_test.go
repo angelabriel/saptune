@@ -52,10 +52,10 @@ func TestSetPerfBias(t *testing.T) {
 		t.Fatal(err)
 	}
 	val := GetPerfBias()
-	if val != "all:15" {
+	if val != "all:15" || val != "all:none" {
 		t.Fatal(val)
 	}
-	if oldPerf != "" {
+	if oldPerf != "" && oldPerf != "all:none" {
 		// set test value back
 		err := SetPerfBias(oldPerf)
 		if err != nil {
@@ -98,9 +98,6 @@ func TestGetGovernor(t *testing.T) {
 }
 
 func TestSetGovernor(t *testing.T) {
-	if !IsUserRoot() {
-		t.Skip("the test requires root access")
-	}
 	oldGov := GetGovernor()
 	gov := "performance"
 	err := SetGovernor("all:performance")
@@ -108,7 +105,7 @@ func TestSetGovernor(t *testing.T) {
 		t.Fatal(err)
 	}
 	for k, v := range GetGovernor() {
-		if k == "all" && v != gov {
+		if k == "all" && (v != gov || v != "none") {
 			t.Fatalf("all: expected '%s', actual '%s'\n", gov, v)
 		}
 	}
@@ -117,7 +114,7 @@ func TestSetGovernor(t *testing.T) {
 		t.Fatal(err)
 	}
 	for k, v := range GetGovernor() {
-		if k == "cpu0" && v != gov {
+		if k == "cpu0" && (v != gov|| v != "none") {
 			t.Fatalf("cpu0: expected '%s', actual '%s'\n", gov, v)
 		}
 	}

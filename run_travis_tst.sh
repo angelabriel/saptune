@@ -2,6 +2,9 @@
 
 pwd
 ls -al
+ls -l /sys/devices
+ls -l /sys/devices/system/cpu
+ls -l /sys/devices/system/cpu*/*
 
 echo "zypper in ..."
 #/bin/systemctl start dbus
@@ -32,7 +35,7 @@ ls -al
 echo "run go tests"
 #go test -v -cover ./... -coverprofile=cover.out
 go test -v -coverprofile=c.out -cover ./...
+exitErr=$?
 go build
-
-pwd
-ls -al
+echo $?
+echo $exitErr
