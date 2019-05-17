@@ -29,3 +29,18 @@ func TestGetOsVers(t *testing.T) {
 		t.Logf("unexpected OS version '%s'\n", actualVal)
 	}
 }
+
+func TestCmdIsAvailable(t *testing.T) {
+	if !CmdIsAvailable("/usr/bin/go") {
+		t.Fatal("'/usr/bin/go' not found")
+	}
+	if CmdIsAvailable("/cmd_not_avail.CnA") {
+		t.Fatal("found '/cmd_not_avail.CnA'")
+	}
+}
+
+func TestCheckForPattern(t *testing.T) {
+	if CheckForPattern("/file_not_available", "Test_Text") {
+		t.Fatal("found '/file_not_available'")
+	}
+}

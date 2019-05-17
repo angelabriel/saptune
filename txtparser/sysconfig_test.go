@@ -85,6 +85,9 @@ func TestSysconfig(t *testing.T) {
 	if val := conf.GetUint64("TMPFS_SIZE_MIN", 0); val != 8388608 {
 		t.Fatal(val)
 	}
+	if val := conf.GetUint64("KEY_DOES_NOT_EXIST", 0); val != 0 {
+		t.Fatal(val)
+	}
 	if val := conf.GetString("KEY_DOES_NOT_EXIST", "DEFAULT"); val != "DEFAULT" {
 		t.Fatal(val)
 	}
@@ -95,7 +98,13 @@ func TestSysconfig(t *testing.T) {
 	if val := conf.GetStringArray("STRARY_TEST", nil); !reflect.DeepEqual(val, []string{"foo", "bar", "abc"}) {
 		t.Fatal(val)
 	}
+	if val := conf.GetStringArray("KEY_DOES_NOT_EXIST", []string{"DEFAULT"}); !reflect.DeepEqual(val, []string{"DEFAULT"}) {
+		t.Fatal(val)
+	}
 	if val := conf.GetIntArray("INTARY_TEST", nil); !reflect.DeepEqual(val, []int{12, 34, 56}) {
+		t.Fatal(val)
+	}
+	if val := conf.GetIntArray("KEY_DOES_NOT_EXIST", []int{0}); !reflect.DeepEqual(val, []int{0}) {
 		t.Fatal(val)
 	}
 	// Read boolean keys

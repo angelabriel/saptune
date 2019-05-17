@@ -1,7 +1,9 @@
 package system
 
 import (
+	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -40,6 +42,28 @@ func TestGetPerfBias(t *testing.T) {
 	}
 }
 
+func TestSetPerfBias(t *testing.T) {
+	if !IsUserRoot() {
+		t.Skip("the test requires root access")
+	}
+	oldPerf := GetPerfBias()
+	err := SetPerfBias("all:15")
+	if err != nil {
+		t.Fatal(err)
+	}
+	val := GetPerfBias()
+	if val != "all:15" {
+		t.Fatal(val)
+	}
+	if oldPerf != "" {
+		// set test value back
+		err := SetPerfBias(oldPerf)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestIsValidGovernor(t *testing.T) {
 	_, err := ioutil.ReadDir("/sys/devices/system/cpu/cpu0/cpufreq")
 	if err != nil {
@@ -48,6 +72,12 @@ func TestIsValidGovernor(t *testing.T) {
 	gov, _ := GetSysString("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
 	if !IsValidGovernor("cpu0", gov) {
 		t.Fatal(gov)
+	}
+	if IsValidGovernor("not_avail", gov) {
+		t.Fatal(gov)
+	}
+	if IsValidGovernor("cpu0", "not_avail") {
+		t.Fatalf("governor 'not_avail' reported as supported, but shouldn't")
 	}
 }
 
@@ -67,6 +97,41 @@ func TestGetGovernor(t *testing.T) {
 	}
 }
 
+func TestSetGovernor(t *testing.T) {
+	if !IsUserRoot() {
+		t.Skip("the test requires root access")
+	}
+	oldGov := GetGovernor()
+	gov := "performance"
+	err := SetGovernor("all:performance")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for k, v := range GetGovernor() {
+		if k == "all" && v != gov {
+			t.Fatalf("all: expected '%s', actual '%s'\n", gov, v)
+		}
+	}
+	err = SetGovernor("cpu0:performance")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for k, v := range GetGovernor() {
+		if k == "cpu0" && v != gov {
+			t.Fatalf("cpu0: expected '%s', actual '%s'\n", gov, v)
+		}
+	}
+	// set test value back
+	val := ""
+	for k, v := range oldGov {
+		val = val + fmt.Sprintf("%s:%s ", k, v)
+	}
+	err = SetGovernor(val)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestGetdmaLatency(t *testing.T) {
 	value := GetdmaLatency()
 	if value == "" {
@@ -82,5 +147,50 @@ func TestGetFLInfo(t *testing.T) {
 		t.Log("system does not support force_latency settings")
 	} else {
 		t.Log(value)
+	}
+}
+
+func TestSetForceLatency(t *testing.T) {
+	if !IsUserRoot() {
+		t.Skip("the test requires root access")
+	}
+	oldLat, _, _ := GetFLInfo()
+	err := SetForceLatency("all:none", "cpu1:state0:0 cpu1:state1:0", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = SetForceLatency("70", "cpu1:state0:0 cpu1:state1:0", false)
+	t.Log(err)
+	if oldLat != "" {
+		// set test value back
+		err := SetForceLatency(oldLat, "", false)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// test with missing cpupower command
+func TestMissingCmd(t *testing.T) {
+	cmdName := "/usr/bin/cpupower"
+	savName := "/usr/bin/cpupower_SAVE"
+	if err := os.Rename(cmdName, savName); err != nil {
+		t.Fatal(err)
+	}
+	value := GetPerfBias()
+	if value != "all:none" {
+		t.Fatal(value)
+	}
+	if err := SetPerfBias("all:15"); err != nil {
+		t.Fatal(err)
+	}
+	if SupportsPerfBias() {
+		t.Fatalf("reports supported, but shouldn't")
+	}
+	if err := SetGovernor("all:performance"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(savName, cmdName); err != nil {
+		t.Fatal(err)
 	}
 }

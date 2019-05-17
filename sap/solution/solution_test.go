@@ -49,11 +49,16 @@ func TestGetOverrideSolution(t *testing.T) {
 		t.Fatal(ovsolutions)
 	}
 
+	ovsolutionFile = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/saptune-test-override-sols-missing-note")
+	ovsolutions = GetOverrideSolution(ovsolutionFile, noteFiles)
+	if len(ovsolutions) != 0 {
+		t.Fatalf("'%+v' has len '%+v'\n", ovsolutions, len(ovsolutions))
+	}
+
 	sols := GetSolutionDefintion("/saptune_file_not_avail")
 	if len(sols) != 0 {
 		t.Fatal(sols)
 	}
-
 }
 
 func TestGetSortedSolutionIDs(t *testing.T) {

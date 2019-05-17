@@ -15,8 +15,8 @@ before_script:
 
 before_install:
   - docker --version
-  - docker pull krig/crmsh:latest
-  - docker run --name travis-st-ci --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -td -v "$(pwd):/app" krig/crmsh
+  - docker pull shap/crmsh:latest
+  - docker run --name travis-st-ci --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -td -v "$(pwd):/app" shap/crmsh
   - docker ps -a
 
 script:
