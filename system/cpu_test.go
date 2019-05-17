@@ -52,7 +52,7 @@ func TestSetPerfBias(t *testing.T) {
 		t.Fatal(err)
 	}
 	val := GetPerfBias()
-	if val != "all:15" || val != "all:none" {
+	if val != "all:15" && val != "all:none" {
 		t.Fatal(val)
 	}
 	if oldPerf != "" && oldPerf != "all:none" {
@@ -105,7 +105,7 @@ func TestSetGovernor(t *testing.T) {
 		t.Fatal(err)
 	}
 	for k, v := range GetGovernor() {
-		if k == "all" && (v != gov || v != "none") {
+		if k == "all" && (v != gov && v != "none") {
 			t.Fatalf("all: expected '%s', actual '%s'\n", gov, v)
 		}
 	}
@@ -114,7 +114,7 @@ func TestSetGovernor(t *testing.T) {
 		t.Fatal(err)
 	}
 	for k, v := range GetGovernor() {
-		if k == "cpu0" && (v != gov|| v != "none") {
+		if k == "cpu0" && (v != gov && v != "none") {
 			t.Fatalf("cpu0: expected '%s', actual '%s'\n", gov, v)
 		}
 	}

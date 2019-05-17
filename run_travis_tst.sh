@@ -37,5 +37,4 @@ echo "run go tests"
 go test -v -coverprofile=c.out -cover ./...
 exitErr=$?
 go build
-echo $?
-echo $exitErr
+exit $exitErr
