@@ -12,7 +12,6 @@ func TestCalledFrom(t *testing.T) {
 	}
 }
 
-/*
 func TestLog(t *testing.T) {
 	logFile := "/var/log/tuned/tuned.log"
 	LogInit()
@@ -36,4 +35,3 @@ func TestLog(t *testing.T) {
 		t.Fatal("Error message not found in log file")
 	}
 }
-*/

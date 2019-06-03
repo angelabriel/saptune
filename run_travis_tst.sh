@@ -22,6 +22,7 @@ export GOPATH=${TRAVIS_HOME}/gopath
 export PATH=${TRAVIS_HOME}/gopath/bin:$PATH
 export TRAVIS_BUILD_DIR=${TRAVIS_HOME}/gopath/src/github.com/SUSE/saptune
 
+mkdir -p /etc/saptune/override
 mkdir -p /usr/share/saptune
 ln -s /app/testdata/saptune-test-solutions /usr/share/saptune/solutions
 
@@ -36,6 +37,7 @@ ls -al
 # to get TasksMax settings work, needs a user login session
 echo "start nobody login session in background"
 su --login nobody -c "sleep 4m" &
+sleep 10
 ps -ef
 loginctl --no-pager
 
@@ -43,4 +45,6 @@ echo "run go tests"
 go test -v -coverprofile=c.out -cover ./...
 exitErr=$?
 go build
+ps -ef
+pkill -P $$
 exit $exitErr
