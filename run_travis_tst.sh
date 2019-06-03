@@ -35,7 +35,7 @@ ls -al
 
 # to get TasksMax settings work, needs a user login session
 echo "start nobody login session in background"
-su --login nobody -c "sleep 15m" &
+su --login nobody -c "sleep 4m" &
 ps -ef
 loginctl --no-pager
 
