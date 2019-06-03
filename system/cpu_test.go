@@ -9,6 +9,21 @@ import (
 	"testing"
 )
 
+// CheckCPUState csMap passend für Tests
+func TestCheckCPUState(t *testing.T) {
+	tstEqualMap := map[string]string{"cpu0": "state0:0 state1:0 state2:0 state3:0 state4:0", "cpu1": "state0:0 state1:0 state2:0 state3:0 state4:0", "cpu2": "state0:0 state1:0 state2:0 state3:0 state4:0", "cpu3": "state0:0 state1:0 state2:0 state3:0 state4:0"}
+	tstDiffMap := map[string]string{"cpu0": "state0:0 state1:0 state2:0 state3:0 state4:0", "cpu1": "state0:0 state1:1 state2:0 state3:0 state4:0", "cpu2": "state0:0 state1:0 state2:1 state3:0 state4:0", "cpu3": "state0:0 state1:0 state2:0 state3:0 state4:1"}
+
+	differ := CheckCPUState(tstEqualMap)
+	if differ {
+		t.Fatal(differ)
+	}
+	differ = CheckCPUState(tstDiffMap)
+	if !differ {
+		t.Fatal(differ)
+	}
+}
+
 func TestSupportsPerfBias(t *testing.T) {
 	if !IsUserRoot() {
 		t.Skip("the test requires root access")
@@ -100,7 +115,8 @@ func TestGetGovernor(t *testing.T) {
 func TestSetGovernor(t *testing.T) {
 	oldGov := GetGovernor()
 	gov := "performance"
-	err := SetGovernor("all:performance")
+	info := ""
+	err := SetGovernor("all:performance", info)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +125,7 @@ func TestSetGovernor(t *testing.T) {
 			t.Fatalf("all: expected '%s', actual '%s'\n", gov, v)
 		}
 	}
-	err = SetGovernor("cpu0:performance")
+	err = SetGovernor("cpu0:performance", info)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +139,12 @@ func TestSetGovernor(t *testing.T) {
 	for k, v := range oldGov {
 		val = val + fmt.Sprintf("%s:%s ", k, v)
 	}
-	err = SetGovernor(val)
+	err = SetGovernor(val, info)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info = "notSupported"
+	err = SetGovernor("cpu0:performance", info)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,15 +173,22 @@ func TestSetForceLatency(t *testing.T) {
 		t.Skip("the test requires root access")
 	}
 	oldLat, _, _ := GetFLInfo()
-	err := SetForceLatency("all:none", "cpu1:state0:0 cpu1:state1:0", false)
+	err := SetForceLatency("all:none", "cpu1:state0:0 cpu1:state1:0", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = SetForceLatency("70", "cpu1:state0:0 cpu1:state1:0", false)
+	err = SetForceLatency("70", "cpu1:state0:0 cpu1:state1:0", "notSupported", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = SetForceLatency("70", "cpu1:state0:0 cpu1:state1:0", "", false)
 	t.Log(err)
+	err = SetForceLatency("70", "cpu1:state0:0 cpu1:state1:0", "", true)
+	t.Log(err)
+
 	if oldLat != "" {
 		// set test value back
-		err := SetForceLatency(oldLat, "", false)
+		err := SetForceLatency(oldLat, "", "", false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -184,7 +212,7 @@ func TestMissingCmd(t *testing.T) {
 	if SupportsPerfBias() {
 		t.Fatalf("reports supported, but shouldn't")
 	}
-	if err := SetGovernor("all:performance"); err != nil {
+	if err := SetGovernor("all:performance", ""); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Rename(savName, cmdName); err != nil {

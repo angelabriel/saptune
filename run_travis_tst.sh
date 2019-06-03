@@ -1,16 +1,16 @@
 #!/bin/sh
 
-pwd
-ls -al
-ls -l /sys/devices
-ls -l /sys/devices/system/cpu
-ls -l /sys/devices/system/cpu*/*
-
 echo "zypper in ..."
-#/bin/systemctl start dbus
-zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go1.10 go cpupower uuidd polkit tuned
+#/bin/systemctl start dbus -> does not work any longer
+# additional libs needed to get 'tuned' working
+zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in glib2 glib2-tools libgio-2_0-0 libglib-2_0-0 libgmodule-2_0-0 libgobject-2_0-0 go1.10 go cpupower uuidd polkit tuned sysstat
+
+# dbus can not be started directly, only by dependency - so start 'tuned' instead
 /bin/systemctl start tuned
-systemctl status
+systemctl --no-pager status
+# try to resolve systemd status 'degraded'
+systemctl reset-failed
+systemctl --no-pager status
 
 echo "PATH is $PATH, GOPATH is $GOPATH, TRAVIS_HOME is $TRAVIS_HOME"
 
@@ -32,8 +32,14 @@ go version
 cd saptune
 pwd
 ls -al
+
+# to get TasksMax settings work, needs a user login session
+echo "start nobody login session in background"
+su --login nobody -c "sleep 15m" &
+ps -ef
+loginctl --no-pager
+
 echo "run go tests"
-#go test -v -cover ./... -coverprofile=cover.out
 go test -v -coverprofile=c.out -cover ./...
 exitErr=$?
 go build

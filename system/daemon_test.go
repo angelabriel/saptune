@@ -1,13 +1,19 @@
 package system
 
 import (
+	"os/exec"
 	"testing"
 )
-
 
 func TestSystemctl(t *testing.T) {
 	if !CmdIsAvailable("/usr/bin/systemctl") {
 		t.Skip("command '/usr/bin/systemctl' not available. Skip tests")
+	}
+	if !IsSystemRunning() {
+		_, _ = exec.Command("/usr/bin/systemctl", "reset-failed").CombinedOutput()
+		if !IsSystemRunning() {
+			t.Skip("command '/usr/bin/systemctl is-system-running' reports errors. Skip daemon tests")
+		}
 	}
 
 	testService := "sshd.service"
@@ -59,6 +65,10 @@ func TestSystemctlIsRunning(t *testing.T) {
 	}
 	if !SystemctlIsRunning("tuned.service") {
 		t.Log("'tuned.service' not running")
+		t.Log("start 'tuned.service' for following tests")
+		if err := SystemctlStart("tuned.service"); err != nil {
+			t.Log(err)
+		}
 	}
 }
 
@@ -85,9 +95,20 @@ func TestWriteTunedAdmProfile(t *testing.T) {
 }
 
 func TestGetTunedProfile(t *testing.T) {
+	if err := TunedAdmProfile("balanced"); err != nil {
+		t.Fatalf("seams 'tuned-adm profile balanced' does not work: '%v'\n", err)
+	}
 	actVal := GetTunedProfile()
 	if actVal == "" {
-		t.Log("seams there is no tuned profile, skip test")
+		t.Fatal("seams there is no tuned profile")
+	}
+
+	if err := TunedAdmOff(); err != nil {
+		t.Fatalf("seams 'tuned-adm off' does not work: '%v'\n", err)
+	}
+	actVal = GetTunedProfile()
+	if actVal != "" {
+		t.Fatalf("seams 'tuned-adm off' does not work: profile is '%v'\n", actVal)
 	}
 }
 
@@ -96,8 +117,7 @@ func TestTunedAdmOff(t *testing.T) {
 		t.Skip("command '/usr/sbin/tuned-adm' not available. Skip tests")
 	}
 	if err := TunedAdmOff(); err != nil {
-		//ANGI TODO - switch to t.Fatal(err), if tuned.service is running in the docker container
-		t.Logf("seams 'tuned-adm off' does not work: '%v'\n", err)
+		t.Fatalf("seams 'tuned-adm off' does not work: '%v'\n", err)
 	}
 	actProfile := GetTunedProfile()
 	if actProfile != "" {
@@ -114,17 +134,14 @@ func TestTunedAdmProfile(t *testing.T) {
 		t.Skip("command '/usr/sbin/tuned-adm' not available. Skip tests")
 	}
 	if err := TunedAdmProfile(profileName); err != nil {
-		//ANGI TODO - switch to t.Fatal(err), if tuned.service is running in the docker container
-		t.Logf("seams 'tuned-adm profile balanced' does not work: '%v'\n", err)
+		t.Fatalf("seams 'tuned-adm profile balanced' does not work: '%v'\n", err)
 	}
 	actProfile := GetTunedProfile()
 	if actProfile != profileName {
-		//ANGI TODO - switch to t.Fatalf(txt), if tuned.service is running in the docker container
-		t.Logf("expected profile '%s', current profile '%s'\n", profileName, actProfile)
+		t.Fatalf("expected profile '%s', current profile '%s'\n", profileName, actProfile)
 	}
 	if err := TunedAdmOff(); err != nil {
-		//ANGI TODO - switch to t.Fatal(err), if tuned.service is running in the docker container
-		t.Logf("seams 'tuned-adm off' does not work: '%v'\n", err)
+		t.Fatalf("seams 'tuned-adm off' does not work: '%v'\n", err)
 	}
 	if err := SystemctlStop("tuned"); err != nil {
 		t.Fatal(err)
@@ -136,8 +153,18 @@ func TestGetTunedAdmProfile(t *testing.T) {
 	if !CmdIsAvailable("/usr/sbin/tuned-adm") {
 		t.Skip("command '/usr/sbin/tuned-adm' not available. Skip tests")
 	}
+	if err := TunedAdmProfile("balanced"); err != nil {
+		t.Fatalf("seams 'tuned-adm profile balanced' does not work: '%v'\n", err)
+	}
 	actVal := GetTunedAdmProfile()
 	if actVal == "" {
-		t.Log("seams there is no tuned profile")
+		t.Fatal("seams there is no tuned profile")
+	}
+	if err := TunedAdmOff(); err != nil {
+		t.Fatalf("seams 'tuned-adm off' does not work: '%v'\n", err)
+	}
+	actVal = GetTunedAdmProfile()
+	if actVal != "" {
+		t.Fatalf("seams 'tuned-adm off' does not work: profile is '%v'\n", actVal)
 	}
 }

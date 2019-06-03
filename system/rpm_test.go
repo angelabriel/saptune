@@ -105,7 +105,7 @@ func TestCheckRpmVers(t *testing.T) {
 		t.Fatal("higher")
 	}
 	actualVal = CheckRpmVers("5.5p1", "5.5m1")
-	if actualVal !=1 {
+	if actualVal != 1 {
 		t.Fatal("less or equal")
 	}
 	actualVal = CheckRpmVers("1b.fc17", "1b.fc17")

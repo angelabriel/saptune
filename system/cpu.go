@@ -155,12 +155,16 @@ func GetGovernor() map[string]string {
 
 // SetGovernor set performance configuration regarding to cpu frequency
 // to the system using 'cpupower' command
-func SetGovernor(value string) error {
+func SetGovernor(value, info string) error {
 	//cmd := exec.Command("cpupower", "-c", "all", "frequency-set", "-g", value)
 	cpu := ""
 	tst := ""
 	cmdName := cpupowerCmd
 
+	if value == "all:none" || info == "notSupported" {
+		WarningLog("governor settings not supported by the system")
+		return nil
+	}
 	if !CmdIsAvailable(cmdName) {
 		WarningLog("command '%s' not found", cmdName)
 		return nil
@@ -266,10 +270,10 @@ func GetFLInfo() (string, string, bool) {
 }
 
 // SetForceLatency set CPU latency configuration to the system
-func SetForceLatency(value, savedStates string, revert bool) error {
+func SetForceLatency(value, savedStates, info string, revert bool) error {
 	oldState := ""
 
-	if value == "all:none" {
+	if value == "all:none" || info == "notSupported" {
 		WarningLog("latency settings not supported by the system")
 		return nil
 	}
@@ -330,6 +334,7 @@ func SetForceLatency(value, savedStates string, revert bool) error {
 }
 
 // CheckCPUState checks, if all cpus have the same state settings
+// returns true, if the cpu states differ
 func CheckCPUState(csMap map[string]string) bool {
 	ret := false
 	oldcpuState := ""

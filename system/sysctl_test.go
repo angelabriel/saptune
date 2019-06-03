@@ -30,30 +30,36 @@ func TestWriteSysctl(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := SetSysctlInt("vm.max_map_count", 100); err != nil {
-                t.Fatal(err)
-        }
+		t.Fatal(err)
+	}
 	intval, err := GetSysctlInt("vm.max_map_count")
 	if intval != 100 {
 		t.Fatal(intval)
 	}
 	if err := SetSysctlUint64("vm.max_map_count", 100); err != nil {
-                t.Fatal(err)
-        }
+		t.Fatal(err)
+	}
 	uintval, err := GetSysctlUint64("vm.max_map_count")
 	if uintval != 100 {
 		t.Fatal(uintval)
 	}
 	if err := SetSysctlString("vm.max_map_count", "100"); err != nil {
-                t.Fatal(err)
-        }
+		t.Fatal(err)
+	}
 	sval, err := GetSysctlString("vm.max_map_count")
 	if sval != "100" {
 		t.Fatal(sval)
 	}
+	if err := SetSysctlString("UnknownKey", "100"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SetSysctlUint64Field("UnknownKey", 1, 100); err == nil {
+		t.Fatal(err)
+	}
 	// set test value back
 	if err := SetSysctlInt("vm.max_map_count", oldval); err != nil {
-                t.Fatal(err)
-        }
+		t.Fatal(err)
+	}
 }
 
 func TestIsPagecacheAvailable(t *testing.T) {

@@ -20,7 +20,7 @@ before_install:
   - docker ps -a
 
 script:
-  - docker exec -t travis-st-ci /bin/sh -c "systemctl start dbus; cd /app; ./run_travis_tst.sh;"
+  - docker exec -t travis-st-ci /bin/sh -c "cd /app; ./run_travis_tst.sh;"
 
 after_script:
   - docker stop travis-st-ci

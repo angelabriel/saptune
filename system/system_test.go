@@ -44,3 +44,18 @@ func TestCheckForPattern(t *testing.T) {
 		t.Fatal("found '/file_not_available'")
 	}
 }
+
+func TestGetServiceName(t *testing.T) {
+	value := GetServiceName("sysstat")
+	if value != "sysstat.service" {
+		t.Fatalf("found service '%s' instead of 'sysstat.service'\n", value)
+	}
+	value = GetServiceName("sysstat.service")
+	if value != "sysstat.service" {
+		t.Fatalf("found service '%s' instead of 'sysstat.service'\n", value)
+	}
+	value = GetServiceName("UnkownService")
+	if value != "" {
+		t.Fatalf("found service '%s' instead of 'UnkownService'\n", value)
+	}
+}
