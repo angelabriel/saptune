@@ -53,6 +53,10 @@ func TestGetTuningOptions(t *testing.T) {
 	if sorted := allOpts.GetSortedIDs(); len(allOpts) != len(sorted) {
 		t.Fatal(sorted, allOpts)
 	}
+	allOpts = GetTuningOptions("", "/etc/saptune/extra/")
+	if sorted := allOpts.GetSortedIDs(); len(allOpts) != len(sorted) {
+		t.Fatal(sorted, allOpts)
+	}
 }
 
 func TestCompareJSValu(t *testing.T) {

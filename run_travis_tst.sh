@@ -23,8 +23,14 @@ export PATH=${TRAVIS_HOME}/gopath/bin:$PATH
 export TRAVIS_BUILD_DIR=${TRAVIS_HOME}/gopath/src/github.com/SUSE/saptune
 
 mkdir -p /etc/saptune/override
+mkdir -p /etc/saptune/extra
 mkdir -p /usr/share/saptune
 ln -s /app/testdata/saptune-test-solutions /usr/share/saptune/solutions
+ln -s /app/testdata/extraNote.conf /etc/saptune/extra/extraNote.conf
+ln -s /app/testdata/extraNote.conf /etc/saptune/extra/wrongName
+touch /etc/saptune/extra/SAP_ASE-SAP_Adaptive_Server_Enterprise.conf
+touch /etc/saptune/extra/oldFile-Name_syntax.conf
+touch /etc/saptune/extra/wrongFileNamesyntax.conf
 
 echo "go environment:"
 go env

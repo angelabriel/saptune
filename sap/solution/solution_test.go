@@ -61,6 +61,28 @@ func TestGetOverrideSolution(t *testing.T) {
 	}
 }
 
+func TestGetDeprecatedSolution(t *testing.T) {
+	deprecSolutionFile := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/saptune-test-deprecated-sols")
+	deprec := "deprecated"
+	solcount := 2
+	if system.IsPagecacheAvailable() {
+		solcount = 4
+	}
+
+	solutions := GetDeprecatedSolution(deprecSolutionFile)
+	if len(solutions) != solcount {
+		t.Fatalf("'%+v' has len '%+v'\n", solutions, len(solutions))
+	}
+	if solutions[runtime.GOARCH]["MAXDB"] != deprec {
+		t.Fatal(solutions)
+	}
+
+	sols := GetDeprecatedSolution("/saptune_file_not_avail")
+	if len(sols) != 0 {
+		t.Fatal(sols)
+	}
+}
+
 func TestGetSortedSolutionIDs(t *testing.T) {
 	if len(GetSortedSolutionNames(runtime.GOARCH)) != len(AllSolutions[runtime.GOARCH]) {
 		t.Fatal(GetSortedSolutionNames(runtime.GOARCH))

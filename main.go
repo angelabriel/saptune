@@ -24,6 +24,7 @@ const (
 	SapconfService        = "sapconf.service"
 	TunedService          = "tuned.service"
 	TunedProfileName      = "saptune"
+	logFile               = "/var/log/tuned/tuned.log"
 	NoteTuningSheets      = "/usr/share/saptune/notes/"
 	OverrideTuningSheets  = "/etc/saptune/override/"
 	ExtraTuningSheets     = "/etc/saptune/extra/" // ExtraTuningSheets is a directory located on file system for external parties to place their tuning option files.
@@ -90,6 +91,7 @@ func cliArg(i int) string {
 var tuneApp *app.App                 // application configuration and tuning states
 var tuningOptions note.TuningOptions // Collection of tuning options from SAP notes and 3rd party vendors.
 var footnote1 = footnote1X86         // set 'unsupported' footnote regarding the architecture
+var debugSwitch = "0"                // Switch Debug on or off
 var solutionSelector = runtime.GOARCH
 
 func main() {
@@ -104,6 +106,8 @@ func main() {
 		os.Exit(1)
 	}
 	saptuneVersion := sconf.GetString("SAPTUNE_VERSION", "")
+	// check, if DEBUG is set in /etc/sysconfig/saptune
+	debugSwitch = sconf.GetString("DEBUG", "0")
 
 	if arg1 := cliArg(1); arg1 == "" || arg1 == "help" || arg1 == "--help" {
 		PrintHelpAndExit(0)
@@ -120,7 +124,7 @@ func main() {
 	}
 
 	// activate logging
-	system.LogInit()
+	system.LogInit(logFile, debugSwitch)
 
 	switch saptuneVersion {
 	case "1":
