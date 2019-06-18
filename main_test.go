@@ -1,11 +1,88 @@
 package main
 
 import (
+	"github.com/SUSE/saptune/sap/note"
 	"os"
 	"os/exec"
 	"syscall"
 	"testing"
 )
+
+func TestSetWidthOfColums(t *testing.T) {
+	compare := note.FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "IO_SCHEDULER_sr0", ActualValueJS: "cfq", ExpectedValueJS: "cfq"}
+	w1 := 2
+	w2 := 3
+	w3 := 4
+	w4 := 5
+	v1, v2, v3, v4 := setWidthOfColums(compare, w1, w2, w3, w4)
+	if v1 != w1 {
+		t.Fatal(v1, w1)
+	}
+	if v2 != 16 {
+		t.Fatal(v2, w2)
+	}
+	if v3 != w3 || v4 != w4 {
+		t.Fatal(v3, w3, v4, w4)
+	}
+	compare = note.FieldComparison{ReflectFieldName: "OverrideParams", ReflectMapKey: "IO_SCHEDULER_sr0", ActualValueJS: "cfq", ExpectedValueJS: "cfq"}
+	v1, v2, v3, v4 = setWidthOfColums(compare, w1, w2, w3, w4)
+	if v1 != 3 {
+		t.Fatal(v1, w1)
+	}
+	if v2 != w2 || v3 != w3 || v4 != w4 {
+		t.Fatal(v2, w2, v3, w3, v4, w4)
+	}
+	compare = note.FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "governor", ActualValueJS: "all-none", ExpectedValueJS: "all-performance"}
+	v1, v2, v3, v4 = setWidthOfColums(compare, w1, w2, w3, w4)
+	if v1 != w1 {
+		t.Fatal(v1, w1)
+	}
+	if v2 != 8 {
+		t.Fatal(v2, w2)
+	}
+	if v3 != 15 {
+		t.Fatal(v3, w3)
+	}
+	if v4 != 8 {
+		t.Fatal(v4, w4)
+	}
+	compare = note.FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "", ActualValueJS: "all-none", ExpectedValueJS: "all-performance"}
+	v1, v2, v3, v4 = setWidthOfColums(compare, w1, w2, w3, w4)
+	if v1 != w1 || v2 != w2 || v3 != w3 || v4 != w4 {
+		t.Fatal(v1, w1, v2, w2, v3, w3, v4, w4)
+	}
+}
+
+func TestPrintNoteFields(t *testing.T) {
+	//tuningOptions := note.GetTuningOptions(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/usr/share/saptune/notes"), "")
+	fcomp1 := note.FieldComparison{ReflectFieldName: "ConfFilePath", ReflectMapKey: "", ActualValue: "/usr/share/saptune/notes/941735", ExpectedValue: "/usr/share/saptune/notes/941735", ActualValueJS: "/usr/share/saptune/notes/941735", ExpectedValueJS: "/usr/share/saptune/notes/941735", MatchExpectation: true}
+	fcomp2 := note.FieldComparison{ReflectFieldName: "ID", ReflectMapKey: "", ActualValue: "941735", ExpectedValue: "941735", ActualValueJS: "941735", ExpectedValueJS: "941735", MatchExpectation: true}
+	fcomp3 := note.FieldComparison{ReflectFieldName: "DescriptiveName", ReflectMapKey: "", ActualValue: "", ExpectedValue: "", ActualValueJS: "", ExpectedValueJS: "", MatchExpectation: true}
+	fcomp4 := note.FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "ShmFileSystemSizeMB", ActualValue: "488", ExpectedValue: "1714", ActualValueJS: "488", ExpectedValueJS: "1714", MatchExpectation: false}
+	fcomp5 := note.FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "kernel.shmmax", ActualValue: "18446744073709551615", ExpectedValue: "18446744073709551615", ActualValueJS: "18446744073709551615", ExpectedValueJS: "18446744073709551615", MatchExpectation: true}
+	map941735 := map[string]note.FieldComparison{"ConfFilePath": fcomp1, "ID": fcomp2, "DescriptiveName": fcomp3, "SysctlParams[ShmFileSystemSizeMB]": fcomp4, "SysctlParams[kernel.shmmax]": fcomp5}
+	noteComp := map[string]map[string]note.FieldComparison{"941735": map941735}
+
+	PrintNoteFields("HEAD", noteComp, true)
+	PrintNoteFields("HEAD", noteComp, false)
+	PrintNoteFields("NONE", noteComp, true)
+	PrintNoteFields("NONE", noteComp, false)
+}
+
+func TestCheckUpdateLeftOvers(t *testing.T) {
+	checkUpdateLeftOvers()
+}
+
+/*
+func TestRevertAction(t *testing.T) {
+	RevertAction("all")
+	RevertAction("")
+}
+
+func TestDaemonAction(t *testing.T) {
+	DaemonAction("start")
+}
+*/
 
 func TestPrintHelpAndExit(t *testing.T) {
 	exitCode := 0

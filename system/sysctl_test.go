@@ -50,6 +50,18 @@ func TestWriteSysctl(t *testing.T) {
 	if sval != "100" {
 		t.Fatal(sval)
 	}
+	oldfield, err := GetSysctlUint64Field("net.ipv4.tcp_wmem", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SetSysctlUint64Field("net.ipv4.tcp_wmem", 1, 2048); err != nil {
+		t.Fatal(err)
+	}
+	uintval, err = GetSysctlUint64Field("net.ipv4.tcp_wmem", 1)
+	if uintval != 2048 {
+		t.Fatal(uintval)
+	}
+
 	if err := SetSysctlString("UnknownKey", "100"); err != nil {
 		t.Fatal(err)
 	}
@@ -58,6 +70,9 @@ func TestWriteSysctl(t *testing.T) {
 	}
 	// set test value back
 	if err := SetSysctlInt("vm.max_map_count", oldval); err != nil {
+		t.Fatal(err)
+	}
+	if err := SetSysctlUint64Field("net.ipv4.tcp_wmem", 1, oldfield); err != nil {
 		t.Fatal(err)
 	}
 }

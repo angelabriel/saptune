@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/SUSE/saptune/system"
 	"github.com/SUSE/saptune/txtparser"
-	"io"
 	"os"
 	"path"
 	"runtime"
@@ -17,14 +16,6 @@ func cleanUp() {
 	var parameterStateDir = "/var/lib/saptune/parameter"
 	os.RemoveAll(parameterStateDir)
 	defer os.RemoveAll(parameterStateDir)
-}
-
-func copyFile(srcFile, destFile string) {
-	src, _ := os.Open(srcFile)
-	defer src.Close()
-	dst, _ := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE, 0644)
-	defer dst.Close()
-	_, _ = io.Copy(dst, src)
 }
 
 func TestCalculateOptimumValue(t *testing.T) {
@@ -135,6 +126,20 @@ func TestVendorSettings(t *testing.T) {
 	}
 	if valapp.(INISettings).ValuesToApply["vm.swappiness"] == "vm.dirty_background_ratio" {
 		t.Fatal(valapp.(INISettings).ValuesToApply["vm.swappiness"])
+	}
+}
+
+func TestNoConfig(t *testing.T) {
+	iniPath := "/no_config_file"
+	ini := INISettings{ConfFilePath: iniPath, ID: "47114711"}
+	initialised, err := ini.Initialise()
+	if err == nil {
+		t.Fatal(err)
+	}
+	initialisedINI := initialised.(INISettings)
+	_, err = initialisedINI.Optimise()
+	if err == nil {
+		t.Fatal(err)
 	}
 }
 
@@ -263,7 +268,7 @@ func TestAllSettings(t *testing.T) {
 	}
 
 	// apply
-	valToApp := map[string]string{"THP": "THP", "KSM": "KSM", "LIMIT_sybase_hard_memlock": "LIMIT_sybase_hard_memlock", "LIMIT_sybase_soft_memlock": "LIMIT_sybase_soft_memlock", "ShmFileSystemSizeMB": "ShmFileSystemSizeMB", "sysstat": "sysstat", "uuidd.socket": "uuidd.socket"}
+	valToApp := map[string]string{"THP": "THP", "KSM": "KSM", "LIMIT_sybase_hard_memlock": "LIMIT_sybase_hard_memlock", "LIMIT_sybase_soft_memlock": "LIMIT_sybase_soft_memlock", "vm.dirty_ratio": "vm.dirty_ratio", "vm.dirty_background_ratio": "vm.dirty_background_ratio", "ShmFileSystemSizeMB": "ShmFileSystemSizeMB", "sysstat": "sysstat", "uuidd.socket": "uuidd.socket"}
 	optimisedINI.ValuesToApply = valToApp
 	//t.Logf("optimisedINI - %+v\n", optimisedINI)
 
@@ -328,7 +333,7 @@ func TestOverrideAllSettings(t *testing.T) {
 	}
 	ovFile := "/etc/saptune/override/9876543"
 	srcFile := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/override_ini_all_test.ini")
-	copyFile(srcFile, ovFile)
+	_ = system.CopyFile(srcFile, ovFile)
 
 	iniPath := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/ini_all_test.ini")
 	ini := INISettings{ConfFilePath: iniPath, ID: "9876543"}
@@ -357,6 +362,9 @@ func TestOverrideAllSettings(t *testing.T) {
 		t.Fatal(err)
 	}
 	optimisedINI := optimised.(INISettings)
+	// clean up
+	os.Remove(ovFile)
+
 	bval := ""
 	for _, entry := range strings.Fields(initialisedINI.SysctlParams["IO_SCHEDULER"]) {
 		fields := strings.Split(entry, "@")
@@ -445,8 +453,6 @@ func TestOverrideAllSettings(t *testing.T) {
 	if optimisedINI.SysctlParams["reminder"] != txt2chk {
 		t.Fatal(optimisedINI.SysctlParams)
 	}
-	// clean up
-	os.Remove(ovFile)
 }
 
 func TestPageCacheSettings(t *testing.T) {

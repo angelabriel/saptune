@@ -16,7 +16,7 @@ func TestSystemctl(t *testing.T) {
 		}
 	}
 
-	testService := "sshd.service"
+	testService := "rpcbind.service"
 	if err := SystemctlEnable(testService); err != nil {
 		t.Fatal(err)
 	}
@@ -52,6 +52,19 @@ func TestSystemctl(t *testing.T) {
 	}
 	if SystemctlIsRunning(testService) {
 		t.Fatalf("service '%s' still running\n", testService)
+	}
+
+	if err := SystemctlEnable("UnkownService"); err == nil {
+		t.Fatal(err)
+	}
+	if err := SystemctlDisable("UnkownService"); err == nil {
+		t.Fatal(err)
+	}
+	if err := SystemctlEnableStart("UnkownService"); err == nil {
+		t.Fatal(err)
+	}
+	if err := SystemctlDisableStop("UnkownService"); err == nil {
+		t.Fatal(err)
 	}
 }
 

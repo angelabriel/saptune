@@ -3,7 +3,7 @@
 echo "zypper in ..."
 #/bin/systemctl start dbus -> does not work any longer
 # additional libs needed to get 'tuned' working
-zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in glib2 glib2-tools libgio-2_0-0 libglib-2_0-0 libgmodule-2_0-0 libgobject-2_0-0 go1.10 go cpupower uuidd polkit tuned sysstat
+zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in glib2 glib2-tools libgio-2_0-0 libglib-2_0-0 libgmodule-2_0-0 libgobject-2_0-0 go1.10 go rpcbind cpupower uuidd polkit tuned sysstat
 
 # dbus can not be started directly, only by dependency - so start 'tuned' instead
 /bin/systemctl start tuned
@@ -23,14 +23,8 @@ export PATH=${TRAVIS_HOME}/gopath/bin:$PATH
 export TRAVIS_BUILD_DIR=${TRAVIS_HOME}/gopath/src/github.com/SUSE/saptune
 
 mkdir -p /etc/saptune/override
-mkdir -p /etc/saptune/extra
 mkdir -p /usr/share/saptune
 ln -s /app/testdata/saptune-test-solutions /usr/share/saptune/solutions
-ln -s /app/testdata/extraNote.conf /etc/saptune/extra/extraNote.conf
-ln -s /app/testdata/extraNote.conf /etc/saptune/extra/wrongName
-touch /etc/saptune/extra/SAP_ASE-SAP_Adaptive_Server_Enterprise.conf
-touch /etc/saptune/extra/oldFile-Name_syntax.conf
-touch /etc/saptune/extra/wrongFileNamesyntax.conf
 
 echo "go environment:"
 go env

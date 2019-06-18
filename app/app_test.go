@@ -13,6 +13,7 @@ import (
 )
 
 var OSPackageInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/")
+var TstFilesInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/")
 var SampleNoteDataDir = "/tmp/saptunetest"
 var SampleParamFile = path.Join(SampleNoteDataDir, "saptune-sample-param")
 
@@ -127,12 +128,15 @@ func TestReadConfig(t *testing.T) {
 		t.Fatal(tuneApp)
 	}
 	// Read from non existing file
-	tuneApp = InitialiseApp("", "", AllTestNotes, AllTestSolutions)
+	tuneApp = InitialiseApp("/tmp/saptune", "", AllTestNotes, AllTestSolutions)
 	if len(tuneApp.TuneForSolutions) != 0 || len(tuneApp.TuneForNotes) != 0 {
 		fmt.Println(len(tuneApp.TuneForSolutions))
 		fmt.Println(len(tuneApp.TuneForNotes))
 		t.Fatal(tuneApp)
 	}
+
+	tuneApp = InitialiseApp(TstFilesInGOPATH, "", AllTestNotes, AllTestSolutions)
+	tuneApp.PrintNoteApplyOrder()
 }
 
 func TestGetSortedSolutionNotes(t *testing.T) {
