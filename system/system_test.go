@@ -50,6 +50,7 @@ func TestCheckForPattern(t *testing.T) {
 	}
 }
 
+/*
 func TestGetServiceName(t *testing.T) {
 	value := GetServiceName("sysstat")
 	if value != "sysstat.service" {
@@ -64,6 +65,7 @@ func TestGetServiceName(t *testing.T) {
 		t.Fatalf("found service '%s' instead of 'UnkownService'\n", value)
 	}
 }
+*/
 
 func TestReadConfigFile(t *testing.T) {
 	content, err := ReadConfigFile("/file_does_not_exist", true)
