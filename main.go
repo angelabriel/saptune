@@ -7,6 +7,7 @@ import (
 	"github.com/SUSE/saptune/sap/solution"
 	"github.com/SUSE/saptune/system"
 	"github.com/SUSE/saptune/txtparser"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -291,7 +292,8 @@ func DaemonActionStop() {
 }
 
 // PrintNoteFields Print mismatching fields in the note comparison result.
-func PrintNoteFields(header string, noteComparisons map[string]map[string]note.FieldComparison, printComparison bool) {
+//func PrintNoteFields(header string, noteComparisons map[string]map[string]note.FieldComparison, printComparison bool) {
+func PrintNoteFields(writer io.Writer, header string, noteComparisons map[string]map[string]note.FieldComparison, printComparison bool) {
 
 	// initialise
 	compliant := "yes"
@@ -349,21 +351,21 @@ func PrintNoteFields(header string, noteComparisons map[string]map[string]note.F
 
 		// print table header
 		if printHead != "" {
-			printHeadline(header, noteID, tuningOptions)
-			printTableHeader(format, fmtlen0, fmtlen1, fmtlen2, fmtlen3, fmtlen4, printComparison)
+			printHeadline(writer, header, noteID, tuningOptions)
+			printTableHeader(writer, format, fmtlen0, fmtlen1, fmtlen2, fmtlen3, fmtlen4, printComparison)
 		}
 
 		// print table body
 		if printComparison {
 			// verify
-			fmt.Printf(format, noteField, comparison.ReflectMapKey, strings.Replace(comparison.ExpectedValueJS, "\t", " ", -1), override, strings.Replace(comparison.ActualValueJS, "\t", " ", -1), compliant)
+			fmt.Fprintf(writer, format, noteField, comparison.ReflectMapKey, strings.Replace(comparison.ExpectedValueJS, "\t", " ", -1), override, strings.Replace(comparison.ActualValueJS, "\t", " ", -1), compliant)
 		} else {
 			// simulate
-			fmt.Printf(format, comparison.ReflectMapKey, strings.Replace(comparison.ActualValueJS, "\t", " ", -1), strings.Replace(comparison.ExpectedValueJS, "\t", " ", -1), override, comment)
+			fmt.Fprintf(writer, format, comparison.ReflectMapKey, strings.Replace(comparison.ActualValueJS, "\t", " ", -1), strings.Replace(comparison.ExpectedValueJS, "\t", " ", -1), override, comment)
 		}
 	}
 	// print footer
-	printTableFooter(header, footnote, reminder, hasDiff)
+	printTableFooter(writer, header, footnote, reminder, hasDiff)
 }
 
 // sortNoteComparisonsOutput sorts the output of the Note comparison
@@ -442,40 +444,40 @@ func setupTableFormat(skeys []string, noteField string, noteCompare map[string]m
 }
 
 // printHeadline prints a headline for the table
-func printHeadline(header, id string, tuningOpts note.TuningOptions) {
+func printHeadline(writer io.Writer, header, id string, tuningOpts note.TuningOptions) {
 	if header != "NONE" {
 		nName := ""
 		if len(tuningOptions) > 0 {
 			nName = tuningOptions[id].Name()
 		}
-		fmt.Printf("\n%s - %s \n\n", id, nName)
+		fmt.Fprintf(writer, "\n%s - %s \n\n", id, nName)
 	}
 }
 
 // printTableHeader prints the header of the table
-func printTableHeader(format string, col0, col1, col2, col3, col4 int, printComp bool) {
+func printTableHeader(writer io.Writer, format string, col0, col1, col2, col3, col4 int, printComp bool) {
 	if printComp {
 		// verify
-		fmt.Printf(format, "SAPNote, Version", "Parameter", "Expected", "Override", "Actual", "Compliant")
+		fmt.Fprintf(writer, format, "SAPNote, Version", "Parameter", "Expected", "Override", "Actual", "Compliant")
 		for i := 0; i < col0+col1+col2+col3+col4+28; i++ {
 			if i == 3+col0+1 || i == 3+col0+3+col1+1 || i == 3+col0+3+col1+4+col2 || i == 3+col0+3+col1+4+col2+2+col3+1 || i == 3+col0+3+col1+4+col2+2+col3+3+col4+1 {
-				fmt.Printf("+")
+				fmt.Fprintf(writer, "+")
 			} else {
-				fmt.Printf("-")
+				fmt.Fprintf(writer, "-")
 			}
 		}
-		fmt.Printf("\n")
+		fmt.Fprintf(writer, "\n")
 	} else {
 		// simulate
-		fmt.Printf(format, "Parameter", "Value set", "Value expected", "Override", "Comment")
+		fmt.Fprintf(writer, format, "Parameter", "Value set", "Value expected", "Override", "Comment")
 		for i := 0; i < col1+col2+col3+col4+28; i++ {
 			if i == 3+col1+1 || i == 3+col1+3+col2+1 || i == 3+col1+3+col2+3+col3+1 || i == 3+col1+3+col2+3+col3+3+col4+1 {
-				fmt.Printf("+")
+				fmt.Fprintf(writer, "+")
 			} else {
-				fmt.Printf("-")
+				fmt.Fprintf(writer, "-")
 			}
 		}
-		fmt.Printf("\n")
+		fmt.Fprintf(writer, "\n")
 	}
 }
 
@@ -510,20 +512,20 @@ func prepareFootnote(comparison note.FieldComparison, compliant, comment, inform
 
 // printTableFooter prints the footer of the table
 // footnotes and reminder section
-func printTableFooter(header string, footnote []string, reminder map[string]string, hasDiff bool) {
+func printTableFooter(writer io.Writer, header string, footnote []string, reminder map[string]string, hasDiff bool) {
 	if header != "NONE" && !hasDiff {
-		fmt.Printf("\n   (no change)\n")
+		fmt.Fprintf(writer, "\n   (no change)\n")
 	}
 	for _, fn := range footnote {
 		if fn != "" {
-			fmt.Printf("\n %s", fn)
+			fmt.Fprintf(writer, "\n %s", fn)
 		}
 	}
-	fmt.Printf("\n\n")
+	fmt.Fprintf(writer, "\n\n")
 	for noteID, reminde := range reminder {
 		if reminde != "" {
 			reminderHead := fmt.Sprintf("Attention for SAP Note %s:\nHints or values not yet handled by saptune. So please read carefully, check and set manually, if needed:\n", noteID)
-			fmt.Printf("%s\n", setRedText+reminderHead+reminde+resetTextColor)
+			fmt.Fprintf(writer, "%s\n", setRedText+reminderHead+reminde+resetTextColor)
 		}
 	}
 }
@@ -560,8 +562,8 @@ func VerifyAllParameters() {
 		if err != nil {
 			errorExit("Failed to inspect the current system: %v", err)
 		}
-		PrintNoteFields("NONE", comparisons, true)
-		tuneApp.PrintNoteApplyOrder()
+		PrintNoteFields(os.Stdout, "NONE", comparisons, true)
+		tuneApp.PrintNoteApplyOrder(os.Stdout)
 		if len(unsatisfiedNotes) == 0 {
 			fmt.Println("The running system is currently well-tuned according to all of the enabled notes.")
 		} else {
@@ -646,7 +648,7 @@ func NoteActionList() {
 		}
 		fmt.Printf(format, noteID, noteObj.Name())
 	}
-	tuneApp.PrintNoteApplyOrder()
+	tuneApp.PrintNoteApplyOrder(os.Stdout)
 	if !system.SystemctlIsRunning(TunedService) || system.GetTunedProfile() != TunedProfileName {
 		fmt.Println("Remember: if you wish to automatically activate the solution's tuning options after a reboot," +
 			"you must instruct saptune to configure \"tuned\" daemon by running:" +
@@ -667,8 +669,8 @@ func NoteActionVerify(noteID string) {
 		}
 		noteComp := make(map[string]map[string]note.FieldComparison)
 		noteComp[noteID] = comparisons
-		PrintNoteFields("HEAD", noteComp, true)
-		tuneApp.PrintNoteApplyOrder()
+		PrintNoteFields(os.Stdout, "HEAD", noteComp, true)
+		tuneApp.PrintNoteApplyOrder(os.Stdout)
 		if !conforming {
 			errorExit("The parameters listed above have deviated from the specified note.\n")
 		} else {
@@ -690,7 +692,7 @@ func NoteActionSimulate(noteID string) {
 		fmt.Printf("If you run `saptune note apply %s`, the following changes will be applied to your system:\n", noteID)
 		noteComp := make(map[string]map[string]note.FieldComparison)
 		noteComp[noteID] = comparisons
-		PrintNoteFields("HEAD", noteComp, false)
+		PrintNoteFields(os.Stdout, "HEAD", noteComp, false)
 	}
 }
 
@@ -909,7 +911,7 @@ func SolutionActionVerify(solName string) {
 		if err != nil {
 			errorExit("Failed to test the current system against the specified SAP solution: %v", err)
 		}
-		PrintNoteFields("NONE", comparisons, true)
+		PrintNoteFields(os.Stdout, "NONE", comparisons, true)
 		if len(unsatisfiedNotes) == 0 {
 			fmt.Println("The system fully conforms to the tuning guidelines of the specified SAP solution.")
 		} else {
@@ -929,7 +931,7 @@ func SolutionActionSimulate(solName string) {
 		errorExit("Failed to test the current system against the specified note: %v", err)
 	} else {
 		fmt.Printf("If you run `saptune solution apply %s`, the following changes will be applied to your system:\n", solName)
-		PrintNoteFields("NONE", comparisons, false)
+		PrintNoteFields(os.Stdout, "NONE", comparisons, false)
 	}
 }
 

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/SUSE/saptune/sap/note"
 	"os"
 	"os/exec"
@@ -55,6 +57,52 @@ func TestSetWidthOfColums(t *testing.T) {
 
 func TestPrintNoteFields(t *testing.T) {
 	//tuningOptions := note.GetTuningOptions(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/usr/share/saptune/notes"), "")
+	var printMatchText1 = `
+941735 -  
+
+   SAPNote, Version | Parameter           | Expected             | Override  | Actual               | Compliant
+--------------------+---------------------+----------------------+-----------+----------------------+-----------
+   941735,          | ShmFileSystemSizeMB | 1714                 |           | 488                  | no 
+   941735,          | kernel.shmmax       | 18446744073709551615 |           | 18446744073709551615 | yes
+
+
+`
+	var printMatchText2 = `
+941735 -  
+
+   Parameter           | Value set            | Value expected       | Override  | Comment
+-----------------------+----------------------+----------------------+-----------+--------------
+   ShmFileSystemSizeMB | 488                  | 1714                 |           |   
+   kernel.shmmax       | 18446744073709551615 | 18446744073709551615 |           |   
+
+
+`
+	var printMatchText3 = `   SAPNote, Version | Parameter           | Expected             | Override  | Actual               | Compliant
+--------------------+---------------------+----------------------+-----------+----------------------+-----------
+   941735,          | ShmFileSystemSizeMB | 1714                 |           | 488                  | no 
+   941735,          | kernel.shmmax       | 18446744073709551615 |           | 18446744073709551615 | yes
+
+
+`
+	var printMatchText4 = `   Parameter           | Value set            | Value expected       | Override  | Comment
+-----------------------+----------------------+----------------------+-----------+--------------
+   ShmFileSystemSizeMB | 488                  | 1714                 |           |   
+   kernel.shmmax       | 18446744073709551615 | 18446744073709551615 |           |   
+
+
+`
+	checkCorrectMessage := func(t *testing.T, got, want string) {
+		t.Helper()
+		if got != want {
+			fmt.Println("==============")
+			fmt.Println(got)
+			fmt.Println("==============")
+			fmt.Println(want)
+			fmt.Println("==============")
+			t.Errorf("Output differs from expected one")
+		}
+	}
+
 	fcomp1 := note.FieldComparison{ReflectFieldName: "ConfFilePath", ReflectMapKey: "", ActualValue: "/usr/share/saptune/notes/941735", ExpectedValue: "/usr/share/saptune/notes/941735", ActualValueJS: "/usr/share/saptune/notes/941735", ExpectedValueJS: "/usr/share/saptune/notes/941735", MatchExpectation: true}
 	fcomp2 := note.FieldComparison{ReflectFieldName: "ID", ReflectMapKey: "", ActualValue: "941735", ExpectedValue: "941735", ActualValueJS: "941735", ExpectedValueJS: "941735", MatchExpectation: true}
 	fcomp3 := note.FieldComparison{ReflectFieldName: "DescriptiveName", ReflectMapKey: "", ActualValue: "", ExpectedValue: "", ActualValueJS: "", ExpectedValueJS: "", MatchExpectation: true}
@@ -63,10 +111,35 @@ func TestPrintNoteFields(t *testing.T) {
 	map941735 := map[string]note.FieldComparison{"ConfFilePath": fcomp1, "ID": fcomp2, "DescriptiveName": fcomp3, "SysctlParams[ShmFileSystemSizeMB]": fcomp4, "SysctlParams[kernel.shmmax]": fcomp5}
 	noteComp := map[string]map[string]note.FieldComparison{"941735": map941735}
 
-	PrintNoteFields("HEAD", noteComp, true)
-	PrintNoteFields("HEAD", noteComp, false)
-	PrintNoteFields("NONE", noteComp, true)
-	PrintNoteFields("NONE", noteComp, false)
+
+	t.Run("verify with header", func(t *testing.T) {
+		buffer := bytes.Buffer{}
+		PrintNoteFields(&buffer, "HEAD", noteComp, true)
+		txt := buffer.String()
+		//txt := PrintNoteFields("HEAD", noteComp, true)
+		checkCorrectMessage(t, txt, printMatchText1)
+	})
+	t.Run("simulate with header", func(t *testing.T) {
+		buffer := bytes.Buffer{}
+		PrintNoteFields(&buffer, "HEAD", noteComp, false)
+		txt := buffer.String()
+		//txt := PrintNoteFields("HEAD", noteComp, false)
+		checkCorrectMessage(t, txt, printMatchText2)
+	})
+	t.Run("verify without header", func(t *testing.T) {
+		buffer := bytes.Buffer{}
+		PrintNoteFields(&buffer, "NONE", noteComp, true)
+		txt := buffer.String()
+		//txt := PrintNoteFields("NONE", noteComp, true)
+		checkCorrectMessage(t, txt, printMatchText3)
+	})
+	t.Run("simulate without header", func(t *testing.T) {
+		buffer := bytes.Buffer{}
+		PrintNoteFields(&buffer, "NONE", noteComp, false)
+		txt := buffer.String()
+		//txt := PrintNoteFields("NONE", noteComp, false)
+		checkCorrectMessage(t, txt, printMatchText4)
+	})
 }
 
 func TestCheckUpdateLeftOvers(t *testing.T) {

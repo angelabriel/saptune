@@ -33,8 +33,10 @@ go version
 cd saptune
 pwd
 ls -al
-sysctl -A > sysctl.out
-/usr/bin/systemctl list-unit-files > unit-files.out
+echo "sysctl -A:"
+sysctl -A 
+echo "/usr/bin/systemctl --no-pager list-unit-files"
+/usr/bin/systemctl --no-pager list-unit-files
 
 # to get TasksMax settings work, needs a user login session
 echo "start nobody login session in background"

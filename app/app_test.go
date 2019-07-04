@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/SUSE/saptune/sap/note"
 	"github.com/SUSE/saptune/sap/param"
@@ -135,8 +136,23 @@ func TestReadConfig(t *testing.T) {
 		t.Fatal(tuneApp)
 	}
 
+	// Read from testdata config 'testdata/etc/sysconfig/saptune'
 	tuneApp = InitialiseApp(TstFilesInGOPATH, "", AllTestNotes, AllTestSolutions)
-	tuneApp.PrintNoteApplyOrder()
+	matchTxt := `
+current order of applied notes is: 2205917 2684254 1680803
+
+`
+	buffer := bytes.Buffer{}
+	tuneApp.PrintNoteApplyOrder(&buffer)
+	txt := buffer.String()
+	if txt != matchTxt {
+		fmt.Println("==============")
+		fmt.Println(txt)
+		fmt.Println("==============")
+		fmt.Println(matchTxt)
+		fmt.Println("==============")
+		t.Errorf("Output differs from expected one")
+	}
 }
 
 func TestGetSortedSolutionNotes(t *testing.T) {
