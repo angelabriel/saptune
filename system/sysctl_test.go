@@ -29,40 +29,39 @@ func TestWriteSysctl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := SetSysctlInt("vm.max_map_count", 100); err != nil {
+	if err := SetSysctlInt("vm.max_map_count", 65630); err != nil {
 		t.Fatal(err)
 	}
 	intval, err := GetSysctlInt("vm.max_map_count")
-	if intval != 100 {
+	if intval != 65630 {
 		t.Fatal(intval)
 	}
-	if err := SetSysctlUint64("vm.max_map_count", 100); err != nil {
+	if err := SetSysctlUint64("vm.max_map_count", 65635); err != nil {
 		t.Fatal(err)
 	}
 	uintval, err := GetSysctlUint64("vm.max_map_count")
-	if uintval != 100 {
+	if uintval != 65635 {
 		t.Fatal(uintval)
 	}
-	if err := SetSysctlString("vm.max_map_count", "100"); err != nil {
+	if err := SetSysctlString("vm.max_map_count", "65640"); err != nil {
 		t.Fatal(err)
 	}
 	sval, err := GetSysctlString("vm.max_map_count")
-	if sval != "100" {
+	if sval != "65640" {
 		t.Fatal(sval)
 	}
-/*
-	oldfield, err := GetSysctlUint64Field("net.ipv4.tcp_wmem", 1)
+
+	oldfield, err := GetSysctlUint64Field("net.ipv4.ip_local_port_range", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := SetSysctlUint64Field("net.ipv4.tcp_wmem", 1, 2048); err != nil {
+	if err := SetSysctlUint64Field("net.ipv4.ip_local_port_range", 0, 31768); err != nil {
 		t.Fatal(err)
 	}
-	uintval, err = GetSysctlUint64Field("net.ipv4.tcp_wmem", 1)
-	if uintval != 2048 {
+	uintval, err = GetSysctlUint64Field("net.ipv4.ip_local_port_range", 0)
+	if uintval != 31768 {
 		t.Fatal(uintval)
 	}
-*/
 
 	if err := SetSysctlString("UnknownKey", "100"); err != nil {
 		t.Fatal(err)
@@ -74,11 +73,9 @@ func TestWriteSysctl(t *testing.T) {
 	if err := SetSysctlInt("vm.max_map_count", oldval); err != nil {
 		t.Fatal(err)
 	}
-/*
-	if err := SetSysctlUint64Field("net.ipv4.tcp_wmem", 1, oldfield); err != nil {
+	if err := SetSysctlUint64Field("net.ipv4.ip_local_port_range", 0, oldfield); err != nil {
 		t.Fatal(err)
 	}
-*/
 }
 
 func TestIsPagecacheAvailable(t *testing.T) {
