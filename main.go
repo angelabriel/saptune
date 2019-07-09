@@ -161,12 +161,11 @@ func main() {
 	switch cliArg(1) {
 	case "daemon":
 		DaemonAction(cliArg(2))
-	case "note":
 		NoteAction(cliArg(2), cliArg(3))
 	case "solution":
 		SolutionAction(cliArg(2), cliArg(3))
 	case "revert":
-		RevertAction(cliArg(2))
+		RevertAction(os.Stdout, cliArg(2), tuneApp)
 	default:
 		PrintHelpAndExit(1)
 	}
@@ -189,16 +188,16 @@ func checkUpdateLeftOvers() {
 }
 
 // RevertAction Revert all notes and solutions
-func RevertAction(actionName string) {
+func RevertAction(writer io.Writer, actionName string, tuneApp *app.App) {
 	if actionName != "all" {
 		PrintHelpAndExit(1)
 	}
-	fmt.Println("Reverting all notes and solutions, this may take some time...")
+	fmt.Fprintf(writer, "Reverting all notes and solutions, this may take some time...\n")
 	if err := tuneApp.RevertAll(true); err != nil {
 		errorExit("Failed to revert notes: %v", err)
 		//panic(err)
 	}
-	fmt.Println("Parameters tuned by the notes and solutions have been successfully reverted.")
+	fmt.Fprintf(writer, "Parameters tuned by the notes and solutions have been successfully reverted.\n")
 }
 
 // DaemonAction handles daemon actions like start, stop, status asm.
@@ -576,13 +575,13 @@ func VerifyAllParameters() {
 func NoteAction(actionName, noteID string) {
 	switch actionName {
 	case "apply":
-		NoteActionApply(noteID)
+		NoteActionApply(os.Stdout, noteID, tuneApp)
 	case "list":
-		NoteActionList()
+		NoteActionList(os.Stdout, tuneApp, tuningOptions)
 	case "verify":
-		NoteActionVerify(noteID)
+		NoteActionVerify(os.Stdout, noteID, tuneApp)
 	case "simulate":
-		NoteActionSimulate(noteID)
+		NoteActionSimulate(os.Stdout, noteID, tuneApp)
 	case "customise":
 		NoteActionCustomise(noteID)
 	case "create":
@@ -590,14 +589,14 @@ func NoteAction(actionName, noteID string) {
 	case "show":
 		NoteActionShow(noteID)
 	case "revert":
-		NoteActionRevert(noteID)
+		NoteActionRevert(os.Stdout, noteID, tuneApp)
 	default:
 		PrintHelpAndExit(1)
 	}
 }
 
 // NoteActionApply applies Note parameter settings to the system
-func NoteActionApply(noteID string) {
+func NoteActionApply(writer io.Writer, noteID string, tuneApp *app.App) {
 	if noteID == "" {
 		PrintHelpAndExit(1)
 	}
@@ -615,20 +614,20 @@ func NoteActionApply(noteID string) {
 	if err := tuneApp.TuneNote(noteID); err != nil {
 		errorExit("Failed to tune for note %s: %v", noteID, err)
 	}
-	fmt.Println("The note has been applied successfully.")
+	fmt.Fprintf(writer, "The note has been applied successfully.\n")
 	if !system.SystemctlIsRunning(TunedService) || system.GetTunedProfile() != TunedProfileName {
-		fmt.Println("\nRemember: if you wish to automatically activate the solution's tuning options after a reboot," +
-			"you must instruct saptune to configure \"tuned\" daemon by running:" +
-			"\n    saptune daemon start")
+		fmt.Fprintf(writer, "\nRemember: if you wish to automatically activate the solution's tuning options after a reboot,"+
+			"you must instruct saptune to configure \"tuned\" daemon by running:"+
+			"\n    saptune daemon start\n")
 	}
 }
 
 // NoteActionList lists all available Note definitions
-func NoteActionList() {
-	fmt.Println("\nAll notes (+ denotes manually enabled notes, * denotes notes enabled by solutions, - denotes notes enabled by solutions but reverted manually later, O denotes override file exists for note):")
+func NoteActionList(writer io.Writer, tuneApp *app.App, tOptions note.TuningOptions) {
+	fmt.Fprintf(writer, "\nAll notes (+ denotes manually enabled notes, * denotes notes enabled by solutions, - denotes notes enabled by solutions but reverted manually later, O denotes override file exists for note):\n")
 	solutionNoteIDs := tuneApp.GetSortedSolutionEnabledNotes()
-	for _, noteID := range tuningOptions.GetSortedIDs() {
-		noteObj := tuningOptions[noteID]
+	for _, noteID := range tOptions.GetSortedIDs() {
+		noteObj := tOptions[noteID]
 		format := "\t%s\t\t%s\n"
 		if len(noteID) >= 8 {
 			format = "\t%s\t%s\n"
@@ -646,19 +645,19 @@ func NoteActionList() {
 		} else if i := sort.SearchStrings(tuneApp.TuneForNotes, noteID); i < len(tuneApp.TuneForNotes) && tuneApp.TuneForNotes[i] == noteID {
 			format = " " + setGreenText + "+" + format + resetTextColor
 		}
-		fmt.Printf(format, noteID, noteObj.Name())
+		fmt.Fprintf(writer, format, noteID, noteObj.Name())
 	}
-	tuneApp.PrintNoteApplyOrder(os.Stdout)
+	tuneApp.PrintNoteApplyOrder(writer)
 	if !system.SystemctlIsRunning(TunedService) || system.GetTunedProfile() != TunedProfileName {
-		fmt.Println("Remember: if you wish to automatically activate the solution's tuning options after a reboot," +
-			"you must instruct saptune to configure \"tuned\" daemon by running:" +
-			"\n    saptune daemon start")
+		fmt.Fprintf(writer, "Remember: if you wish to automatically activate the solution's tuning options after a reboot,"+
+			"you must instruct saptune to configure \"tuned\" daemon by running:"+
+			"\n    saptune daemon start\n")
 	}
 }
 
 // NoteActionVerify compares all parameter settings from a Note definition
 // against the system settings
-func NoteActionVerify(noteID string) {
+func NoteActionVerify(writer io.Writer, noteID string, tuneApp *app.App) {
 	if noteID == "" {
 		VerifyAllParameters()
 	} else {
@@ -669,19 +668,19 @@ func NoteActionVerify(noteID string) {
 		}
 		noteComp := make(map[string]map[string]note.FieldComparison)
 		noteComp[noteID] = comparisons
-		PrintNoteFields(os.Stdout, "HEAD", noteComp, true)
-		tuneApp.PrintNoteApplyOrder(os.Stdout)
+		PrintNoteFields(writer, "HEAD", noteComp, true)
+		tuneApp.PrintNoteApplyOrder(writer)
 		if !conforming {
 			errorExit("The parameters listed above have deviated from the specified note.\n")
 		} else {
-			fmt.Println("The system fully conforms to the specified note.")
+			fmt.Fprintf(writer, "The system fully conforms to the specified note.\n")
 		}
 	}
 }
 
 // NoteActionSimulate shows all changes that will be applied to the system if
 // the Note will be applied.
-func NoteActionSimulate(noteID string) {
+func NoteActionSimulate(writer io.Writer, noteID string, tuneApp *app.App) {
 	if noteID == "" {
 		PrintHelpAndExit(1)
 	}
@@ -689,10 +688,10 @@ func NoteActionSimulate(noteID string) {
 	if _, comparisons, _, err := tuneApp.VerifyNote(noteID); err != nil {
 		errorExit("Failed to test the current system against the specified note: %v", err)
 	} else {
-		fmt.Printf("If you run `saptune note apply %s`, the following changes will be applied to your system:\n", noteID)
+		fmt.Fprintf(writer, "If you run `saptune note apply %s`, the following changes will be applied to your system:\n", noteID)
 		noteComp := make(map[string]map[string]note.FieldComparison)
 		noteComp[noteID] = comparisons
-		PrintNoteFields(os.Stdout, "HEAD", noteComp, false)
+		PrintNoteFields(writer, "HEAD", noteComp, false)
 	}
 }
 
@@ -811,15 +810,15 @@ func NoteActionShow(noteID string) {
 
 // NoteActionRevert reverts all parameter settings of a Note back to the
 // state before 'apply'
-func NoteActionRevert(noteID string) {
+func NoteActionRevert(writer io.Writer, noteID string, tuneApp *app.App) {
 	if noteID == "" {
 		PrintHelpAndExit(1)
 	}
 	if err := tuneApp.RevertNote(noteID, true); err != nil {
 		errorExit("Failed to revert note %s: %v", noteID, err)
 	}
-	fmt.Println("Parameters tuned by the note have been successfully reverted.")
-	fmt.Println("Please note: the reverted note may still show up in list of enabled notes, if an enabled solution refers to it.")
+	fmt.Fprintf(writer, "Parameters tuned by the note have been successfully reverted.\n")
+	fmt.Fprintf(writer, "Please note: the reverted note may still show up in list of enabled notes, if an enabled solution refers to it.\n")
 }
 
 // SolutionAction  Solution actions like apply, revert, verify asm.

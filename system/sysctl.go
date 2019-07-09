@@ -92,7 +92,7 @@ func GetSysctlUint64(parameter string) (uint64, error) {
 	return strconv.ParseUint(value, 10, 64)
 }
 
-// Extract a uint64 value from a sysctl key of many fields.
+// GetSysctlUint64Field extracts an uint64 value from a sysctl key of many fields.
 func GetSysctlUint64Field(param string, field int) (uint64, error) {
 	fields, err := GetSysctlString(param)
 	if err == nil {

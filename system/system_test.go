@@ -17,8 +17,8 @@ func TestIsUserRoot(t *testing.T) {
 
 func TestGetOsName(t *testing.T) {
 	actualVal := GetOsName()
-	if actualVal != "SLES" {
-		t.Logf("OS is '%s' and not 'SLES'\n", actualVal)
+	if actualVal != "SLES" && actualVal != "openSUSE Leap" {
+		t.Errorf("OS is '%s' and not 'SLES'\n", actualVal)
 	}
 	if actualVal == "" {
 		t.Logf("empty value returned for the os Name")
