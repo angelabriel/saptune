@@ -22,7 +22,6 @@ var AllTestSolutions = map[string]solution.Solution{
 	"sol12": solution.Solution{"1001", "1002"},
 }
 
-//var tuningOpts = note.GetTuningOptions(OSNotesInGOPATH, TstFilesInGOPATH)
 var tuningOpts = note.GetTuningOptions("", TstFilesInGOPATH)
 var tApp = app.InitialiseApp(OSPackageInGOPATH, "", tuningOpts, AllTestSolutions)
 var checkOut = func(t *testing.T, got, want string) {
@@ -105,9 +104,6 @@ Remember: if you wish to automatically activate the solution's tuning options af
 `
 
 	buffer := bytes.Buffer{}
-	//tuningOptions := note.GetTuningOptions(OSNotesInGOPATH, "")
-	//tuningOptions = note.GetTuningOptions(OSNotesInGOPATH, TstFilesInGOPATH)
-	//tuneApp := app.InitialiseApp(OSPackageInGOPATH, "", tuningOptions, AllTestSolutions)
 	NoteActionList(&buffer, tApp, tuningOpts)
 	txt := buffer.String()
 	checkOut(t, txt, listMatchText)

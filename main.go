@@ -161,6 +161,7 @@ func main() {
 	switch cliArg(1) {
 	case "daemon":
 		DaemonAction(cliArg(2))
+	case "note":
 		NoteAction(cliArg(2), cliArg(3))
 	case "solution":
 		SolutionAction(cliArg(2), cliArg(3))
