@@ -158,10 +158,13 @@ func TestParseINIFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(content, err)
 	}
-	newFile := path.Join(os.TempDir(), "saptunetest")
+	newFile := path.Join(os.TempDir(), "saptunetest1")
 	content, err = ParseINIFile(newFile, true)
 	if err != nil {
 		t.Fatal(content, err)
+	}
+	if _, err = os.Stat(newFile); err != nil {
+		t.Fatalf("file '%s' does not exist\n", newFile)
 	}
 	os.Remove(newFile)
 	newFile2 := path.Join(os.TempDir(), "saptunetest2")
@@ -169,7 +172,10 @@ func TestParseINIFile(t *testing.T) {
 	if err == nil {
 		t.Fatal(content, err)
 	}
-	os.Remove(newFile2)
+	if _, err = os.Stat(newFile); err == nil {
+		os.Remove(newFile2)
+		t.Fatalf("file '%s' exists\n", newFile2)
+	}
 }
 
 func TestParseINI(t *testing.T) {
