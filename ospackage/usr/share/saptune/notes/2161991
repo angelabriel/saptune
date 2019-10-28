@@ -8,7 +8,7 @@
 
 [block]
 ## Type:    string
-## Default: noop
+## Default: noop or none
 #
 # The default I/O scheduler for SLES is CFQ. It offers satisfactory performance
 # for wide range of I/O task, however choosing an alternative scheduler may 
@@ -19,5 +19,6 @@
 #
 # When set, all block devices on the system will be switched to the chosen 
 # scheduler.
-IO_SCHEDULER=noop
+# comma separated list
+IO_SCHEDULER=noop, none
 

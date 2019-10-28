@@ -109,6 +109,9 @@ func (vend INISettings) Initialise() (Note, error) {
 	vend.SysctlParams = make(map[string]string)
 	vend.OverrideParams = make(map[string]string)
 	vend.Inform = make(map[string]string)
+	pc = LinuxPagingImprovements{}
+	blck = param.BlockDeviceQueue{param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}}
+
 	for _, param := range ini.AllValues {
 		if override && len(ow.KeyValue[param.Section]) != 0 {
 			param.Key, param.Value, param.Operator = vend.handleInitOverride(param.Key, param.Value, param.Section, param.Operator, ow)
@@ -120,7 +123,7 @@ func (vend INISettings) Initialise() (Note, error) {
 		case INISectionVM:
 			vend.SysctlParams[param.Key] = GetVMVal(param.Key)
 		case INISectionBlock:
-			vend.SysctlParams[param.Key], _ = GetBlkVal(param.Key, &blck)
+			vend.SysctlParams[param.Key], vend.Inform[param.Key], _ = GetBlkVal(param.Key, &blck)
 		case INISectionLimits:
 			vend.SysctlParams[param.Key], _ = GetLimitsVal(param.Value)
 		case INISectionService:
@@ -192,7 +195,7 @@ func (vend INISettings) Optimise() (Note, error) {
 		case INISectionVM:
 			vend.SysctlParams[param.Key] = OptVMVal(param.Key, param.Value)
 		case INISectionBlock:
-			vend.SysctlParams[param.Key] = OptBlkVal(param.Key, param.Value, &blck)
+			vend.SysctlParams[param.Key], vend.Inform[param.Key] = OptBlkVal(param.Key, param.Value, &blck)
 		case INISectionLimits:
 			vend.SysctlParams[param.Key] = OptLimitsVal(vend.SysctlParams[param.Key], param.Value)
 		case INISectionService:

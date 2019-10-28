@@ -21,7 +21,7 @@
 #
 # When set, all block devices on the system will be switched to the chosen 
 # scheduler.
-IO_SCHEDULER=noop
+IO_SCHEDULER=noop, none
 
 ## Type:    integer
 ## Default: 1024
