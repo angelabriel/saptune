@@ -81,7 +81,7 @@ func TestOptSysctlVal(t *testing.T) {
 
 func TestGetBlkVal(t *testing.T) {
 	tblck := param.BlockDeviceQueue{BlockDeviceSchedulers: param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, BlockDeviceNrRequests: param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}}
-	_, _, err = GetBlkVal("IO_SCHEDULER_sda", &tblck)
+	_, _, err := GetBlkVal("IO_SCHEDULER_sda", &tblck)
 	if err != nil {
 		t.Error(err)
 	}
