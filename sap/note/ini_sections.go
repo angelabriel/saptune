@@ -123,7 +123,7 @@ func GetBlkVal(key string, cur *param.BlockDeviceQueue) (string, string, error) 
 
 // OptBlkVal optimises the block device structure with the settings
 // from the configuration file
-func OptBlkVal(key, cfgval string, cur *param.BlockDeviceQueue) (string, string) {
+func OptBlkVal(key, cfgval string, cur *param.BlockDeviceQueue, bOK map[string][]string) (string, string) {
 	info := ""
 	if cfgval == "" {
 		return cfgval, info
@@ -138,12 +138,13 @@ func OptBlkVal(key, cfgval string, cur *param.BlockDeviceQueue) (string, string)
 		for _, sched := range strings.Split(cfgval, ",") {
 			sval = strings.ToLower(strings.TrimSpace(sched))
 			if !param.IsValidScheduler(bdev[1], sval) {
-				system.WarningLog("'%s' is not a valid scheduler for device '%s', skipping.", sval, bdev[1])
+				//system.WarningLog("'%s' is not a valid scheduler for device '%s', skipping.", sval, bdev[1])
 				continue
 			} else {
-				system.InfoLog("'%s' will be used as new scheduler for device '%s'.", sval, bdev[1])
+				//system.InfoLog("'%s' will be used as new scheduler for device '%s'.", sval, bdev[1])
 				sfound = true
 				oval = bdev[1] + " " + sval
+				bOK[sval] = append(bOK[sval], bdev[1])
 				break
 			}
 		}

@@ -88,14 +88,15 @@ func TestGetBlkVal(t *testing.T) {
 }
 
 func TestOptBlkVal(t *testing.T) {
+	blckOK := make(map[string][]string)
 	tblck := param.BlockDeviceQueue{BlockDeviceSchedulers: param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, BlockDeviceNrRequests: param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}}
-	val, info := OptBlkVal("IO_SCHEDULER_sda", "noop", &tblck)
+	val, info := OptBlkVal("IO_SCHEDULER_sda", "noop", &tblck, blckOK)
 	if val != "noop" {
 		t.Fatal(val, info)
 	}
 	if info == "NA" {
 		t.Logf("scheduler '%s' is not supported\n", val)
-		val, info := OptBlkVal("IO_SCHEDULER_sda", "none", &tblck)
+		val, info := OptBlkVal("IO_SCHEDULER_sda", "none", &tblck, blckOK)
 		if val != "none" {
 			t.Fatal(val, info)
 		}
@@ -104,13 +105,13 @@ func TestOptBlkVal(t *testing.T) {
 		}
 	}
 
-	val, info = OptBlkVal("IO_SCHEDULER_sda", "NoOP", &tblck)
+	val, info = OptBlkVal("IO_SCHEDULER_sda", "NoOP", &tblck, blckOK)
 	if val != "NoOP" && val != "noop" {
 		t.Fatal(val, info)
 	}
 	if info == "NA" {
 		t.Logf("scheduler '%s' is not supported\n", val)
-		val, info = OptBlkVal("IO_SCHEDULER_sda", "NoNE", &tblck)
+		val, info = OptBlkVal("IO_SCHEDULER_sda", "NoNE", &tblck, blckOK)
 		if val != "NoNE" && val != "none" {
 			t.Fatal(val, info)
 		}
@@ -118,13 +119,13 @@ func TestOptBlkVal(t *testing.T) {
 			t.Logf("scheduler '%s' is not supported\n", val)
 		}
 	}
-	val, info = OptBlkVal("IO_SCHEDULER_sda", "deadline", &tblck)
+	val, info = OptBlkVal("IO_SCHEDULER_sda", "deadline", &tblck, blckOK)
 	if val != "deadline" {
 		t.Fatal(val, info)
 	}
 	if info == "NA" {
 		t.Logf("scheduler '%s' is not supported\n", val)
-		val, info = OptBlkVal("IO_SCHEDULER_sda", "mq-deadline", &tblck)
+		val, info = OptBlkVal("IO_SCHEDULER_sda", "mq-deadline", &tblck, blckOK)
 		if val != "mq-deadline" {
 			t.Fatal(val, info)
 		}
@@ -132,19 +133,19 @@ func TestOptBlkVal(t *testing.T) {
 			t.Logf("scheduler '%s' is not supported\n", val)
 		}
 	}
-	val, info = OptBlkVal("IO_SCHEDULER_sda", "noop, none", &tblck)
+	val, info = OptBlkVal("IO_SCHEDULER_sda", "noop, none", &tblck, blckOK)
 	if val != "noop" && val != "none" && info != "NA" {
 		t.Fatal(val, info)
 	}
-	val, info = OptBlkVal("IO_SCHEDULER_sda", "NoOp,NoNe", &tblck)
+	val, info = OptBlkVal("IO_SCHEDULER_sda", "NoOp,NoNe", &tblck, blckOK)
 	if val != "noop" && val != "none" && info != "NA" {
 		t.Fatal(val, info)
 	}
-	val, info = OptBlkVal("IO_SCHEDULER_sda", " noop , none ", &tblck)
+	val, info = OptBlkVal("IO_SCHEDULER_sda", " noop , none ", &tblck, blckOK)
 	if val != "noop" && val != "none" && info != "NA" {
 		t.Fatal(val, info)
 	}
-	val, info = OptBlkVal("IO_SCHEDULER_sda", "hugo", &tblck)
+	val, info = OptBlkVal("IO_SCHEDULER_sda", "hugo", &tblck, blckOK)
 	if val != "hugo" && info != "NA" {
 		t.Fatal(val, info)
 	}
@@ -152,28 +153,29 @@ func TestOptBlkVal(t *testing.T) {
 		t.Logf("scheduler '%s' is not supported\n", val)
 	}
 
-	val, info = OptBlkVal("NRREQ_sda", "512", &tblck)
+	val, info = OptBlkVal("NRREQ_sda", "512", &tblck, blckOK)
 	if val != "512" {
 		t.Fatal(val)
 	}
-	val, info = OptBlkVal("NRREQ_sdb", "0", &tblck)
+	val, info = OptBlkVal("NRREQ_sdb", "0", &tblck, blckOK)
 	if val != "1024" {
 		t.Fatal(val)
 	}
-	val, info = OptBlkVal("NRREQ_sdc", "128", &tblck)
+	val, info = OptBlkVal("NRREQ_sdc", "128", &tblck, blckOK)
 	if val != "128" {
 		t.Fatal(val)
 	}
 }
 
 func TestSetBlkVal(t *testing.T) {
+	blckOK := make(map[string][]string)
 	tblck := param.BlockDeviceQueue{BlockDeviceSchedulers: param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, BlockDeviceNrRequests: param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}}
 	val, info, err := GetBlkVal("IO_SCHEDULER_sda", &tblck)
 	oval := val
 	if err != nil {
 		t.Error(err)
 	}
-	val, info = OptBlkVal("IO_SCHEDULER_sda", "noop, none", &tblck)
+	val, info = OptBlkVal("IO_SCHEDULER_sda", "noop, none", &tblck, blckOK)
 	if val != "noop" && val != "none" {
 		t.Fatal(val, info)
 	}

@@ -164,6 +164,8 @@ func (vend INISettings) Initialise() (Note, error) {
 
 // Optimise gets the expected parameter values from the configuration
 func (vend INISettings) Optimise() (Note, error) {
+	blckOK := make(map[string][]string)
+	scheds := ""
 	// Parse the configuration file
 	ini, err := txtparser.ParseINIFile(vend.ConfFilePath, false)
 	if err != nil {
@@ -195,7 +197,8 @@ func (vend INISettings) Optimise() (Note, error) {
 		case INISectionVM:
 			vend.SysctlParams[param.Key] = OptVMVal(param.Key, param.Value)
 		case INISectionBlock:
-			vend.SysctlParams[param.Key], vend.Inform[param.Key] = OptBlkVal(param.Key, param.Value, &blck)
+			vend.SysctlParams[param.Key], vend.Inform[param.Key] = OptBlkVal(param.Key, param.Value, &blck, blckOK)
+			scheds = param.Value
 		case INISectionLimits:
 			vend.SysctlParams[param.Key] = OptLimitsVal(vend.SysctlParams[param.Key], param.Value)
 		case INISectionService:
@@ -227,6 +230,14 @@ func (vend INISettings) Optimise() (Note, error) {
 		}
 		// add values to parameter saved state file, if NOT in 'verify'
 		vend.addParamSavedStates(param.Key)
+	}
+
+	// print info about used block scheduler
+	if scheds != "" {
+		system.InfoLog("Trying scheduler in this order: %s.", scheds)
+		for b, s := range blckOK {
+			system.InfoLog("'%s' will be used as new scheduler for device '%s'.", b, strings.Join(s, " "))
+		}
 	}
 	return vend, nil
 }

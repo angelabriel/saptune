@@ -41,7 +41,7 @@ func InfoLog(txt string, stuff ...interface{}) {
 	if infoLogger != nil {
 		infoLogger.Printf(calledFrom()+txt+"\n", stuff...)
 		if verboseSwitch == "on" {
-			fmt.Fprintf(os.Stdout, "INFO: "+txt+"\n", stuff...)
+			fmt.Fprintf(os.Stdout, "    INFO: "+txt+"\n", stuff...)
 		}
 	}
 }

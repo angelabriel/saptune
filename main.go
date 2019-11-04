@@ -90,11 +90,11 @@ func cliArg(i int) string {
 	return ""
 }
 
-var tuneApp *app.App                 // application configuration and tuning states
-var tuningOptions note.TuningOptions // Collection of tuning options from SAP notes and 3rd party vendors.
-var footnote1 = footnote1X86         // set 'unsupported' footnote regarding the architecture
-var debugSwitch = os.Getenv("SAPTUNE_DEBUG")      // Switch Debug on ("1") or off ("0" - default)
-var verboseSwitch = os.Getenv("SAPTUNE_VERBOSE")  // Switch verbose mode on ("on" - default) or off ("off")
+var tuneApp *app.App                             // application configuration and tuning states
+var tuningOptions note.TuningOptions             // Collection of tuning options from SAP notes and 3rd party vendors.
+var footnote1 = footnote1X86                     // set 'unsupported' footnote regarding the architecture
+var debugSwitch = os.Getenv("SAPTUNE_DEBUG")     // Switch Debug on ("1") or off ("0" - default)
+var verboseSwitch = os.Getenv("SAPTUNE_VERBOSE") // Switch verbose mode on ("on" - default) or off ("off")
 var solutionSelector = runtime.GOARCH
 
 func main() {
