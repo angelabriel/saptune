@@ -10,15 +10,15 @@
 ## Type:    string
 ## Default: noop or none
 #
-# The default I/O scheduler for SLES is CFQ for single-queued block layer
-# devices. It offers satisfactory performance for wide range of I/O task,
-# however choosing an alternative scheduler may potentially yield better
-# latency characteristics and throughput.
-# "noop" is an alternative scheduler, in comparison to CFQ it may offer more
-# consistent performance, lower computation overhead, and potentially higher
-# throughput.
-# For most SAP environments (RAID, storage arrays, virtualizaton) 'noop' is the
-# better choice.
+# The default I/O scheduler for single-queued block layer devices offers
+# satisfactory performance for wide range of I/O task, however choosing an
+# alternative scheduler may potentially yield better latency characteristics
+# and throughput.
+# "noop" is an alternative scheduler, in comparison to other schedulers it
+# may offer more consistent performance, lower computation overhead, and
+# potentially higher throughput.
+# For most SAP environments (RAID, storage arrays, virtualizaton) 'noop' is
+# the better choice.
 # With the new introduced multi-queue scheduler for block layer devices the
 # recommended I/O scheduler is 'none' as an equivalent to 'noop' for
 # single-queued block layer devices.
