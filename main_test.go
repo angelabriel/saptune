@@ -317,11 +317,11 @@ net.ipv4.ip_local_port_range = 31768 61999
 	// copy an extra note for later rename
 	fsrc := fmt.Sprintf("%ssimpleNote.conf", ExtraFilesInGOPATH)
 	if err := system.CopyFile(fsrc, fileName); err != nil {
-		t.Fatalf("copy of %s to %s failed", fsrc, fileName)
+		t.Fatalf("copy of %s to %s failed: '%+v'", fsrc, fileName, err)
 	}
 	fsrc = fmt.Sprintf("%ssimpleNote.conf", ExtraFilesInGOPATH)
 	if err := system.CopyFile(fsrc, ovFileName); err != nil {
-		t.Fatalf("copy of %s to %s failed", fsrc, ovFileName)
+		t.Fatalf("copy of %s to %s failed: '%+v'", fsrc, ovFileName, err)
 	}
 
 	// check note files and show content of test note
