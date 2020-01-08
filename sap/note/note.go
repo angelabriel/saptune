@@ -187,7 +187,9 @@ func CompareNoteFields(actualNote, expectedNote Note) (allMatch bool, comparison
 					valApplyList = append(valApplyList, comparisons[ckey].ReflectMapKey)
 				}
 				if !comparisons[ckey].MatchExpectation {
-					allMatch = false
+					if key.String() == "UserTasksMax" || (actualValue.(string) != "all:none" && actualValue.(string) != "NA" && !strings.Contains(key.String(), "grub")) {
+						allMatch = false
+					}
 				}
 			}
 		} else {
