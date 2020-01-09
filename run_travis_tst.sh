@@ -33,6 +33,9 @@ go version
 cd saptune
 pwd
 ls -al
+ls -al /home/travis/gopath/src/github.com/SUSE/saptune/testdata/etc/saptune/override
+ls -al /home/travis/gopath/src/github.com/SUSE/saptune/testdata/etc/saptune/*
+ls -al /home/travis/gopath/src/github.com/SUSE/saptune/testdata/extra
 
 # to get TasksMax settings work, needs a user login session
 echo "start nobody login session in background"

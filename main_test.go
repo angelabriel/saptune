@@ -319,9 +319,8 @@ net.ipv4.ip_local_port_range = 31768 61999
 	if err := system.CopyFile(fsrc, fileName); err != nil {
 		t.Fatalf("copy of %s to %s failed: '%+v'", fsrc, fileName, err)
 	}
-	fsrc = fmt.Sprintf("%ssimpleNote.conf", ExtraFilesInGOPATH)
-	if err := system.CopyFile(fsrc, ovFileName); err != nil {
-		t.Fatalf("copy of %s to %s failed: '%+v'", fsrc, ovFileName, err)
+	if err := system.CopyFile(fileName, ovFileName); err != nil {
+		t.Fatalf("copy of %s to %s failed: '%+v'", fileName, ovFileName, err)
 	}
 
 	// check note files and show content of test note
