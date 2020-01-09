@@ -33,6 +33,9 @@ go version
 cd saptune
 pwd
 ls -al
+ls -al /home/travis/gopath/src/github.com/SUSE/saptune/testdata
+ls -al /home/travis/gopath/src/github.com/SUSE/saptune/testdata/etc
+ls -al /home/travis/gopath/src/github.com/SUSE/saptune/testdata/etc/*
 ls -al /home/travis/gopath/src/github.com/SUSE/saptune/testdata/etc/saptune/override
 ls -al /home/travis/gopath/src/github.com/SUSE/saptune/testdata/etc/saptune/*
 ls -al /home/travis/gopath/src/github.com/SUSE/saptune/testdata/extra
