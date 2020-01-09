@@ -7,8 +7,6 @@ import (
 	"github.com/SUSE/saptune/sap/note"
 	"github.com/SUSE/saptune/sap/solution"
 	"github.com/SUSE/saptune/system"
-//	"github.com/SUSE/saptune/txtparser"
-//	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -18,7 +16,6 @@ import (
 )
 
 var OSNotesInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/usr/share/saptune/notes")
-//var OSPackageInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/")
 var ExtraFilesInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/extra") + "/"
 var OverTstFilesInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/etc/saptune/override") + "/"
 var TstFilesInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/")
@@ -29,7 +26,6 @@ var AllTestSolutions = map[string]solution.Solution{
 }
 
 var tuningOpts = note.GetTuningOptions("", ExtraFilesInGOPATH)
-//var tApp = app.InitialiseApp(OSPackageInGOPATH, "", tuningOpts, AllTestSolutions)
 var tApp = app.InitialiseApp(TstFilesInGOPATH, "", tuningOpts, AllTestSolutions)
 
 var checkOut = func(t *testing.T, got, want string) {
@@ -335,7 +331,6 @@ net.ipv4.ip_local_port_range = 31768 61999
 	}
 	// refresh note list (AllNotes)
 	newTuningOpts := note.GetTuningOptions("", ExtraFilesInGOPATH)
-	//nApp := app.InitialiseApp(OSPackageInGOPATH, "", newTuningOpts, AllTestSolutions)
 	nApp := app.InitialiseApp(TstFilesInGOPATH, "", newTuningOpts, AllTestSolutions)
 
 	NoteActionShow(&buffer, nID, "", ExtraFilesInGOPATH, nApp)
@@ -377,7 +372,6 @@ net.ipv4.ip_local_port_range = 31768 61999
 	// show content of renamed note
 	// refresh note list (AllNotes) for 'Show'
 	renTuningOpts := note.GetTuningOptions("", ExtraFilesInGOPATH)
-	//rApp := app.InitialiseApp(OSPackageInGOPATH, "", renTuningOpts, AllTestSolutions)
 	rApp := app.InitialiseApp(TstFilesInGOPATH, "", renTuningOpts, AllTestSolutions)
 
 	showRenameBuf := bytes.Buffer{}
@@ -655,4 +649,3 @@ The system fully conforms to the tuning guidelines of the specified SAP solution
 
 	tearDown(t)
 }
-

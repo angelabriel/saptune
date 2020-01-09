@@ -20,8 +20,10 @@ Saptune – part of SLES for SAP Applications – is a configuration tool to pre
 
 # So our goals with saptune are:
 
-    Provide a central framework for configuring the SLES for running various SAP workloads based on SAP recommendations  
-    Enable partners and customers to extend saptune with their own configurations and tests  
+```
+Provide a central framework for configuring the SLES for running various SAP workloads based on SAP recommendations
+Enable partners and customers to extend saptune with their own configurations and tests
+```
 
  
 # Highlights:

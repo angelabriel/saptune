@@ -961,8 +961,8 @@ func SolutionActionApply(writer io.Writer, solName string, tuneApp *app.App) {
 		}
 	}
 	if !system.SystemctlIsRunning(TunedService) || system.GetTunedProfile() != TunedProfileName {
-		fmt.Fprintf(writer, "\nRemember: if you wish to automatically activate the solution's tuning options after a reboot," +
-			"you must instruct saptune to configure \"tuned\" daemon by running:" +
+		fmt.Fprintf(writer, "\nRemember: if you wish to automatically activate the solution's tuning options after a reboot,"+
+			"you must instruct saptune to configure \"tuned\" daemon by running:"+
 			"\n    saptune daemon start\n")
 	}
 }
@@ -998,8 +998,8 @@ func SolutionActionList(writer io.Writer, tuneApp *app.App) {
 		fmt.Fprintf(writer, format, solName)
 	}
 	if !system.SystemctlIsRunning(TunedService) || system.GetTunedProfile() != TunedProfileName {
-		fmt.Fprintf(writer, "\nRemember: if you wish to automatically activate the solution's tuning options after a reboot," +
-			"you must instruct saptune to configure \"tuned\" daemon by running:" +
+		fmt.Fprintf(writer, "\nRemember: if you wish to automatically activate the solution's tuning options after a reboot,"+
+			"you must instruct saptune to configure \"tuned\" daemon by running:"+
 			"\n    saptune daemon start\n")
 	}
 }
