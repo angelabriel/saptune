@@ -20,9 +20,9 @@ Need for check, if a system fully conforms to the requirements of SAP (important
 
 # So our goals with saptune are:
 
-Provide a central framework for configuring the SLES for running various SAP workloads based on SAP recommendations\
+Provide a central framework for configuring the SLES for running various SAP workloads based on SAP recommendations
 
-Enable partners and customers to extend saptune with their own configurations and tests\
+Enable partners and customers to extend saptune with their own configurations and tests
 
  
 # Highlights:
