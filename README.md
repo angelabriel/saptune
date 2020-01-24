@@ -108,14 +108,19 @@ But before committing the sources, run the tests locally by using docker and the
 	docker exec -t travis-st-ci /bin/sh -c "cd /app; ./run_travis_tst.sh;"
 
 in $GOPATH/src/github.com/SUSE/saptune
+
 	go tool cover -html=c.out -o coverage.html
+
 and check the file 'coverage.html' in your Browser to see the coverage
 
 make changes to the source files
 
 and run the tests again
+
 	docker exec -t travis-st-ci /bin/sh -c "cd /app; ./run_travis_tst.sh;"
 
 clean up when finished with your tests
+
 	docker stop travis-st-ci
 	docker rm travis-st-ci
+
