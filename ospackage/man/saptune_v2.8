@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017-2019 SUSE LLC.
+.\" * Copyright (c) 2017-2020 SUSE LLC.
 .\" * All rights reserved
 .\" * Authors: Soeren Schmidt, Angela Briel
 .\" *
@@ -14,7 +14,7 @@
 .\" * GNU General Public License for more details.
 .\" */
 .\"
-.TH saptune "8" "November 2019" "" "System Optimisation For SAP"
+.TH saptune "8" "January 2020" "" "System Optimisation For SAP"
 .SH NAME
 saptune \- Comprehensive system optimisation management for SAP solutions (\fBVersion 2\fP)
 
@@ -25,7 +25,7 @@ ATTENTION: If you still use version \fB1\fP of saptune please refer to man page 
 [ start | status | stop ]
 
 \fBsaptune note\fP
-[ list | verify ]
+[ list | verify | enabled ]
 
 \fBsaptune note\fP
 [ apply | simulate | verify | customise | create | revert | show | delete ] NoteID
@@ -34,7 +34,7 @@ ATTENTION: If you still use version \fB1\fP of saptune please refer to man page 
 rename NoteID newNoteID
 
 \fBsaptune solution\fP
-[ list | verify ]
+[ list | verify | enabled ]
 
 \fBsaptune solution\fP
 [ apply | simulate | verify | revert ] SolutionName
@@ -101,6 +101,9 @@ Currently implemented notes are marked with '\fB+\fP', if manually enabled, '\fB
 .br
 If an \fBoverride\fP file exists for a NoteID, the note is marked with '\fBO\fP'.
 .TP
+.B enabled
+Print all current enabled notes as a list separated by blanks.
+.TP
 .B verify
 If a Note ID is specified, saptune verifies the current running system against the recommendations specified in the Note. If Note ID is not specified, saptune verifies all system parameters against all implemented Notes. As a result you will see a table containing the following columns
 
@@ -120,19 +123,21 @@ e.g.
 .br
 [1] setting is not supported by the system
 .br
-This may result in a 'no' in column 'Compliant', but the system will nevertheless be reported as fully conforms to the specified note.
+This may result in a ' - ' in column 'Compliant', but the system will nevertheless be reported as fully conforms to the specified note.
 .br
 [2] setting is not available on the system
 .br
-This may result in a 'no' in column 'Compliant', but the system will nevertheless be reported as fully conforms to the specified note for some parameter.
+In case of 'grub' settings, this may result in a 'no' in column 'Compliant', but the system will nevertheless be reported as fully conforms to the specified note, because most 'grub' settings mentioned in the SAP Notes are covered by other, alternative settings.
 .br
 [3] value is only checked, but NOT set
 .br
-In case of 'grub' settings, this may result in a 'no' in column 'Compliant', but the system will nevertheless be reported as fully conforms to the specified note, because all 'grub' settings mentioned in the SAP Notes are covered by other settings.
+In case of 'grub' settings, this may result in a 'no' in column 'Compliant', but the system will nevertheless be reported as fully conforms to the specified note, because most 'grub' settings mentioned in the SAP Notes are covered by other, alternative settings.
 .br
 [4] cpu idle state settings differ
 .br
 [5] expected value does not contain a supported scheduler
+.br
+[6] grub settings are mostly covered by other settings. See man page saptune-note(5) for details
 
 If a Note definition contains a '\fB[reminder]\fP' section, this section will be printed below the table and the footnotes. It will be highlighted with red color.
 .TP
@@ -238,6 +243,9 @@ List all SAP solution names that saptune is capable of implementing.
 The currently implemented solution is marked with '\fB*\fP' and is highlighted with green color. A deprecated solution is marked with '\fBD\fP'.
 .br
 If an \fBoverride\fP file exists for a solution, the solution is marked with '\fBO\fP'.
+.TP
+.B enabled
+Print the current enabled solution.
 .TP
 .B simulate
 Show all notes that are associated with the specified SAP solution, and all changes that will be applied once the solution is activated.
