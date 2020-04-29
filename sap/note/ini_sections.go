@@ -91,6 +91,7 @@ func OptSysctlVal(operator txtparser.Operator, key, actval, cfgval string) strin
 
 var isSched = regexp.MustCompile(`^IO_SCHEDULER_\w+$`)
 var isNrreq = regexp.MustCompile(`^NRREQ_\w+$`)
+var isRahead = regexp.MustCompile(`^READ_AHEAD_KB_\w+$`)
 
 // GetBlkVal initialise the block device structure with the current
 // system settings
@@ -117,6 +118,14 @@ func GetBlkVal(key string, cur *param.BlockDeviceQueue) (string, string, error) 
 		newReq = newNrR.(param.BlockDeviceNrRequests).NrRequests
 		retVal = strconv.Itoa(newReq[strings.TrimPrefix(key, "NRREQ_")])
 		cur.BlockDeviceNrRequests = newNrR.(param.BlockDeviceNrRequests)
+	case isRahead.MatchString(key):
+		newRah, err := cur.BlockDeviceReadAheadKB.Inspect()
+		if err != nil {
+			return "", info, err
+		}
+		newReq = newRah.(param.BlockDeviceReadAheadKB).ReadAheadKB
+		retVal = strconv.Itoa(newReq[strings.TrimPrefix(key, "READ_AHEAD_KB_")])
+		cur.BlockDeviceReadAheadKB = newRah.(param.BlockDeviceReadAheadKB)
 	}
 	return retVal, info, nil
 }
@@ -160,6 +169,13 @@ func OptBlkVal(key, cfgval string, cur *param.BlockDeviceQueue, bOK map[string][
 		ival, _ := strconv.Atoi(sval)
 		opt, _ := cur.BlockDeviceNrRequests.Optimise(ival)
 		cur.BlockDeviceNrRequests = opt.(param.BlockDeviceNrRequests)
+	case isRahead.MatchString(key):
+		if sval == "0" {
+			sval = "512"
+		}
+		ival, _ := strconv.Atoi(sval)
+		opt, _ := cur.BlockDeviceReadAheadKB.Optimise(ival)
+		cur.BlockDeviceReadAheadKB = opt.(param.BlockDeviceReadAheadKB)
 	}
 	return sval, info
 }
@@ -183,6 +199,15 @@ func SetBlkVal(key, value string, cur *param.BlockDeviceQueue, revert bool) erro
 			cur.BlockDeviceNrRequests.NrRequests[strings.TrimPrefix(key, "NRREQ_")] = ival
 		}
 		err = cur.BlockDeviceNrRequests.Apply()
+		if err != nil {
+			return err
+		}
+	case isRahead.MatchString(key):
+		if revert {
+			ival, _ := strconv.Atoi(value)
+			cur.BlockDeviceReadAheadKB.ReadAheadKB[strings.TrimPrefix(key, "READ_AHEAD_KB_")] = ival
+		}
+		err = cur.BlockDeviceReadAheadKB.Apply()
 		if err != nil {
 			return err
 		}
@@ -622,11 +647,20 @@ func OptLoginVal(cfgval string) string {
 func SetLoginVal(key, value string, revert bool) error {
 	switch key {
 	case "UserTasksMax":
+		// set limit per active user (for both - revert and apply)
+		if value != "" && value != "NA" {
+			for _, userID := range system.GetCurrentLogins() {
+				if err := system.SetTasksMax(userID, value); err != nil {
+					return err
+				}
+			}
+		}
+		// handle drop-in file
 		if revert && IsLastNoteOfParameter(key) {
 			// revert - remove logind drop-in file
 			os.Remove(path.Join(LogindConfDir, LogindSAPConfFile))
-			// restart systemd-logind.service
-			err := system.SystemctlRestart("systemd-logind.service")
+			// reload-or-try-restart systemd-logind.service
+			err := system.SystemctlReloadTryRestart("systemd-logind.service")
 			return err
 		}
 		if value != "" && value != "NA" {
@@ -642,20 +676,13 @@ func SetLoginVal(key, value string, revert bool) error {
 			if err := ioutil.WriteFile(path.Join(LogindConfDir, LogindSAPConfFile), []byte(LogindSAPConfContent), 0644); err != nil {
 				return err
 			}
-			// restart systemd-logind.service
-			if err := system.SystemctlRestart("systemd-logind.service"); err != nil {
+			// reload-or-try-restart systemd-logind.service
+			if err := system.SystemctlReloadTryRestart("systemd-logind.service"); err != nil {
 				return err
 			}
 			if value == "infinity" {
 				system.WarningLog("Be aware: system-wide UserTasksMax is now set to infinity according to SAP recommendations.\n" +
 					"This opens up entire system to fork-bomb style attacks.")
-			}
-			// set per user
-			for _, userID := range system.GetCurrentLogins() {
-				//oldLimit := system.GetTasksMax(userID)
-				if err := system.SetTasksMax(userID, value); err != nil {
-					return err
-				}
 			}
 		}
 	}

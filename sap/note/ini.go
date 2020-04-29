@@ -15,7 +15,7 @@ import (
 const OverrideTuningSheets = "/etc/saptune/override/"
 
 var pc = LinuxPagingImprovements{}
-var blck = param.BlockDeviceQueue{param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}}
+var blck = param.BlockDeviceQueue{param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}, param.BlockDeviceReadAheadKB{ReadAheadKB: make(map[string]int)}}
 var isLimitSoft = regexp.MustCompile(`LIMIT_.*_soft_memlock`)
 var isLimitHard = regexp.MustCompile(`LIMIT_.*_hard_memlock`)
 var flstates = ""
@@ -110,7 +110,7 @@ func (vend INISettings) Initialise() (Note, error) {
 	vend.OverrideParams = make(map[string]string)
 	vend.Inform = make(map[string]string)
 	pc = LinuxPagingImprovements{}
-	blck = param.BlockDeviceQueue{param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}}
+	blck = param.BlockDeviceQueue{param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}, param.BlockDeviceReadAheadKB{ReadAheadKB: make(map[string]int)}}
 
 	for _, param := range ini.AllValues {
 		if override && len(ow.KeyValue[param.Section]) != 0 {
@@ -408,7 +408,11 @@ func (vend INISettings) createParamSavedStates(key, flstates string) {
 	// do not write parameter values to the saved state file during
 	// a pure 'verify' action
 	if _, ok := vend.ValuesToApply["verify"]; !ok && vend.SysctlParams[key] != "" {
-		CreateParameterStartValues(key, vend.SysctlParams[key])
+		start := vend.SysctlParams[key]
+		if key == "UserTasksMax" {
+			start = system.GetTasksMax("0")
+		}
+		CreateParameterStartValues(key, start)
 		if key == "force_latency" {
 			CreateParameterStartValues("fl_states", flstates)
 		}

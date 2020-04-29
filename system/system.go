@@ -55,6 +55,24 @@ func GetOsName() string {
 	return matches[1]
 }
 
+// IsSLE15 returns true, if System is running a SLE15 release
+func IsSLE15() bool {
+	var re = regexp.MustCompile(`15-SP\d+`)
+	if GetOsName() == "SLES" && (GetOsVers() == "15" || re.MatchString(GetOsVers())) {
+		return true
+	}
+	return false
+}
+
+// IsSLE12 returns true, if System is running a SLE12 release
+func IsSLE12() bool {
+	var re = regexp.MustCompile(`12-SP\d+`)
+	if GetOsName() == "SLES" && (GetOsVers() == "12" || re.MatchString(GetOsVers())) {
+		return true
+	}
+	return false
+}
+
 // CheckForPattern returns true, if the file is available and
 // contains the expected string
 func CheckForPattern(file, pattern string) bool {
@@ -127,4 +145,20 @@ func CopyFile(srcFile, destFile string) error {
 		}
 	}
 	return err
+}
+
+// BlockDeviceIsDisk checks, if a block device is a disk
+// /sys/block/*/device/type (TYPE_DISK / 0x00)
+// does not work for virtio block devices, needs workaround
+func BlockDeviceIsDisk(dev string) bool {
+	isVD := regexp.MustCompile(`^vd\w+$`)
+	fname := fmt.Sprintf("/sys/block/%s/device/type", dev)
+	dtype, err := ioutil.ReadFile(fname)
+	if err != nil || strings.TrimSpace(string(dtype)) != "0" {
+		if strings.Join(isVD.FindStringSubmatch(dev), "") == "" {
+			// unsupported device
+			return false
+		}
+	}
+	return true
 }
