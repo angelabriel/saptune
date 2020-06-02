@@ -85,10 +85,13 @@ func GetINIFileVersionSectionEntry(fileName, entryName string) string {
 
 // chkSecTags checks, if the tags of a section are valid
 func chkSecTags(secFields []string) bool {
-	osWild := regexp.MustCompile(`(.*)-(\*)`)
 	ret := true
 	cnt := 0
 	for _, secTag := range secFields {
+		if secTag == "" {
+			// support empty tags
+			continue
+		}
 		if cnt == 0 {
 			// skip section name
 			cnt = cnt + 1
@@ -101,46 +104,61 @@ func chkSecTags(secFields []string) bool {
 		}
 		switch tagField[0] {
 		case "os":
-			osw := osWild.FindStringSubmatch(tagField[1])
-			if len(osw) != 3 {
-				if tagField[1] != system.GetOsVers() {
-					// os version does not match
-					system.WarningLog("os version '%s' in section definition '%v' does not match running os version '%s'. Skipping whole section with all lines till next valid section definition", tagField[1], secFields, system.GetOsVers())
-					ret = false
-				}
-			} else if osw[2] == "*" {
-				// wildcard
-				switch osw[1] {
-				case "15":
-					if !system.IsSLE15() {
-						system.WarningLog("os version '%s' in section definition '%v' does not match running os version '%s'. Skipping whole section with all lines till next valid section definition", tagField[1], secFields, system.GetOsVers())
-						ret = false
-					}
-				case "12":
-					if !system.IsSLE12() {
-						system.WarningLog("os version '%s' in section definition '%v' does not match running os version '%s'. Skipping whole section with all lines till next valid section definition", tagField[1], secFields, system.GetOsVers())
-						ret = false
-					}
-				default:
-					system.WarningLog("unsupported os version '%s' in section definition '%v'. Skipping whole section with all lines till next valid section definition", tagField[1], secFields)
-					ret = false
-				}
-			}
+			ret = chkOsTags(tagField[1], secFields)
 		case "arch":
-			chkArch := runtime.GOARCH
-			if chkArch == "amd64" {
-				// map architecture to 'uname -i' output
-				chkArch = "x86_64"
-			}
-			if tagField[1] != chkArch {
-				// arch does not match
-				system.WarningLog("system architecture '%s' in section definition '%v' does not match the architecture of the running system '%s'. Skipping whole section with all lines till next valid section definition", tagField[1], secFields, chkArch)
-				ret = false
-			}
+			ret = chkArchTags(tagField[1], secFields)
 		default:
 			system.WarningLog("skip unkown section tag '%v'.", secTag)
 			ret = false
 		}
+	}
+	return ret
+}
+
+// chkOsTags checks if the os section tag is valid or not
+func chkOsTags(tagField string, secFields []string) bool {
+	ret := true
+	osWild := regexp.MustCompile(`(.*)-(\*)`)
+	osw := osWild.FindStringSubmatch(tagField)
+	if len(osw) != 3 {
+		if tagField != system.GetOsVers() {
+			// os version does not match
+			system.WarningLog("os version '%s' in section definition '%v' does not match running os version '%s'. Skipping whole section with all lines till next valid section definition", tagField, secFields, system.GetOsVers())
+			ret = false
+		}
+	} else if osw[2] == "*" {
+		// wildcard
+		switch osw[1] {
+		case "15":
+			if !system.IsSLE15() {
+				system.WarningLog("os version '%s' in section definition '%v' does not match running os version '%s'. Skipping whole section with all lines till next valid section definition", tagField, secFields, system.GetOsVers())
+				ret = false
+			}
+		case "12":
+			if !system.IsSLE12() {
+				system.WarningLog("os version '%s' in section definition '%v' does not match running os version '%s'. Skipping whole section with all lines till next valid section definition", tagField, secFields, system.GetOsVers())
+				ret = false
+			}
+		default:
+			system.WarningLog("unsupported os version '%s' in section definition '%v'. Skipping whole section with all lines till next valid section definition", tagField, secFields)
+			ret = false
+		}
+	}
+	return ret
+}
+
+// chkArchTags checks if the os section tag is valid or not
+func chkArchTags(tagField string, secFields []string) bool {
+	ret := true
+	chkArch := runtime.GOARCH
+	if chkArch == "amd64" {
+		// map architecture to 'uname -i' output
+		chkArch = "x86_64"
+	}
+	if tagField != chkArch {
+		// arch does not match
+		system.WarningLog("system architecture '%s' in section definition '%v' does not match the architecture of the running system '%s'. Skipping whole section with all lines till next valid section definition", tagField, secFields, chkArch)
+		ret = false
 	}
 	return ret
 }
@@ -234,6 +252,8 @@ func ParseINI(input string) *INIFile {
 				// to be compatible to old section definitions without 'tags' we need to check fields[1] for os matching
 				if fields[1] == "all" || fields[1] == system.GetOsVers() {
 					kov = []string{"rpm", "rpm:" + fields[0], "", fields[2]}
+				} else {
+					system.WarningLog("in rpm section '%v' the line '%v' contains a non-matching os version '%s'. Skipping line", currentSection, fields, fields[1])
 				}
 			} else if len(fields) == 2 {
 				// new syntax - rpm to check | expected package version

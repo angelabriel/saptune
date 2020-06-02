@@ -136,29 +136,29 @@ func TestChkGrubCompliance(t *testing.T) {
 	// grub:numa_balancing - false
 	comp1 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "grub:numa_balancing", ActualValue: "NA", ExpectedValue: "disable", ActualValueJS: "NA", ExpectedValueJS: "disable", MatchExpectation: false}
 	// kernel.numa_balancing - true
-	comp2 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"kernel.numa_balancing", ActualValue:"0", ExpectedValue:"0", ActualValueJS:"0", ExpectedValueJS:"0", MatchExpectation:true}
+	comp2 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "kernel.numa_balancing", ActualValue: "0", ExpectedValue: "0", ActualValueJS: "0", ExpectedValueJS: "0", MatchExpectation: true}
 	// kernel.numa_balancing - false
-	comp3 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"kernel.numa_balancing", ActualValue:"0", ExpectedValue:"0", ActualValueJS:"0", ExpectedValueJS:"0", MatchExpectation:false}
+	comp3 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "kernel.numa_balancing", ActualValue: "0", ExpectedValue: "0", ActualValueJS: "0", ExpectedValueJS: "0", MatchExpectation: false}
 	// grub:transparent_hugepage - false
-	comp4 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"grub:transparent_hugepage", ActualValue:"NA", ExpectedValue:"never", ActualValueJS:"NA", ExpectedValueJS:"never", MatchExpectation:false}
+	comp4 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "grub:transparent_hugepage", ActualValue: "NA", ExpectedValue: "never", ActualValueJS: "NA", ExpectedValueJS: "never", MatchExpectation: false}
 	// THP - true
-	comp5 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"THP", ActualValue:"always", ExpectedValue:"never", ActualValueJS:"always", ExpectedValueJS:"never", MatchExpectation:true}
+	comp5 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "THP", ActualValue: "always", ExpectedValue: "never", ActualValueJS: "always", ExpectedValueJS: "never", MatchExpectation: true}
 	// THP - false
-	comp6 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"THP", ActualValue:"always", ExpectedValue:"never", ActualValueJS:"always", ExpectedValueJS:"never", MatchExpectation:false}
+	comp6 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "THP", ActualValue: "always", ExpectedValue: "never", ActualValueJS: "always", ExpectedValueJS: "never", MatchExpectation: false}
 	// grub:intel_idle.max_cstate - false
-	comp7 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"grub:intel_idle.max_cstate", ActualValue:"NA", ExpectedValue:"1", ActualValueJS:"NA", ExpectedValueJS:"1", MatchExpectation:false}
+	comp7 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "grub:intel_idle.max_cstate", ActualValue: "NA", ExpectedValue: "1", ActualValueJS: "NA", ExpectedValueJS: "1", MatchExpectation: false}
 	// grub:intel_idle.max_cstate - true
-	comp10 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"grub:intel_idle.max_cstate", ActualValue:"NA", ExpectedValue:"1", ActualValueJS:"NA", ExpectedValueJS:"1", MatchExpectation:true}
+	comp10 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "grub:intel_idle.max_cstate", ActualValue: "NA", ExpectedValue: "1", ActualValueJS: "NA", ExpectedValueJS: "1", MatchExpectation: true}
 	// grub:processor.max_cstate - true
-	comp8 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"grub:processor.max_cstate", ActualValue:"NA", ExpectedValue:"1", ActualValueJS:"NA", ExpectedValueJS:"1", MatchExpectation:true}
+	comp8 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "grub:processor.max_cstate", ActualValue: "NA", ExpectedValue: "1", ActualValueJS: "NA", ExpectedValueJS: "1", MatchExpectation: true}
 	// grub:processor.max_cstate - false
-	comp11 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"grub:processor.max_cstate", ActualValue:"NA", ExpectedValue:"1", ActualValueJS:"NA", ExpectedValueJS:"1", MatchExpectation:false}
+	comp11 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "grub:processor.max_cstate", ActualValue: "NA", ExpectedValue: "1", ActualValueJS: "NA", ExpectedValueJS: "1", MatchExpectation: false}
 	// force_latency - false and all:none
-	comp9 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"force_latency", ActualValue:"all:none", ExpectedValue:"70", ActualValueJS:"all:none", ExpectedValueJS:"70", MatchExpectation:false}
+	comp9 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "force_latency", ActualValue: "all:none", ExpectedValue: "70", ActualValueJS: "all:none", ExpectedValueJS: "70", MatchExpectation: false}
 	// force_latency - true and all:none
-	comp12 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"force_latency", ActualValue:"all:none", ExpectedValue:"70", ActualValueJS:"all:none", ExpectedValueJS:"70", MatchExpectation:true}
+	comp12 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "force_latency", ActualValue: "all:none", ExpectedValue: "70", ActualValueJS: "all:none", ExpectedValueJS: "70", MatchExpectation: true}
 	// force_latency - false and !all:none
-	comp13 := FieldComparison{ReflectFieldName:"SysctlParams", ReflectMapKey:"force_latency", ActualValue:"33", ExpectedValue:"70", ActualValueJS:"33", ExpectedValueJS:"70", MatchExpectation:false}
+	comp13 := FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "force_latency", ActualValue: "33", ExpectedValue: "70", ActualValueJS: "33", ExpectedValueJS: "70", MatchExpectation: false}
 
 	// grub:numa_balancing - false, kernel.numa_balancing - true = true
 	t.Run("grub:numa_balancing - false, kernel.numa_balancing - true", func(t *testing.T) {

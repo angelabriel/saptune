@@ -215,7 +215,7 @@ func CompareNoteFields(actualNote, expectedNote Note) (allMatch bool, comparison
 	return
 }
 
-// grub special - check compliance of alternative settings
+// ChkGrubCompliance grub special - check compliance of alternative settings
 // only if one of these alternatives are not compliant, modify the result of
 // the compare
 func ChkGrubCompliance(comparisons map[string]FieldComparison, allMatch bool) bool {

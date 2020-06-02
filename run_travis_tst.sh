@@ -12,9 +12,6 @@ systemctl --no-pager status
 systemctl reset-failed
 systemctl --no-pager status
 
-ls -l /sys/block/*
-ls -l /sys/block/*/device/type
-
 echo "PATH is $PATH, GOPATH is $GOPATH, TRAVIS_HOME is $TRAVIS_HOME"
 
 export TRAVIS_HOME=/home/travis
