@@ -190,7 +190,6 @@ func (vend INISettings) Optimise() (Note, error) {
 	ini, err := vend.getSectionInfo(false)
 	if err != nil {
 		// fallback, parse the configuration file
-		system.WarningLog("Problems while reading section information, trying fallback")
 		ini, err = txtparser.ParseINIFile(vend.ConfFilePath, false)
 		if err != nil {
 			return vend, err
@@ -243,7 +242,6 @@ func (vend INISettings) Optimise() (Note, error) {
 			vend.SysctlParams[param.Key] = OptLoginVal(param.Value)
 		case INISectionMEM:
 			if vend.OverrideParams["VSZ_TMPFS_PERCENT"] == "untouched" || vend.OverrideParams["VSZ_TMPFS_PERCENT"] == "" {
-				fmt.Printf("ANGI: ini.KeyValue VSZ_TMPFS_PERCENT  id '%+v'\n", ini.KeyValue["mem"]["VSZ_TMPFS_PERCENT"].Value)
 				vend.SysctlParams[param.Key] = OptMemVal(param.Key, vend.SysctlParams[param.Key], param.Value, ini.KeyValue["mem"]["VSZ_TMPFS_PERCENT"].Value)
 			} else {
 				vend.SysctlParams[param.Key] = OptMemVal(param.Key, vend.SysctlParams[param.Key], param.Value, vend.OverrideParams["VSZ_TMPFS_PERCENT"])
@@ -283,13 +281,25 @@ func (vend INISettings) Optimise() (Note, error) {
 			}
 		}
 	}
+
+	// write section data to section store file, if NOT in 'verify'
+	// will cover the situation where a note fully conforms with the
+	// system, so that there is NO apply operation, but later a
+	// revert may happen
+	if _, ok := vend.ValuesToApply["verify"]; !ok {
+		// this code section was moved from function 'Apply'
+		err = vend.storeSectionInfo(ini, "section", true)
+		if err != nil {
+			system.ErrorLog("Problems during storing of section information")
+			return vend, err
+		}
+	}
 	return vend, nil
 }
 
 // Apply sets the new parameter values in the system or
 // revert the system to the former parameter values
 func (vend INISettings) Apply() error {
-	//var ini *txtparser.INIFile
 	var err error
 	errs := make([]error, 0, 0)
 	revertValues := false
@@ -306,17 +316,8 @@ func (vend INISettings) Apply() error {
 	ini, err = vend.getSectionInfo(revertValues)
 	if err != nil {
 		// fallback, reading info from config file
-		system.WarningLog("Problems while reading section information, trying fallback")
 		ini, err = txtparser.ParseINIFile(vend.ConfFilePath, false)
 		if err != nil {
-			return err
-		}
-	}
-	if !revertValues {
-		// apply, write section data for revert
-		err = vend.storeSectionInfo(ini, "section", true)
-		if err != nil {
-			system.ErrorLog("Problems during storing of section information")
 			return err
 		}
 	}
@@ -525,14 +526,11 @@ func (vend INISettings) getSectionInfo(fileSelect bool) (*txtparser.INIFile, err
 
 // CleanUpRun cleans up runtime files
 func CleanUpRun() {
-	fmt.Printf("ANGI: CleanUpRun\n")
 	var runfile = regexp.MustCompile(`.*\.run$`)
 	content, _ := ioutil.ReadDir(SaptuneSectionDir)
 	for _, entry := range content {
-		fmt.Printf("ANGI: file is '%+v'\n", entry.Name())
 		if runfile.MatchString(entry.Name()) {
 			// remove runtime file
-			fmt.Printf("ANGI: remove file '%+v'\n", entry.Name())
 			_ = os.Remove(path.Join(SaptuneSectionDir, entry.Name()))
 		}
 	}
