@@ -146,7 +146,7 @@ current order of enabled notes is: 2205917 2684254 1680803
 	tuneApp.PrintNoteApplyOrder(&buffer)
 	txt := buffer.String()
 	if txt != matchTxt {
-		fmt.Println("tuneApp.TuneForNotes is '%v', tuneApp.NoteApplyOrder is '%v'", tuneApp.TuneForNotes, tuneApp.NoteApplyOrder)
+		fmt.Printf("tuneApp.TuneForNotes is '%v', tuneApp.NoteApplyOrder is '%v'", tuneApp.TuneForNotes, tuneApp.NoteApplyOrder)
 		fmt.Println("==============")
 		fmt.Println(txt)
 		fmt.Println("==============")
