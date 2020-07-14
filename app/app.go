@@ -127,9 +127,9 @@ func (app *App) removeFromConfig(noteID string) {
 func (app *App) IsNoteApplied(noteID string) (string, bool) {
 	rval := ""
 	ret := false
-	// ANGI TODO - is check against state file still ok or should
-	// the check switched to first check NOTE_APPLY_ORDER and later
-	// the state file
+	// check against state file first is still ok, don't change
+	// because of TuneAll/RevertAll to cover system reboot
+	// NoteApplyOrder is filled, but state files are removed
 	sfile, err := os.Stat(app.State.GetPathToNote(noteID))
 	if err == nil {
 		// state file for note already exists
@@ -170,20 +170,20 @@ func (app *App) NoteSanityCheck() error {
 		// bsc#1149205
 		// noteID available in apply order list, but no note definition
 		// file found. May be removed or renamed.
-		system.ErrorLog("the Note ID '%s' is not recognised by saptune, but is listed in the apply order list.\nMay be you removed or renamed the associated Note definition file on command line without reverting the Note first.\nWe will now remove the NoteID from the apply order list to prevent further confusion.", note)
+		system.ErrorLog("The Note ID '%s' is not recognized by saptune, but it is listed in the apply order list.\nMay be the associated Note definition file was removed or renamed via command line without previously reverting the Note.\nSaptune will now remove the NoteID from the apply order list to prevent further confusion.", note)
 		app.removeFromConfig(note)
 		if err := app.SaveConfig(); err != nil {
 			errs = append(errs, err)
 		}
 
-		// idea to first check for existence of section file and then 
+		// idea to first check for existence of section file and then
 		// check the state file will NOT work in case that the apply
 		// was done with a previous saptune version where NO section
 		// file handling exists
 		fileName := fmt.Sprintf("/var/lib/saptune/sections/%s.sections", note)
 		// check, if empty state file exists
 		if content, err := ioutil.ReadFile(app.State.GetPathToNote(note)); err == nil && len(content) == 0 {
-			 // remove empty state file
+			// remove empty state file
 			_ = app.State.Remove(note)
 			if _, err := os.Stat(fileName); err == nil {
 				// section file exists, remove
@@ -193,7 +193,7 @@ func (app *App) NoteSanityCheck() error {
 			// non-empty state file
 			if _, err := os.Stat(fileName); err == nil {
 				// section file exists, try revert
-				// without section file a revert is 
+				// without section file a revert is
 				// impossible as the fall back, the
 				// Note definition file no longer exists
 				_ = app.RevertNote(note, true)
@@ -362,6 +362,10 @@ func (app *App) TuneSolution(solName string) (removedExplicitNotes []string, err
 // TuneAll tune for all currently enabled solutions and notes.
 func (app *App) TuneAll() error {
 	for _, noteID := range app.NoteApplyOrder {
+		if _, err := os.Stat(app.State.GetPathToNote(noteID)); err == nil {
+			// state file for note already exists
+			continue
+		}
 		if _, err := app.GetNoteByID(noteID); err != nil {
 			_ = system.ErrorLog(err.Error())
 			continue
@@ -467,7 +471,7 @@ func (app *App) RevertSolution(solName string) error {
 }
 
 // RevertAll revert all tuned parameters (both solutions and additional notes),
-// and clear stored states.
+// and clear stored states, but NOT NoteApplyOrder.
 func (app *App) RevertAll(permanent bool) error {
 	allErrs := make([]error, 0, 0)
 
