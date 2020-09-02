@@ -35,7 +35,7 @@ func (pa SampleParam) Optimise(way interface{}) (param.Parameter, error) {
 	pa.Data = "optimised" + fmt.Sprint(way)
 	return pa, nil
 }
-func (pa SampleParam) Apply() error {
+func (pa SampleParam) Apply(way interface{}) error {
 	return ioutil.WriteFile(SampleParamFile, []byte(pa.Data), 0644)
 }
 
@@ -57,7 +57,7 @@ func (n1 SampleNote1) Optimise() (note.Note, error) {
 	return n1, err
 }
 func (n1 SampleNote1) Apply() error {
-	return n1.Param.Apply()
+	return n1.Param.Apply("1")
 }
 
 type SampleNote2 struct {
@@ -78,7 +78,7 @@ func (n2 SampleNote2) Optimise() (note.Note, error) {
 	return n2, err
 }
 func (n2 SampleNote2) Apply() error {
-	return n2.Param.Apply()
+	return n2.Param.Apply("2")
 }
 
 var AllTestNotes = map[string]note.Note{"1001": SampleNote1{}, "1002": SampleNote2{}}
@@ -146,7 +146,6 @@ current order of enabled notes is: 2205917 2684254 1680803
 	tuneApp.PrintNoteApplyOrder(&buffer)
 	txt := buffer.String()
 	if txt != matchTxt {
-		fmt.Printf("tuneApp.TuneForNotes is '%v', tuneApp.NoteApplyOrder is '%v'", tuneApp.TuneForNotes, tuneApp.NoteApplyOrder)
 		fmt.Println("==============")
 		fmt.Println(txt)
 		fmt.Println("==============")
@@ -514,4 +513,14 @@ func TestTuneAll(t *testing.T) {
 		t.Errorf("Error during TuneAll - '%v'\n", err)
 	}
 	tuneApp = InitialiseApp(path.Join(SampleNoteDataDir, "conf"), path.Join(SampleNoteDataDir, "data"), AllTestNotes, AllTestSolutions)
+}
+
+func TestInitialiseApp(t *testing.T) {
+	tstApp := InitialiseApp("/sys/", "", AllTestNotes, AllTestSolutions)
+	if len(tstApp.TuneForSolutions) != 0 && len(tstApp.TuneForNotes) != 0 && len(tstApp.NoteApplyOrder) != 0 {
+		fmt.Println(len(tstApp.TuneForSolutions), tstApp.TuneForSolutions)
+		fmt.Println(len(tstApp.TuneForNotes), tstApp.TuneForSolutions)
+		fmt.Println(len(tstApp.NoteApplyOrder), tstApp.TuneForSolutions)
+		t.Error(tstApp)
+	}
 }
