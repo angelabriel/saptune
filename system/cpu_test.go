@@ -221,6 +221,9 @@ func TestMissingCmd(t *testing.T) {
 }
 
 func TestCPUErrorCases(t *testing.T) {
+	if !SupportsPerfBias() {
+		t.Skip("System does not support Intel's performance bias setting. Skipping test")
+	}
 	oldCpupowerCmd := cpupowerCmd
 	cpupowerCmd = "/usr/bin/false"
 	val := GetPerfBias()
