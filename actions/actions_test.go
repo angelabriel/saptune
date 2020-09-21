@@ -131,10 +131,6 @@ Parameters tuned by the notes and solutions have been successfully reverted.
 	}
 }
 
-func TestGetovFile(t *testing.T) {
-	ovFileName, overrideNote := getovFile(noteID, OverrideTuningSheets)
-}
-
 func TestGetFileName(t *testing.T) {
 	tstRetErrorExit = -1
 	oldOSExit := system.OSExit
