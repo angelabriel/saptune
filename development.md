@@ -51,7 +51,8 @@ clean up when finished with your tests
 ## build the saptune package:
 saptune is build on ibs (and not obs, as saptune is not available on Factory)
 
-branch from a maintained project (see https://maintenance.suse.de/maintained) \
+branch from a maintained project (see https://maintenance.suse.de/maintained)
+
 	osc -A https://api.suse.de bco -M SUSE:SLE-12-SP2:Update saptune
 
 build the source archive from the github repository (something like `tar -czvf ../saptune-\<release\>.tgz .`) and move it to your obs directory\
