@@ -13,28 +13,27 @@ import (
 
 //define constants and variables for the whole package
 const (
-	SaptuneService       = "saptune.service"
-	SapconfService       = "sapconf.service"
-	TunedService         = "tuned.service"
-	setGreenText         = "\033[32m"
-	setRedText           = "\033[31m"
-	resetTextColor       = "\033[0m"
-	exitSaptuneStopped   = 1
-	exitNotTuned         = 3
-	footnote1X86         = "[1] setting is not supported by the system"
-	footnote1IBM         = "[1] setting is not relevant for the system"
-	footnote2            = "[2] setting is not available on the system"
-	footnote3            = "[3] value is only checked, but NOT set"
-	footnote4            = "[4] cpu idle state settings differ"
-	footnote5            = "[5] expected value does not contain a supported scheduler"
-	footnote6            = "[6] grub settings are mostly covered by other settings. See man page saptune-note(5) for details"
-	footnote7            = "[7] parameter value is untouched by default"
+	SaptuneService     = "saptune.service"
+	SapconfService     = "sapconf.service"
+	TunedService       = "tuned.service"
+	exitSaptuneStopped = 1
+	exitNotTuned       = 3
+	footnote1X86       = "[1] setting is not supported by the system"
+	footnote1IBM       = "[1] setting is not relevant for the system"
+	footnote2          = "[2] setting is not available on the system"
+	footnote3          = "[3] value is only checked, but NOT set"
+	footnote4          = "[4] cpu idle state settings differ"
+	footnote5          = "[5] expected value does not contain a supported scheduler"
+	footnote6          = "[6] grub settings are mostly covered by other settings. See man page saptune-note(5) for details"
+	footnote7          = "[7] parameter value is untouched by default"
 )
 
 // NoteTuningSheets is the directory for the sap notes shipped with the satune package
 var NoteTuningSheets = "/usr/share/saptune/notes/"
+
 // OverrideTuningSheets is the directory for the override files
 var OverrideTuningSheets = "/etc/saptune/override/"
+
 // ExtraTuningSheets is a directory located on file system for external parties to place their tuning option files.
 var ExtraTuningSheets = "/etc/saptune/extra/"
 
@@ -50,9 +49,21 @@ var footnote1 = footnote1X86
 // Collection of tuning options from SAP notes and 3rd party vendors.
 var tuningOptions = note.GetTuningOptions(NoteTuningSheets, ExtraTuningSheets)
 
+// set colors for the table and list output
+var setGreenText = "\033[32m"
+var setRedText = "\033[31m"
+var resetTextColor = "\033[0m"
+
 // SelectAction selects the choosen action depending on the first command line
 // argument
 func SelectAction(stApp *app.App, saptuneVers string) {
+	// switch off color, if Stdout is not a terminal
+	if !system.OutIsTerm(os.Stdout) {
+		setGreenText = ""
+		setRedText = ""
+		resetTextColor = ""
+	}
+
 	switch system.CliArg(1) {
 	case "daemon":
 		DaemonAction(system.CliArg(2), saptuneVers, stApp)

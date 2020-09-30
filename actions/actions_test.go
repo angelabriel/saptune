@@ -28,12 +28,12 @@ var tApp = app.InitialiseApp(TstFilesInGOPATH, "", tuningOpts, AllTestSolutions)
 // setup for ErroExit catches
 var tstRetErrorExit = -1
 var tstosExit = func(val int) {
-        tstRetErrorExit = val
+	tstRetErrorExit = val
 }
 var tstwriter io.Writer
 var tstErrorExitOut = func(str string, out ...interface{}) error {
-        fmt.Fprintf(tstwriter, "ERROR: "+str, out...)
-        return fmt.Errorf(str+"\n", out...)
+	fmt.Fprintf(tstwriter, "ERROR: "+str, out...)
+	return fmt.Errorf(str+"\n", out...)
 }
 
 var checkOut = func(t *testing.T, got, want string) {
