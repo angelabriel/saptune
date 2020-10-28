@@ -173,7 +173,7 @@ func SetBlkVal(key, value string, cur *param.BlockDeviceQueue, revert bool) erro
 		if revert {
 			cur.BlockDeviceSchedulers.SchedulerChoice[strings.TrimPrefix(key, "IO_SCHEDULER_")] = value
 		}
-		err = cur.BlockDeviceSchedulers.Apply()
+		err = cur.BlockDeviceSchedulers.Apply(strings.TrimPrefix(key, "IO_SCHEDULER_"))
 		if err != nil {
 			return err
 		}
@@ -182,7 +182,7 @@ func SetBlkVal(key, value string, cur *param.BlockDeviceQueue, revert bool) erro
 			ival, _ := strconv.Atoi(value)
 			cur.BlockDeviceNrRequests.NrRequests[strings.TrimPrefix(key, "NRREQ_")] = ival
 		}
-		err = cur.BlockDeviceNrRequests.Apply()
+		err = cur.BlockDeviceNrRequests.Apply(strings.TrimPrefix(key, "NRREQ_"))
 		if err != nil {
 			return err
 		}

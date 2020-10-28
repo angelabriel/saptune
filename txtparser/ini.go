@@ -23,6 +23,7 @@ type Operator string
 // RegexKeyOperatorValue breaks up a line into key, operator, value.
 var RegexKeyOperatorValue = regexp.MustCompile(`([\w.+_-]+)\s*([<=>]+)\s*["']*(.*?)["']*$`)
 
+var blockDev = make([]string, 0, 10)
 // counter to control the [block] section detected warning
 var blckCnt = 0
 
@@ -188,25 +189,9 @@ func ParseINI(input string) *INIFile {
 			if blckCnt == 0 {
 				system.WarningLog("[block] section detected: Traversing all block devices can take a considerable amount of time.")
 				blckCnt = blckCnt + 1
+				blockDev = system.CollectBlockDeviceInfo()
 			}
-			// identify virtio block devices
-			isVD := regexp.MustCompile(`^vd\w+$`)
-			_, sysDevs := system.ListDir("/sys/block", "the available block devices of the system")
-			for _, bdev := range sysDevs {
-				// /sys/block/*/device/type (TYPE_DISK / 0x00)
-				// does not work for virtio block devices
-				fname := fmt.Sprintf("/sys/block/%s/device/type", bdev)
-				dtype, err := ioutil.ReadFile(fname)
-				if err != nil || strings.TrimSpace(string(dtype)) != "0" {
-					if strings.Join(isVD.FindStringSubmatch(bdev), "") == "" {
-						// skip unsupported devices
-						continue
-					}
-				}
-				//if strings.Contains(bdev, "dm-") {
-				// skip unsupported devices
-				//	continue
-				//}
+			for _, bdev := range blockDev {
 				entry := INIEntry{
 					Section:  currentSection,
 					Key:      fmt.Sprintf("%s_%s", kov[1], bdev),

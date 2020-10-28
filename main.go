@@ -137,6 +137,9 @@ func main() {
 	// activate logging
 	system.LogInit(logFile, debugSwitch, verboseSwitch)
 
+	// cleanup runtime file
+	note.CleanUpRun()
+
 	switch saptuneVersion {
 	case "1":
 		cmd := exec.Command(saptuneV1, os.Args[1:]...)

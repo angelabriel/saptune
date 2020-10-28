@@ -5,11 +5,16 @@ import (
 	"github.com/SUSE/saptune/sap/param"
 	"github.com/SUSE/saptune/system"
 	"github.com/SUSE/saptune/txtparser"
+	"io/ioutil"
+	"os"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
 )
+
+// SaptuneSectionDir defines saptunes saved state directory
+const SaptuneSectionDir = "/var/lib/saptune/sections"
 
 // OverrideTuningSheets defines saptunes override directory
 const OverrideTuningSheets = "/etc/saptune/override/"
@@ -425,6 +430,18 @@ func (vend INISettings) addParamSavedStates(key string) {
 	// a pure 'verify' action
 	if _, ok := vend.ValuesToApply["verify"]; !ok && vend.SysctlParams[key] != "" {
 		AddParameterNoteValues(key, vend.SysctlParams[key], vend.ID)
+	}
+}
+
+// CleanUpRun cleans up runtime files
+func CleanUpRun() {
+	var runfile = regexp.MustCompile(`.*\.run$`)
+	content, _ := ioutil.ReadDir(SaptuneSectionDir)
+	for _, entry := range content {
+		if runfile.MatchString(entry.Name()) {
+			// remove runtime file
+			_ = os.Remove(path.Join(SaptuneSectionDir, entry.Name()))
+		}
 	}
 }
 
