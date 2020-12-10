@@ -183,6 +183,58 @@ func GetBlockDeviceInfo() (*BlockDev, error) {
 	return bdevConf, err
 }
 
+// getValidBlockDevices reads all block devices from /sys/block
+// and select the block devices, which are 'real disks' or a multipath
+// device (/sys/block/*/dm/uuid starts with 'mpath-'
+func getValidBlockDevices() (valDevs []string) {
+	var isMpath = regexp.MustCompile(`^mpath-\w+`)
+	var isMpathPart = regexp.MustCompile(`^part.*-mpath-\w+`)
+	var isLVM = regexp.MustCompile(`^LVM-\w+`)
+	candidates := []string{}
+	excludedevs := []string{}
+
+	// List /sys/block and inspect the needed info of each one
+	_, sysDevs := ListDir("/sys/block", "the available block devices of the system")
+	for _, bdev := range sysDevs {
+		dmUuid := fmt.Sprintf("/sys/block/%s/dm/uuid", bdev)
+		if _, err := os.Stat(dmUuid); err == nil {
+			cont, _ := ioutil.ReadFile(dmUuid)
+			if isMpath.MatchString(string(cont)) {
+				candidates = append(candidates, bdev)
+			}
+			 _, slaves := ListDir(fmt.Sprintf("/sys/block/%s/slaves", bdev), "dm slaves")
+			if len(slaves) != 0 && (isMpath.MatchString(string(cont)) || isLVM.MatchString(string(cont))) && !isMpathPart.MatchString(string(cont)) {
+				excludedevs = append(excludedevs, slaves...)
+			}
+		} else {
+			if !BlockDeviceIsDisk(bdev) {
+				// skip unsupported devices
+				WarningLog("skipping device '%s', unsupported", bdev)
+				continue
+			}
+			candidates = append(candidates, bdev)
+		}
+	}
+	if len(excludedevs) == 0 {
+		return candidates
+	}
+	for _, bdev := range candidates {
+		exclude := false
+		for _, edev := range excludedevs {
+			if bdev == edev {
+				// skip unsupported devices
+				WarningLog("skipping device '%s', md slaves unsupported", bdev)
+				exclude = true
+				break
+			}
+		}
+		if !exclude {
+			valDevs = append(valDevs, bdev)
+		}
+	}
+	return valDevs
+}
+
 // CollectBlockDeviceInfo collects all needed information about
 // block devices from /sys/block
 // write info to /var/lib/saptune/sections/block.run
@@ -193,14 +245,7 @@ func CollectBlockDeviceInfo() []string {
 	}
 	blockMap := make(map[string]string)
 
-	// List /sys/block and inspect the needed info of each one
-	_, sysDevs := ListDir("/sys/block", "the available block devices of the system")
-	for _, bdev := range sysDevs {
-		if !BlockDeviceIsDisk(bdev) {
-			// skip unsupported devices
-			WarningLog("skipping device '%s', unsupported", bdev)
-			continue
-		}
+	for _, bdev := range getValidBlockDevices() {
 		// add new block device
 		blockMap = make(map[string]string)
 
@@ -221,7 +266,6 @@ func CollectBlockDeviceInfo() []string {
 		readahead, _ := GetSysString(path.Join("block", bdev, "queue", "read_ahead_kb"))
 		blockMap["READ_AHEAD_KB"] = readahead
 
-		// end of sys/block loop
 		// save block info
 		bdevConf.BlockAttributes[bdev] = blockMap
 		bdevConf.AllBlockDevs = append(bdevConf.AllBlockDevs, bdev)
