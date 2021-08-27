@@ -1,9 +1,10 @@
-[![Build Status](https://travis-ci.org/angelabriel/saptune.svg?branch=saptune_test)](https://travis-ci.org/angelabriel/saptune)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/c159575e62a6de1a2ac3/test_coverage)](https://codeclimate.com/github/angelabriel/saptune/test_coverage)
-[![Maintainability](https://api.codeclimate.com/v1/badges/c159575e62a6de1a2ac3/maintainability)](https://codeclimate.com/github/angelabriel/saptune/maintainability)
+
+[![Build Status](https://travis-ci.org/SUSE/saptune.svg?branch=master)](https://travis-ci.org/SUSE/saptune)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/5375e2ca293dd0e8b322/test_coverage)](https://codeclimate.com/github/SUSE/saptune/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/5375e2ca293dd0e8b322/maintainability)](https://codeclimate.com/github/SUSE/saptune/maintainability)
 
 
-### saptune
+# saptune
 
 # What is saptune?
 
@@ -24,7 +25,7 @@ Provide a central framework for configuring the SLES for running various SAP wor
 
 Enable partners and customers to extend saptune with their own configurations and tests
 
- 
+
 # Highlights:
 
 Enhanced human-readable output so you can get a clear overview which SAP notes are available, which SAP notes are referred by a dedicated solution, which SAP note or solution is currently in use (aka applied).
@@ -69,7 +70,7 @@ For now:\
 <https://www.suse.com/c/a-new-saptune-is-here/>\
 <https://www.suse.com/c/saptune-a-deep-dive/>
 
- 
+
 # Feedback
 
 Supporters, contributors, colleagues, customers and partners are welcome to approach us with ideas and suggestions. If you miss something or you think something should be done better, then don’t hesitate to contact us. You are welcome to give further feedback via email at SapAlliance@suse.com, create an issue in this repository, carrier pigeon etc. and tell us your needs.\

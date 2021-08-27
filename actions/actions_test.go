@@ -14,12 +14,16 @@ import (
 	"testing"
 )
 
+var SolutionSheetsInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/sol/sols") + "/"
 var ExtraFilesInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/extra") + "/"
+var OverTstFilesInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/etc/saptune/override") + "/"
+var DeprecFilesInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/sol/deprecated") + "/"
 var TstFilesInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/")
+
 var AllTestSolutions = map[string]solution.Solution{
-	"sol1":  solution.Solution{"simpleNote"},
-	"sol2":  solution.Solution{"extraNote"},
-	"sol12": solution.Solution{"simpleNote", "extraNote"},
+	"sol1":  {"simpleNote"},
+	"sol2":  {"extraNote"},
+	"sol12": {"simpleNote", "extraNote"},
 }
 
 var tuningOpts = note.GetTuningOptions("", ExtraFilesInGOPATH)
@@ -46,6 +50,27 @@ var checkOut = func(t *testing.T, got, want string) {
 		fmt.Println("==============")
 		t.Errorf("Output differs from expected one")
 	}
+}
+
+var setUpSol = func(t *testing.T) {
+	t.Helper()
+	// prepare deprecated solution, custom solution and override
+	noteFiles := TstFilesInGOPATH + "/"
+	extraNoteFiles := TstFilesInGOPATH + "/extra/"
+	solution.CustomSolutions = solution.GetOtherSolution(ExtraFilesInGOPATH, noteFiles, extraNoteFiles)
+	solution.OverrideSolutions = solution.GetOtherSolution(OverTstFilesInGOPATH, noteFiles, "")
+	solution.DeprecSolutions = solution.GetOtherSolution(DeprecFilesInGOPATH, "", "")
+	//solution.AllSolutions = solution.GetSolutionDefintion(solution.SolutionSheets)
+	solution.AllSolutions = solution.GetSolutionDefintion(SolutionSheetsInGOPATH)
+}
+
+var tearDownSol = func(t *testing.T) {
+	t.Helper()
+	solution.CustomSolutions = solution.GetOtherSolution("", "", "")
+	solution.OverrideSolutions = solution.GetOtherSolution("", "", "")
+	solution.DeprecSolutions = solution.GetOtherSolution("", "", "")
+	//solution.AllSolutions = solution.GetSolutionDefintion(solution.SolutionSheets)
+	solution.AllSolutions = solution.GetSolutionDefintion(SolutionSheetsInGOPATH)
 }
 
 var setUp = func(t *testing.T) {
@@ -92,22 +117,29 @@ Parameters tuned by the notes and solutions have been successfully reverted.
 
 	// this errExitMatchText differs from the 'real' text by the last 2 lines
 	// because of test situation, the 'exit 1' in PrintHelpAndExit is not
-	// executed (as desinged for testing)
+	// executed (as designed for testing)
 	errExitMatchText := fmt.Sprintf(`saptune: Comprehensive system optimisation management for SAP solutions.
 Daemon control:
   saptune daemon [ start | status | stop ]  ATTENTION: deprecated
-  saptune service [ start | status | stop | enable | disable | enablestart | stopdisable ]
+  saptune service [ start | status | stop | restart | takeover | enable | disable | enablestart | disablestop ]
 Tune system according to SAP and SUSE notes:
-  saptune note [ list | verify | enabled ]
-  saptune note [ apply | simulate | verify | customise | create | revert | show | delete ] NoteID
+  saptune note [ list | verify | revertall | enabled | applied ]
+  saptune note [ apply | simulate | verify | customise | create | edit | revert | show | delete ] NoteID
   saptune note rename NoteID newNoteID
 Tune system for all notes applicable to your SAP solution:
-  saptune solution [ list | verify | enabled ]
-  saptune solution [ apply | simulate | verify | revert ] SolutionName
+  saptune solution [ list | verify | enabled | applied ]
+  saptune solution [ apply | simulate | verify | customise | create | edit | revert | show | delete ] SolutionName
+  saptune solution rename SolutionName newSolutionName
+Staging control:
+   saptune staging [ status | enable | disable | is-enabled | list | diff | analysis | release ]
+   saptune staging [ analysis | diff ] [ NoteID... | SolutionID... | all ]
+   saptune staging release [--force|--dry-run] [ NoteID... | SolutionID... | all ]
 Revert all parameters tuned by the SAP notes or solutions:
   saptune revert all
 Remove the pending lock file from a former saptune call
   saptune lock remove
+Print current saptune status:
+  saptune status
 Print current saptune version:
   saptune version
 Print this message:
@@ -206,18 +238,25 @@ func TestPrintHelpAndExit(t *testing.T) {
 	errExitMatchText := fmt.Sprintf(`saptune: Comprehensive system optimisation management for SAP solutions.
 Daemon control:
   saptune daemon [ start | status | stop ]  ATTENTION: deprecated
-  saptune service [ start | status | stop | enable | disable | enablestart | stopdisable ]
+  saptune service [ start | status | stop | restart | takeover | enable | disable | enablestart | disablestop ]
 Tune system according to SAP and SUSE notes:
-  saptune note [ list | verify | enabled ]
-  saptune note [ apply | simulate | verify | customise | create | revert | show | delete ] NoteID
+  saptune note [ list | verify | revertall | enabled | applied ]
+  saptune note [ apply | simulate | verify | customise | create | edit | revert | show | delete ] NoteID
   saptune note rename NoteID newNoteID
 Tune system for all notes applicable to your SAP solution:
-  saptune solution [ list | verify | enabled ]
-  saptune solution [ apply | simulate | verify | revert ] SolutionName
+  saptune solution [ list | verify | enabled | applied ]
+  saptune solution [ apply | simulate | verify | customise | create | edit | revert | show | delete ] SolutionName
+  saptune solution rename SolutionName newSolutionName
+Staging control:
+   saptune staging [ status | enable | disable | is-enabled | list | diff | analysis | release ]
+   saptune staging [ analysis | diff ] [ NoteID... | SolutionID... | all ]
+   saptune staging release [--force|--dry-run] [ NoteID... | SolutionID... | all ]
 Revert all parameters tuned by the SAP notes or solutions:
   saptune revert all
 Remove the pending lock file from a former saptune call
   saptune lock remove
+Print current saptune status:
+  saptune status
 Print current saptune version:
   saptune version
 Print this message:

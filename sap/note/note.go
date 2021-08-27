@@ -21,6 +21,11 @@ import (
 	"strings"
 )
 
+// SaptuneParameterStateDir defines the directory where to store the
+// parameter state files
+// separated from the note state file directory
+const SaptuneParameterStateDir = "/run/saptune/parameter"
+
 // Note defines the structure and actions for a SAP Note
 // An SAP note consisting of a series of tunable parameters that can be
 // applied and reverted.
@@ -50,19 +55,26 @@ func GetTuningOptions(saptuneTuningDir, thirdPartyTuningDir string) TuningOption
 		}
 	}
 
+	if thirdPartyTuningDir == "" {
+		return ret
+	}
+
 	// Collect those defined by 3rd party
 	_, files = system.ListDir(thirdPartyTuningDir, "3rd party tuning definitions")
 	for _, fileName := range files {
+		if fileName == "solutions" || strings.HasSuffix(fileName, ".sol") {
+			continue
+		}
 		// ignore left over files (BOBJ and ASE definition files) from
 		// the migration of saptune version 1 to saptune version 2
 		if fileName == "SAP_BOBJ-SAP_Business_OBJects.conf" || fileName == "SAP_ASE-SAP_Adaptive_Server_Enterprise.conf" {
-			system.WarningLog("GetTuningOptions: skip old note definition \"%s\" from saptune version 1.", fileName)
-			system.WarningLog("For more information refer to the man page saptune-migrate(7)")
+			system.InfoLog("GetTuningOptions: skip old note definition \"%s\" from saptune version 1.", fileName)
+			system.InfoLog("For more information refer to the man page saptune-migrate(7)")
 			continue
 		}
 		if !strings.HasSuffix(fileName, ".conf") {
 			// skip filenames without .conf suffix
-			system.WarningLog("skip file \"%s\", wrong filename syntax, missing '.conf' suffix", fileName)
+			system.InfoLog("skip file \"%s\", wrong filename syntax, missing '.conf' suffix", fileName)
 			continue
 		}
 
@@ -73,12 +85,12 @@ func GetTuningOptions(saptuneTuningDir, thirdPartyTuningDir string) TuningOption
 			// no header found in the vendor file
 			// fall back to the old style vendor file names
 			// support of old style vendor file names for compatibility reasons
-			system.WarningLog("GetTuningOptions: no header information found in file \"%s\"", fileName)
-			system.WarningLog("falling back to old style vendor file names")
+			system.InfoLog("GetTuningOptions: no header information found in file \"%s\"", fileName)
+			system.InfoLog("falling back to old style vendor file names")
 			// By convention, the portion before dash makes up the ID.
 			idName := strings.SplitN(fileName, "-", 2)
 			if len(idName) != 2 {
-				system.WarningLog("GetTuningOptions: skip bad file name \"%s\"", fileName)
+				system.InfoLog("GetTuningOptions: skip bad file name \"%s\"", fileName)
 				continue
 			}
 			id = idName[0]
@@ -91,7 +103,7 @@ func GetTuningOptions(saptuneTuningDir, thirdPartyTuningDir string) TuningOption
 		}
 		// Do not allow vendor to override built-in
 		if _, exists := ret[id]; exists {
-			system.WarningLog("GetTuningOptions: vendor's \"%s\" will not override built-in tuning implementation", fileName)
+			system.InfoLog("GetTuningOptions: vendor's \"%s\" will not override built-in tuning implementation", fileName)
 			continue
 		}
 		ret[id] = INISettings{
@@ -190,7 +202,7 @@ func CompareNoteFields(actualNote, expectedNote Note) (allMatch bool, comparison
 				} else if key.String() == "force_latency" && comparisons[ckey].ReflectFieldName == "SysctlParams" {
 					valApplyList = append(valApplyList, comparisons[ckey].ReflectMapKey)
 				}
-				if !comparisons[ckey].MatchExpectation {
+				if !comparisons[ckey].MatchExpectation && fieldName == "SysctlParams" {
 					// a parameter, which is not supported
 					// by the system ("all:none") should not
 					// influence the compare result
@@ -206,10 +218,15 @@ func CompareNoteFields(actualNote, expectedNote Note) (allMatch bool, comparison
 					if actualValue.(string) != "all:none" && !isInternalGrub(key.String()) {
 						allMatch = false
 					}
+					// handle filesystem options separately
+					if system.IsXFSOption.MatchString(key.String()) && actualValue.(string) == "NA" {
+						allMatch = true
+					}
 				}
 			}
 		} else {
 			// Compare ordinary field value
+			// ConfFilePath, ID, DescriptiveName
 			comparisons[fieldName] = cmpFieldValue(i, fieldName, refActualNote, refExpectedNote)
 			if !comparisons[fieldName].MatchExpectation {
 				allMatch = false

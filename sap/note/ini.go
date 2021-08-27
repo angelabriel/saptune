@@ -1,86 +1,49 @@
 package note
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/SUSE/saptune/sap"
 	"github.com/SUSE/saptune/sap/param"
 	"github.com/SUSE/saptune/system"
 	"github.com/SUSE/saptune/txtparser"
-	"io/ioutil"
-	"os"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-// SaptuneSectionDir defines saptunes saved state directory
-const SaptuneSectionDir = "/var/lib/saptune/sections"
+// and section name definition
+const (
+	INISectionSysctl    = "sysctl"
+	INISectionSys       = "sys"
+	INISectionVM        = "vm"
+	INISectionFS        = "filesystem"
+	INISectionCPU       = "cpu"
+	INISectionMEM       = "mem"
+	INISectionBlock     = "block"
+	INISectionService   = "service"
+	INISectionLimits    = "limits"
+	INISectionLogin     = "login"
+	INISectionVersion   = "version"
+	INISectionPagecache = "pagecache"
+	INISectionRpm       = "rpm"
+	INISectionGrub      = "grub"
+	INISectionReminder  = "reminder"
 
-// OverrideTuningSheets defines saptunes override directory
-const OverrideTuningSheets = "/etc/saptune/override/"
+	// LoginConfDir is the path to systemd's logind configuration directory under /etc.
+	LogindConfDir = "/etc/systemd/logind.conf.d"
+	// LogindSAPConfFile is a configuration file full of SAP-specific settings for logind.
+	LogindSAPConfFile = "saptune-UserTasksMax.conf"
+)
 
 var ini *txtparser.INIFile
 var pc = LinuxPagingImprovements{}
 
-//var blck = param.BlockDeviceQueue{param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}, param.BlockDeviceReadAheadKB{ReadAheadKB: make(map[string]int)}}
-var blck = param.BlockDeviceQueue{BlockDeviceSchedulers: param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, BlockDeviceNrRequests: param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}, BlockDeviceReadAheadKB: param.BlockDeviceReadAheadKB{ReadAheadKB: make(map[string]int)}}
+var blck = param.BlockDeviceQueue{BlockDeviceSchedulers: param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, BlockDeviceNrRequests: param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}, BlockDeviceReadAheadKB: param.BlockDeviceReadAheadKB{ReadAheadKB: make(map[string]int)}, BlockDeviceMaxSectorsKB: param.BlockDeviceMaxSectorsKB{MaxSectorsKB: make(map[string]int)}}
 var isLimitSoft = regexp.MustCompile(`LIMIT_.*_soft_memlock`)
 var isLimitHard = regexp.MustCompile(`LIMIT_.*_hard_memlock`)
 var flstates = ""
 
 // Tuning options composed by a third party vendor.
-
-// CalculateOptimumValue calculates optimum parameter value given the current
-// value, comparison operator, and expected value. Return optimised value.
-func CalculateOptimumValue(operator txtparser.Operator, currentValue string, expectedValue string) (string, error) {
-	if operator == txtparser.OperatorEqual {
-		return expectedValue, nil
-	}
-	// Numeric comparisons
-	var iCurrentValue int64
-	iExpectedValue, err := strconv.ParseInt(expectedValue, 10, 64)
-	if err != nil {
-		return "", system.ErrorLog("%+v - Expected value \"%s\" should be but is not an integer", err, expectedValue)
-	}
-	if currentValue == "" {
-		switch operator {
-		case txtparser.OperatorLessThan:
-			iCurrentValue = iExpectedValue - 1
-		case txtparser.OperatorLessThanEqual:
-			iCurrentValue = iExpectedValue
-		case txtparser.OperatorMoreThan:
-			iCurrentValue = iExpectedValue + 1
-		case txtparser.OperatorMoreThanEqual:
-			iCurrentValue = iExpectedValue
-		}
-	} else {
-		iCurrentValue, err = strconv.ParseInt(currentValue, 10, 64)
-		if err != nil {
-			return "", system.ErrorLog("%+v - Current value \"%s\" should be but is not an integer", err, currentValue)
-		}
-		switch operator {
-		case txtparser.OperatorLessThan:
-			if iCurrentValue >= iExpectedValue {
-				iCurrentValue = iExpectedValue - 1
-			}
-		case txtparser.OperatorMoreThan:
-			if iCurrentValue <= iExpectedValue {
-				iCurrentValue = iExpectedValue + 1
-			}
-		case txtparser.OperatorLessThanEqual:
-			if iCurrentValue >= iExpectedValue {
-				iCurrentValue = iExpectedValue
-			}
-		case txtparser.OperatorMoreThanEqual:
-			if iCurrentValue <= iExpectedValue {
-				iCurrentValue = iExpectedValue
-			}
-		}
-	}
-	return strconv.FormatInt(iCurrentValue, 10), nil
-}
 
 // INISettings defines tuning options composed by a third party vendor.
 type INISettings struct {
@@ -103,7 +66,7 @@ func (vend INISettings) Name() string {
 
 // Initialise retrieves the current parameter values from the system
 func (vend INISettings) Initialise() (Note, error) {
-	ini, err := vend.getSectionInfo(false)
+	ini, err := txtparser.GetSectionInfo("sns", vend.ID, false)
 	if err != nil {
 		// Parse the configuration file
 		ini, err = txtparser.ParseINIFile(vend.ConfFilePath, false)
@@ -111,7 +74,7 @@ func (vend INISettings) Initialise() (Note, error) {
 			return vend, err
 		}
 		// write section data to section runtime file
-		err = vend.storeSectionInfo(ini, "run", true)
+		err = txtparser.StoreSectionInfo(ini, "run", vend.ID, true)
 		if err != nil {
 			system.ErrorLog("Problems during storing of section information")
 			return vend, err
@@ -119,18 +82,14 @@ func (vend INISettings) Initialise() (Note, error) {
 	}
 
 	// looking for override file
-	override := false
-	ow, err := txtparser.ParseINIFile(path.Join(OverrideTuningSheets, vend.ID), false)
-	if err == nil {
-		override = true
-	}
+	override, ow := txtparser.GetOverrides("ovw", vend.ID)
+
 	// Read current parameter values
 	vend.SysctlParams = make(map[string]string)
 	vend.OverrideParams = make(map[string]string)
 	vend.Inform = make(map[string]string)
 	pc = LinuxPagingImprovements{}
-	//blck = param.BlockDeviceQueue{param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}, param.BlockDeviceReadAheadKB{ReadAheadKB: make(map[string]int)}}
-	blck = param.BlockDeviceQueue{BlockDeviceSchedulers: param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, BlockDeviceNrRequests: param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}, BlockDeviceReadAheadKB: param.BlockDeviceReadAheadKB{ReadAheadKB: make(map[string]int)}}
+	blck = param.BlockDeviceQueue{BlockDeviceSchedulers: param.BlockDeviceSchedulers{SchedulerChoice: make(map[string]string)}, BlockDeviceNrRequests: param.BlockDeviceNrRequests{NrRequests: make(map[string]int)}, BlockDeviceReadAheadKB: param.BlockDeviceReadAheadKB{ReadAheadKB: make(map[string]int)}, BlockDeviceMaxSectorsKB: param.BlockDeviceMaxSectorsKB{MaxSectorsKB: make(map[string]int)}}
 
 	for _, param := range ini.AllValues {
 		if override && len(ow.KeyValue[param.Section]) != 0 {
@@ -139,13 +98,19 @@ func (vend INISettings) Initialise() (Note, error) {
 
 		switch param.Section {
 		case INISectionSysctl:
+			vend.Inform[param.Key] = ""
 			vend.SysctlParams[param.Key], _ = system.GetSysctlString(param.Key)
+		case INISectionSys:
+			vend.SysctlParams[param.Key], vend.Inform[param.Key] = GetSysVal(param.Key)
 		case INISectionVM:
-			vend.SysctlParams[param.Key] = GetVMVal(param.Key)
+			vend.SysctlParams[param.Key], vend.Inform[param.Key] = GetVMVal(param.Key)
+		case INISectionFS:
+			vend.SysctlParams[param.Key], vend.Inform[param.Key] = GetFSVal(param.Key, param.Value)
+			continue
 		case INISectionBlock:
 			vend.SysctlParams[param.Key], vend.Inform[param.Key], _ = GetBlkVal(param.Key, &blck)
 		case INISectionLimits:
-			vend.SysctlParams[param.Key], _ = GetLimitsVal(param.Value)
+			vend.SysctlParams[param.Key], vend.Inform[param.Key], _ = GetLimitsVal(param.Value)
 		case INISectionService:
 			vend.SysctlParams[param.Key] = GetServiceVal(param.Key)
 		case INISectionLogin:
@@ -169,7 +134,7 @@ func (vend INISettings) Initialise() (Note, error) {
 			// page cache is special, has it's own config file
 			// so adjust path to pagecache config file, if needed
 			if override {
-				pc.PagingConfig = path.Join(OverrideTuningSheets, vend.ID)
+				pc.PagingConfig = path.Join(txtparser.OverrideTuningSheets, vend.ID)
 			} else {
 				pc.PagingConfig = vend.ConfFilePath
 			}
@@ -188,9 +153,10 @@ func (vend INISettings) Initialise() (Note, error) {
 func (vend INISettings) Optimise() (Note, error) {
 	blckOK := make(map[string][]string)
 	scheds := ""
+	next := false
 
 	// read saved section data == config data from configuration file
-	ini, err := vend.getSectionInfo(false)
+	ini, err := txtparser.GetSectionInfo("sns", vend.ID, false)
 	if err != nil {
 		// fallback, parse the configuration file
 		ini, err = txtparser.ParseINIFile(vend.ConfFilePath, false)
@@ -198,7 +164,7 @@ func (vend INISettings) Optimise() (Note, error) {
 			return vend, err
 		}
 		// write section data to section runtime file
-		err = vend.storeSectionInfo(ini, "run", true)
+		err = txtparser.StoreSectionInfo(ini, "run", vend.ID, true)
 		if err != nil {
 			system.ErrorLog("Problems during storing of section information")
 			return vend, err
@@ -207,34 +173,33 @@ func (vend INISettings) Optimise() (Note, error) {
 
 	for _, param := range ini.AllValues {
 		// Compare current values against INI's definition
-		if len(vend.OverrideParams) != 0 && vend.ID == "1805750" {
-			// as note 1805750 does not set a limits domain, but
-			// the customer should be able to set the correct
-			// domain using an override file we need to rewrite
-			// param.Key and param.Value to get a correct behaviour
-			param.Key, param.Value = vend.handleID1805750(param.Key, param.Value)
+		// handle note 1805750
+		param.Key, param.Value = vend.handleID1805750(param.Key, param.Value)
+		// check, if we should use the value from override file
+		next, scheds, param.Value = vend.useOverrides(param.Key, scheds, param.Value)
+		if next {
+			continue
 		}
-		if len(vend.OverrideParams[param.Key]) != 0 {
-			// use value from override file instead of the value
-			// from the sap note (ConfFile)
-			if vend.OverrideParams[param.Key] == "untouched" {
-				if isSched.MatchString(param.Key) {
-					scheds = "untouched"
-				}
-				continue
-			}
-			param.Value = vend.OverrideParams[param.Key]
-		}
+
 		switch param.Section {
 		case INISectionSysctl:
-			//optimisedValue, err := CalculateOptimumValue(param.Operator, vend.SysctlParams[param.Key], param.Value)
+			//optimisedValue, err := txtparser.CalculateOptimumValue(param.Operator, vend.SysctlParams[param.Key], param.Value)
 			//vend.SysctlParams[param.Key] = optimisedValue
+			vend.Inform[param.Key] = system.ChkForSysctlDoubles(param.Key)
 			vend.SysctlParams[param.Key] = OptSysctlVal(param.Operator, param.Key, vend.SysctlParams[param.Key], param.Value)
+		case INISectionSys:
+			vend.Inform[param.Key] = vend.chkDoubles(param.Key, vend.Inform[param.Key])
+			vend.SysctlParams[param.Key] = OptSysVal(param.Operator, param.Key, vend.SysctlParams[param.Key], param.Value)
 		case INISectionVM:
+			vend.Inform[param.Key] = vend.chkDoubles(param.Key, vend.Inform[param.Key])
 			vend.SysctlParams[param.Key] = OptVMVal(param.Key, param.Value)
+		case INISectionFS:
+			vend.SysctlParams[param.Key] = OptFSVal(param.Key, param.Value)
+			continue
 		case INISectionBlock:
 			vend.SysctlParams[param.Key], vend.Inform[param.Key] = OptBlkVal(param.Key, param.Value, &blck, blckOK)
-			if isSched.MatchString(param.Key) {
+			vend.Inform[param.Key] = vend.chkDoubles(param.Key, vend.Inform[param.Key])
+			if system.IsSched.MatchString(param.Key) {
 				scheds = param.Value
 			}
 		case INISectionLimits:
@@ -272,18 +237,8 @@ func (vend INISettings) Optimise() (Note, error) {
 		vend.addParamSavedStates(param.Key)
 	}
 
-	// print info about used block scheduler only during 'verify' to
-	// supress double prints in case of 'apply'
-	if _, ok := vend.ValuesToApply["verify"]; ok && scheds != "" {
-		if scheds == "untouched" {
-			system.InfoLog("Schedulers will be remain untouched!")
-		} else {
-			system.InfoLog("Trying scheduler in this order: %s.", scheds)
-			for b, s := range blckOK {
-				system.InfoLog("'%s' will be used as new scheduler for device '%s'.", b, strings.Join(s, " "))
-			}
-		}
-	}
+	// print info about used block scheduler
+	vend.printSchedInfo(scheds, blckOK)
 
 	// write section data to section store file, if NOT in 'verify'
 	// will cover the situation where a note fully conforms with the
@@ -291,7 +246,7 @@ func (vend INISettings) Optimise() (Note, error) {
 	// revert may happen
 	if _, ok := vend.ValuesToApply["verify"]; !ok {
 		// this code section was moved from function 'Apply'
-		err = vend.storeSectionInfo(ini, "section", true)
+		err = txtparser.StoreSectionInfo(ini, "section", vend.ID, true)
 		if err != nil {
 			system.ErrorLog("Problems during storing of section information")
 			return vend, err
@@ -316,7 +271,7 @@ func (vend INISettings) Apply() error {
 		revertValues = true
 	}
 
-	ini, err = vend.getSectionInfo(revertValues)
+	ini, err = txtparser.GetSectionInfo("sns", vend.ID, revertValues)
 	if err != nil {
 		// fallback, reading info from config file
 		ini, err = txtparser.ParseINIFile(vend.ConfFilePath, false)
@@ -326,16 +281,10 @@ func (vend INISettings) Apply() error {
 	}
 
 	for _, param := range ini.AllValues {
-		if len(vend.OverrideParams) != 0 && vend.ID == "1805750" {
-			// as note 1805750 does not set a limits domain, but
-			// the customer should be able to set the correct
-			// domain using an override file we need to rewrite
-			// param.Key and param.Value to get a correct behaviour
-			param.Key, param.Value = vend.handleID1805750(param.Key, param.Value)
-		}
-
+		// handle note 1805750
+		param.Key, param.Value = vend.handleID1805750(param.Key, param.Value)
 		switch param.Section {
-		case INISectionVersion, INISectionRpm, INISectionGrub, INISectionReminder:
+		case INISectionVersion, INISectionRpm, INISectionGrub, INISectionFS, INISectionReminder:
 			// These parameters are only checked, but not applied.
 			// So nothing to do during apply and no need for revert
 			continue
@@ -361,6 +310,8 @@ func (vend INISettings) Apply() error {
 			// vm.dirty_ratio is set to 0 and vice versa
 			key, val := vend.getCounterPart(param.Key, revertValues)
 			errs = append(errs, system.SetSysctlString(key, val))
+		case INISectionSys:
+			errs = append(errs, SetSysVal(param.Key, vend.SysctlParams[param.Key]))
 		case INISectionVM:
 			errs = append(errs, SetVMVal(param.Key, vend.SysctlParams[param.Key]))
 		case INISectionBlock:
@@ -458,7 +409,12 @@ func (vend INISettings) createParamSavedStates(key, flstates string) {
 	if _, ok := vend.ValuesToApply["verify"]; !ok && vend.SysctlParams[key] != "" {
 		start := vend.SysctlParams[key]
 		if key == "UserTasksMax" {
-			start = system.GetTasksMax("0")
+			if system.SystemctlIsStarting() {
+				start = system.GetBackupValue("/var/lib/saptune/working/.tmbackup")
+			} else {
+				start = system.GetTasksMax("0")
+				system.WriteBackupValue(start, "/var/lib/saptune/working/.tmbackup")
+			}
 		}
 		CreateParameterStartValues(key, start)
 		if key == "force_latency" {
@@ -476,79 +432,18 @@ func (vend INISettings) addParamSavedStates(key string) {
 	}
 }
 
-// storeSectionInfo stores INIFile section information to section directory
-func (vend INISettings) storeSectionInfo(obj *txtparser.INIFile, file string, overwriteExisting bool) error {
-	iniFileName := ""
-	if file == "run" {
-		iniFileName = fmt.Sprintf("%s/%s.run", SaptuneSectionDir, vend.ID)
-	} else {
-		iniFileName = fmt.Sprintf("%s/%s.sections", SaptuneSectionDir, vend.ID)
-	}
-	content, err := json.Marshal(obj)
-	if err != nil {
-		return err
-	}
-	if err = os.MkdirAll(SaptuneSectionDir, 0755); err != nil {
-		return err
-	}
-	if _, err := os.Stat(iniFileName); os.IsNotExist(err) || overwriteExisting {
-		return ioutil.WriteFile(iniFileName, content, 0644)
-	}
-	return nil
-
-}
-
-// getSectionInfo reads content of stored INIFile information.
-// Return the content as INIFile
-func (vend INISettings) getSectionInfo(fileSelect bool) (*txtparser.INIFile, error) {
-	iniFileName := ""
-	if fileSelect {
-		iniFileName = fmt.Sprintf("%s/%s.sections", SaptuneSectionDir, vend.ID)
-	} else {
-		iniFileName = fmt.Sprintf("%s/%s.run", SaptuneSectionDir, vend.ID)
-	}
-	iniConf := &txtparser.INIFile{
-		AllValues: make([]txtparser.INIEntry, 0, 64),
-		KeyValue:  make(map[string]map[string]txtparser.INIEntry),
-	}
-
-	content, err := ioutil.ReadFile(iniFileName)
-	if err == nil {
-		// do not remove section runtime file, but remove section
-		// saved state file after reading
-		if fileSelect {
-			// remove section saved state file after reading
-			err = os.Remove(iniFileName)
-		}
-		if len(content) != 0 {
-			err = json.Unmarshal(content, &iniConf)
-		}
-	}
-	return iniConf, err
-}
-
-// CleanUpRun cleans up runtime files
-func CleanUpRun() {
-	var runfile = regexp.MustCompile(`.*\.run$`)
-	content, _ := ioutil.ReadDir(SaptuneSectionDir)
-	for _, entry := range content {
-		if runfile.MatchString(entry.Name()) {
-			// remove runtime file
-			_ = os.Remove(path.Join(SaptuneSectionDir, entry.Name()))
-		}
-	}
-}
-
 // handleID1805750 handles the special case of SAP Note 1805750
 func (vend INISettings) handleID1805750(key, val string) (string, string) {
 	// as note 1805750 does not set a limits domain, but
 	// the customer should be able to set the correct
 	// domain using an override file we need to rewrite
 	// param.Key and param.Value to get a correct behaviour
-	for owkey, owval := range vend.OverrideParams {
-		if (isLimitSoft.MatchString(key) && isLimitSoft.MatchString(owkey)) || (isLimitHard.MatchString(key) && isLimitHard.MatchString(owkey)) {
-			key = owkey
-			val = owval
+	if len(vend.OverrideParams) != 0 && vend.ID == "1805750" {
+		for owkey, owval := range vend.OverrideParams {
+			if (isLimitSoft.MatchString(key) && isLimitSoft.MatchString(owkey)) || (isLimitHard.MatchString(key) && isLimitHard.MatchString(owkey)) {
+				key = owkey
+				val = owval
+			}
 		}
 	}
 	return key, val
@@ -590,4 +485,67 @@ func (vend INISettings) handleInitOverride(key, val, section string, op txtparse
 		}
 	}
 	return key, val, op
+}
+
+// printSchedInfo prints info about used block scheduler only during 'verify' to
+// suppress double prints in case of 'apply'
+func (vend INISettings) printSchedInfo(scheds string, blckOK map[string][]string) {
+	if _, ok := vend.ValuesToApply["verify"]; ok && scheds != "" {
+		if scheds == "untouched" {
+			system.InfoLog("Schedulers will be remain untouched!")
+		} else {
+			system.InfoLog("Trying scheduler in this order: %s.", scheds)
+			for b, s := range blckOK {
+				system.InfoLog("'%s' will be used as new scheduler for device '%s'.", b, strings.Join(s, " "))
+			}
+		}
+	}
+}
+
+// useOverrides checks, if we should use the value from override file
+func (vend INISettings) useOverrides(key, scheds, val string) (bool, string, string) {
+	nxt := false
+	if len(vend.OverrideParams[key]) != 0 {
+		// use value from override file instead of the value
+		// from the sap note (ConfFile)
+		if vend.OverrideParams[key] == "untouched" {
+			if system.IsSched.MatchString(key) {
+				scheds = "untouched"
+			}
+			nxt = true
+		} else {
+			val = vend.OverrideParams[key]
+		}
+	}
+	return nxt, scheds, val
+}
+
+// chkDoubles checks for double defined parameters
+// till now for /sys parameter settings
+// like KSM, THP and /sys/block/*/queue
+func (vend INISettings) chkDoubles(key, info string) string {
+	paramFiles := system.GetFiles(SaptuneParameterStateDir)
+
+	syskey := key
+	inf := ""
+	searchParam, sect := system.GetSysSearchParam(syskey)
+	sParam := strings.TrimPrefix(searchParam, "sys:")
+	matchTxt := "[" + sect + "] '" + sParam
+
+	if vend.SysctlParams[searchParam] != "" {
+		// defined in same note definition file
+		inf = matchTxt + "' of note " + vend.ID
+	} else if _, exists := paramFiles[sParam]; exists {
+		// defined in another note definition file
+		inf = matchTxt + "' from the other applied notes"
+	}
+	if inf != "" {
+		system.WarningLog("'%s' is defined twice, see section %s", syskey, inf)
+		if info != "" {
+			info = info + "§" + inf
+		} else {
+			info = inf
+		}
+	}
+	return info
 }

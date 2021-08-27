@@ -4,7 +4,9 @@ package system
 
 import (
 	"io/ioutil"
+	"os"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -73,4 +75,87 @@ func TestSysString(parameter, value string) error {
 		err = ioutil.WriteFile(path.Join("/sys", strings.Replace(parameter, ".", "/", -1)), []byte(save), 0644)
 	}
 	return err
+}
+
+// GetSysSearchParam returns the search pattern for a given sys key
+// and the conterpart section
+func GetSysSearchParam(syskey string) (string, string) {
+	searchParam := ""
+	sect := ""
+	// blkdev
+	sched := regexp.MustCompile(`block.*queue\.scheduler$`)
+	nrreq := regexp.MustCompile(`block.*queue\.nr_requests$`)
+	rakb := regexp.MustCompile(`block.*queue\.read_ahead_kb$`)
+	mskb := regexp.MustCompile(`block.*queue\.max_sectors_kb$`)
+	dev := regexp.MustCompile(`block\.(.*)\.queue\..*$`)
+	d := dev.FindStringSubmatch(syskey)
+	bdev := ""
+	if len(d) > 0 {
+		bdev = d[1]
+	} else {
+		dev = regexp.MustCompile(`.*_(\w+)$`)
+		d = dev.FindStringSubmatch(syskey)
+		if len(d) > 0 {
+			bdev = d[1]
+		}
+	}
+
+	switch {
+	case syskey == "THP":
+		searchParam = "sys:" + SysKernelTHPEnabled
+		sect = "sys"
+	case syskey == "sys:"+SysKernelTHPEnabled:
+		searchParam = "THP"
+		sect = "vm"
+	case syskey == "KSM":
+		searchParam = "sys:" + SysKSMRun
+		sect = "sys"
+	case syskey == "sys:"+SysKSMRun:
+		searchParam = "KSM"
+		sect = "vm"
+	case IsSched.MatchString(syskey):
+		searchParam = "sys:block." + bdev + ".queue.scheduler"
+		sect = "sys"
+	case sched.MatchString(syskey):
+		searchParam = "IO_SCHEDULER_" + bdev
+		sect = "block"
+	case IsNrreq.MatchString(syskey):
+		searchParam = "sys:block." + bdev + ".queue.nr_requests"
+		sect = "sys"
+	case nrreq.MatchString(syskey):
+		searchParam = "NRREQ_" + bdev
+		sect = "block"
+	case IsRahead.MatchString(syskey):
+		searchParam = "sys:block." + bdev + ".queue.read_ahead_kb"
+		sect = "sys"
+	case rakb.MatchString(syskey):
+		searchParam = "READ_AHEAD_KB_" + bdev
+		sect = "block"
+	case IsMsect.MatchString(syskey):
+		searchParam = "sys:block." + bdev + ".queue.max_sectors_kb"
+		sect = "sys"
+	case mskb.MatchString(syskey):
+		searchParam = "MAX_SECTORS_KB_" + bdev
+		sect = "block"
+	}
+	return searchParam, sect
+}
+
+// GetNrTags returns the value from /sys/block/<bdev>/mq/0/nr_tags and the
+// related scheduler
+func GetNrTags(key string) (int, string, string) {
+	nrtags := 0
+	elev := ""
+	disk := ""
+	dname := regexp.MustCompile(`^NRREQ_(\w+)$`)
+	bdev := dname.FindStringSubmatch(key)
+	if len(bdev) > 0 {
+		nrTagsFile := path.Join("block", bdev[1], "mq", "0", "nr_tags")
+		if _, err := os.Stat(nrTagsFile); err == nil {
+			nrtags, _ = GetSysInt(nrTagsFile)
+		}
+		elev, _ = GetSysChoice(path.Join("block", bdev[1], "queue", "scheduler"))
+		disk = bdev[1]
+	}
+	return nrtags, elev, disk
 }

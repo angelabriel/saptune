@@ -8,13 +8,11 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"sort"
 	"strings"
 )
 
 var templateFile = "/usr/share/saptune/NoteTemplate.conf"
-var editor = os.Getenv("EDITOR")
 
 // NoteAction  Note actions like apply, revert, verify asm.
 func NoteAction(actionName, noteID, newNoteID string, tuneApp *app.App) {
@@ -27,18 +25,24 @@ func NoteAction(actionName, noteID, newNoteID string, tuneApp *app.App) {
 		NoteActionVerify(os.Stdout, noteID, tuneApp)
 	case "simulate":
 		NoteActionSimulate(os.Stdout, noteID, tuneApp)
-	case "customise":
-		NoteActionCustomise(noteID, tuneApp)
+	case "customise", "customize":
+		NoteActionCustomise(os.Stdout, noteID, tuneApp)
+	case "edit":
+		NoteActionEdit(os.Stdout, noteID, tuneApp)
 	case "create":
 		NoteActionCreate(noteID, tuneApp)
 	case "show":
-		NoteActionShow(os.Stdout, noteID, NoteTuningSheets, ExtraTuningSheets, tuneApp)
+		NoteActionShow(os.Stdout, noteID, tuneApp)
 	case "delete":
-		NoteActionDelete(os.Stdin, os.Stdout, noteID, NoteTuningSheets, ExtraTuningSheets, OverrideTuningSheets, tuneApp)
+		NoteActionDelete(os.Stdin, os.Stdout, noteID, tuneApp)
 	case "rename":
-		NoteActionRename(os.Stdin, os.Stdout, noteID, newNoteID, NoteTuningSheets, ExtraTuningSheets, OverrideTuningSheets, tuneApp)
+		NoteActionRename(os.Stdin, os.Stdout, noteID, newNoteID, tuneApp)
 	case "revert":
 		NoteActionRevert(os.Stdout, noteID, tuneApp)
+	case "revertall":
+		RevertAction(os.Stdout, "all", tuneApp)
+	case "applied":
+		NoteActionApplied(os.Stdout, tuneApp)
 	case "enabled":
 		NoteActionEnabled(os.Stdout, tuneApp)
 	default:
@@ -58,7 +62,7 @@ func NoteActionApply(writer io.Writer, noteID string, tuneApp *app.App) {
 	// note to the state before it was tuned.
 	if str, ok := tuneApp.IsNoteApplied(noteID); ok {
 		if str == "" {
-			system.InfoLog("note '%s' already applied. Nothing to do", noteID)
+			system.NoticeLog("note '%s' already applied. Nothing to do", noteID)
 		}
 		system.ErrorExit("", 0)
 	}
@@ -71,7 +75,7 @@ func NoteActionApply(writer io.Writer, noteID string, tuneApp *app.App) {
 
 // NoteActionList lists all available Note definitions
 func NoteActionList(writer io.Writer, tuneApp *app.App, tOptions note.TuningOptions) {
-	fmt.Fprintf(writer, "\nAll notes (+ denotes manually enabled notes, * denotes notes enabled by solutions, - denotes notes enabled by solutions but reverted manually later, O denotes override file exists for note):\n")
+	fmt.Fprintf(writer, "\nAll notes (+ denotes manually enabled notes, * denotes notes enabled by solutions, - denotes notes enabled by solutions but reverted manually later, O denotes override file exists for note, C denotes custom note):\n")
 	solutionNoteIDs := tuneApp.GetSortedSolutionEnabledNotes()
 	for _, noteID := range tOptions.GetSortedIDs() {
 		noteObj := tOptions[noteID]
@@ -80,7 +84,12 @@ func NoteActionList(writer io.Writer, tuneApp *app.App, tOptions note.TuningOpti
 			format = "\t%s\t%s\n"
 		}
 		if _, err := os.Stat(fmt.Sprintf("%s%s", OverrideTuningSheets, noteID)); err == nil {
+			// override file exists
 			format = " O" + format
+		}
+		if _, err := os.Stat(fmt.Sprintf("%s%s.conf", ExtraTuningSheets, noteID)); err == nil {
+			// custom note
+			format = " C" + format
 		}
 		if i := sort.SearchStrings(solutionNoteIDs, noteID); i < len(solutionNoteIDs) && solutionNoteIDs[i] == noteID {
 			j := tuneApp.PositionInNoteApplyOrder(noteID)
@@ -92,7 +101,11 @@ func NoteActionList(writer io.Writer, tuneApp *app.App, tOptions note.TuningOpti
 		} else if i := sort.SearchStrings(tuneApp.TuneForNotes, noteID); i < len(tuneApp.TuneForNotes) && tuneApp.TuneForNotes[i] == noteID {
 			format = " " + setGreenText + "+" + format + resetTextColor
 		}
-		fmt.Fprintf(writer, format, noteID, noteObj.Name())
+		// handle special highlighting in Note description
+		// like the 'only' in SAP Note 1656250
+		bonly := " " + setBoldText + "only" + resetTextColor + " "
+		nname := strings.Replace(noteObj.Name(), " only ", bonly, 1)
+		fmt.Fprintf(writer, format, noteID, nname)
 	}
 	tuneApp.PrintNoteApplyOrder(writer)
 	rememberMessage(writer)
@@ -139,47 +152,74 @@ func NoteActionSimulate(writer io.Writer, noteID string, tuneApp *app.App) {
 }
 
 // NoteActionCustomise creates an override file and allows to editing the Note
-// definition file
-func NoteActionCustomise(noteID string, tuneApp *app.App) {
+// definition override file
+func NoteActionCustomise(writer io.Writer, noteID string, tuneApp *app.App) {
 	if noteID == "" {
 		PrintHelpAndExit(os.Stdout, 1)
 	}
 	if _, err := tuneApp.GetNoteByID(noteID); err != nil {
 		system.ErrorExit("%v", err)
 	}
-	editFileName := ""
+	editSrcFile := ""
+	editDestFile := ""
 	fileName, _ := getFileName(noteID, NoteTuningSheets, ExtraTuningSheets)
 	ovFileName, overrideNote := getovFile(noteID, OverrideTuningSheets)
 	if !overrideNote {
-		//copy file
-		err := system.CopyFile(fileName, ovFileName)
-		if err != nil {
-			system.ErrorExit("Problems while copying '%s' to '%s' - %v", fileName, ovFileName, err)
-		}
-		editFileName = ovFileName
+		editSrcFile = fileName
+		editDestFile = ovFileName
 	} else {
-		system.InfoLog("Note override file already exists, using file '%s' as base for editing", ovFileName)
-		editFileName = ovFileName
+		system.NoticeLog("Note override file already exists, using file '%s' as base for editing", ovFileName)
+		editSrcFile = ovFileName
+		editDestFile = ovFileName
 	}
 
-	if editor == "" {
-		editor = "/usr/bin/vim" // launch vim by default
+	changed, err := system.EditAndCheckFile(editSrcFile, editDestFile, noteID, "note")
+	if err != nil {
+		system.ErrorExit("Problems while editing note definition file '%s' - %v", editSrcFile, err)
 	}
-	cmd := exec.Command(editor, editFileName)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = os.Environ()
-	if err := cmd.Run(); err != nil {
-		system.ErrorExit("Failed to start launch editor %s: %v", editor, err)
+	if changed {
+		if _, ok := tuneApp.IsNoteApplied(noteID); !ok {
+			system.NoticeLog("Do not forget to apply the just edited Note to get your changes to take effect\n")
+		} else { // noteID already applied
+			system.NoticeLog("Your just edited Note is already applied. To get your changes to take effect, please 'revert' the Note and apply again.\n")
+		}
+	} else {
+		system.NoticeLog("Nothing changed during the editor session, so no update of the note definition file '%s'", editSrcFile)
 	}
-	if _, ok := tuneApp.IsNoteApplied(noteID); !ok {
-		system.InfoLog("Do not forget to apply the just edited Note to get your changes to take effect\n")
-	} else { // noteID already applied
-		system.InfoLog("Your just edited Note is already applied. To get your changes to take effect, please 'revert' the Note and apply again.\n")
+}
+
+// NoteActionEdit allows to editing the custom/vendor specific Note definition
+// file and NOT the override file
+func NoteActionEdit(writer io.Writer, noteID string, tuneApp *app.App) {
+	if noteID == "" {
+		PrintHelpAndExit(os.Stdout, 1)
 	}
-	// if syscall.Exec returns 'nil' the execution of the program ends immediately
-	// changed syscall.Exec to exec.Command because of the new 'lock' handling
+	if _, err := tuneApp.GetNoteByID(noteID); err != nil {
+		system.ErrorExit("%v", err)
+	}
+	fileName, extraNote := getFileName(noteID, NoteTuningSheets, ExtraTuningSheets)
+	ovFileName, overrideNote := getovFile(noteID, OverrideTuningSheets)
+	if !extraNote {
+		system.ErrorExit("The Note definition file you want to edit is a saptune internal (shipped) Note and can NOT be edited. Use 'saptune note customise' instead. Exiting ...")
+	}
+
+	changed, err := system.EditAndCheckFile(fileName, fileName, noteID, "note")
+	if err != nil {
+		system.ErrorExit("Problems while editing Note definition file '%s' - %v", fileName, err)
+	}
+	if changed {
+		if _, ok := tuneApp.IsNoteApplied(noteID); !ok {
+			system.NoticeLog("Do not forget to apply the just edited Note to get your changes to take effect\n")
+		} else { // noteID already applied
+			system.NoticeLog("Your just edited Note is already applied. To get your changes to take effect, please 'revert' the Note and apply again.\n")
+		}
+		if overrideNote {
+			system.NoticeLog("Note override file '%s' exists. Please check, if the content of this file is still valid", ovFileName)
+		}
+
+	} else {
+		system.NoticeLog("Nothing changed during the editor session, so no update of the note definition file '%s'", fileName)
+	}
 }
 
 // NoteActionCreate helps the customer to create an own Note definition
@@ -196,36 +236,29 @@ func NoteActionCreate(noteID string, tuneApp *app.App) {
 	}
 	extraFileName := fmt.Sprintf("%s%s.conf", ExtraTuningSheets, noteID)
 	if _, err := os.Stat(extraFileName); err == nil {
-		system.ErrorExit("Note '%s' already exists in %s. Please use 'saptune note customise %s' instead to create an override file or choose another NoteID.", noteID, ExtraTuningSheets, noteID)
+		system.ErrorExit("Note '%s' already exists in %s. Please use 'saptune note edit %s' instead to modify this custom specific Note or 'saptune note customise %s' to create an override file or choose another NoteID.", noteID, ExtraTuningSheets, noteID)
 	}
-	//if _, err := os.Stat(extraFileName); os.IsNotExist(err) {
-	//copy template file
-	err := system.CopyFile(templateFile, extraFileName)
+
+	changed, err := system.EditAndCheckFile(templateFile, extraFileName, noteID, "note")
 	if err != nil {
-		system.ErrorExit("Problems while copying '%s' to '%s' - %v", templateFile, extraFileName, err)
+		system.ErrorExit("Problems while editing note definition file '%s' - %v", extraFileName, err)
 	}
-	if editor == "" {
-		editor = "/usr/bin/vim" // launch vim by default
-	}
-	cmd := exec.Command(editor, extraFileName)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = os.Environ()
-	if err := cmd.Run(); err != nil {
-		system.ErrorExit("Failed to start launch editor %s: %v", editor, err)
+	if !changed {
+		system.NoticeLog("Nothing changed during the editor session, so no new, custom specific note definition file will be created.")
+	} else {
+		system.NoticeLog("Note '%s' created successfully. You can modify the content of your Note definition file by using 'saptune note edit %s' or create an override file by 'saptune note customise %s'.", noteID, noteID, noteID)
 	}
 }
 
 // NoteActionShow shows the content of the Note definition file
-func NoteActionShow(writer io.Writer, noteID, noteTuningSheets, extraTuningSheets string, tuneApp *app.App) {
+func NoteActionShow(writer io.Writer, noteID string, tuneApp *app.App) {
 	if noteID == "" {
 		PrintHelpAndExit(writer, 1)
 	}
 	if _, err := tuneApp.GetNoteByID(noteID); err != nil {
 		system.ErrorExit("%v", err)
 	}
-	fileName, _ := getFileName(noteID, noteTuningSheets, extraTuningSheets)
+	fileName, _ := getFileName(noteID, NoteTuningSheets, ExtraTuningSheets)
 	cont, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		system.ErrorExit("Failed to read file '%s' - %v", fileName, err)
@@ -235,7 +268,7 @@ func NoteActionShow(writer io.Writer, noteID, noteTuningSheets, extraTuningSheet
 
 // NoteActionDelete deletes a custom Note definition file and
 // the corresponding override file
-func NoteActionDelete(reader io.Reader, writer io.Writer, noteID, noteTuningSheets, extraTuningSheets, ovTuningSheets string, tuneApp *app.App) {
+func NoteActionDelete(reader io.Reader, writer io.Writer, noteID string, tuneApp *app.App) {
 	if noteID == "" {
 		PrintHelpAndExit(writer, 1)
 	}
@@ -244,40 +277,46 @@ func NoteActionDelete(reader io.Reader, writer io.Writer, noteID, noteTuningShee
 	}
 
 	txtConfirm := fmt.Sprintf("Do you really want to delete Note (%s)?", noteID)
-	fileName, extraNote := getFileName(noteID, noteTuningSheets, extraTuningSheets)
-	ovFileName, overrideNote := getovFile(noteID, ovTuningSheets)
+	fileName, extraNote := getFileName(noteID, NoteTuningSheets, ExtraTuningSheets)
+	ovFileName, overrideNote := getovFile(noteID, OverrideTuningSheets)
 
 	// check, if note is active - applied
 	if _, ok := tuneApp.IsNoteApplied(noteID); ok {
-		system.InfoLog("The Note definition file you want to delete is currently in use, which means it is already applied.")
-		system.InfoLog("So please 'revert' the Note first and then try deleting again.\n")
+		system.NoticeLog("The Note definition file you want to delete is currently in use, which means it is already applied.")
+		system.NoticeLog("So please 'revert' the Note first and then try deleting again.\n")
 		system.ErrorExit("", 0)
 	}
 
 	if !extraNote && !overrideNote {
-		system.ErrorExit("ATTENTION: The Note definition file you want to delete is a saptune internal (shipped) Note and can NOT be deleted. Exiting ...")
+		system.ErrorExit("The Note definition file you want to delete is a saptune internal (shipped) Note and can NOT be deleted. Exiting ...")
 	}
 	if !extraNote && overrideNote {
 		// system note, override file exists
 		txtConfirm = fmt.Sprintf("Note to delete is a saptune internal (shipped) Note, so it can NOT be deleted. But an override file for the Note exists.\nDo you want to remove the override file for Note %s?", noteID)
 	}
 	if extraNote && overrideNote {
-		// custome note with override file
-		txtConfirm = fmt.Sprintf("Note to delete is a customer/vendor specific Note.\nDo you really want to delete this Note (%s) and the corresponding override file?", noteID)
+		// custom note with override file
+		txtConfirm = fmt.Sprintf("Note to delete is a customer/vendor specific Note and an override file for the Note exists.\nDo you want to remove the override file for Note %s?", noteID)
 	}
-	if extraNote && !overrideNote {
-		// custome note
+	if overrideNote {
+		// remove override file
+		if readYesNo(txtConfirm, reader, writer) {
+			deleteDefFile(ovFileName)
+		}
+	}
+	if extraNote {
+		// custom note
 		txtConfirm = fmt.Sprintf("Note to delete is a customer/vendor specific Note.\nDo you really want to delete this Note (%s)?", noteID)
-	}
-
-	if readYesNo(txtConfirm, reader, writer) {
-		deleteNote(fileName, ovFileName, overrideNote, extraNote)
+		// remove customer/vendor specific note definition file
+		if readYesNo(txtConfirm, reader, writer) {
+			deleteDefFile(fileName)
+		}
 	}
 }
 
 // NoteActionRename renames a custom Note definition file and
 // the corresponding override file
-func NoteActionRename(reader io.Reader, writer io.Writer, noteID, newNoteID, noteTuningSheets, extraTuningSheets, ovTuningSheets string, tuneApp *app.App) {
+func NoteActionRename(reader io.Reader, writer io.Writer, noteID, newNoteID string, tuneApp *app.App) {
 	if noteID == "" || newNoteID == "" {
 		PrintHelpAndExit(writer, 1)
 	}
@@ -289,32 +328,35 @@ func NoteActionRename(reader io.Reader, writer io.Writer, noteID, newNoteID, not
 	}
 
 	txtConfirm := fmt.Sprintf("Do you really want to rename Note %s to %s?", noteID, newNoteID)
-	fileName, extraNote := getFileName(noteID, noteTuningSheets, extraTuningSheets)
-	newFileName := fmt.Sprintf("%s%s.conf", extraTuningSheets, newNoteID)
+	fileName, extraNote := getFileName(noteID, NoteTuningSheets, ExtraTuningSheets)
+	newFileName := fmt.Sprintf("%s%s.conf", ExtraTuningSheets, newNoteID)
 	if !extraNote {
 		system.ErrorExit("The Note definition file you want to rename is a saptune internal (shipped) Note and can NOT be renamed. Exiting ...")
 	}
-	ovFileName, overrideNote := getovFile(noteID, ovTuningSheets)
-	newovFileName := fmt.Sprintf("%s%s", ovTuningSheets, newNoteID)
+	ovFileName, overrideNote := getovFile(noteID, OverrideTuningSheets)
+	newovFileName := fmt.Sprintf("%s%s", OverrideTuningSheets, newNoteID)
 
 	// check, if note is active - applied
 	if _, ok := tuneApp.IsNoteApplied(noteID); ok {
-		system.InfoLog("The Note definition file you want to rename is currently in use, which means it is already applied.")
-		system.InfoLog("So please 'revert' the Note first and then try renaming again.\n")
+		system.NoticeLog("The Note definition file you want to rename is currently in use, which means it is already applied.")
+		system.NoticeLog("So please 'revert' the Note first and then try renaming again.\n")
 		system.ErrorExit("", 0)
 	}
 
 	if extraNote && overrideNote {
-		// custome note with override file
+		// custom note with override file
 		txtConfirm = fmt.Sprintf("Note to rename is a customer/vendor specific Note.\nDo you really want to rename this Note (%s) and the corresponding override file to the new name '%s'?", noteID, newNoteID)
 	}
 	if extraNote && !overrideNote {
-		// custome note
+		// custom note
 		txtConfirm = fmt.Sprintf("Note to rename is a customer/vendor specific Note.\nDo you really want to rename this Note (%s) to the new name '%s'?", noteID, newNoteID)
 	}
 
 	if readYesNo(txtConfirm, reader, writer) {
-		renameNote(fileName, newFileName, ovFileName, newovFileName, overrideNote, extraNote)
+		renameDefFile(fileName, newFileName)
+		if overrideNote {
+			renameDefFile(ovFileName, newovFileName)
+		}
 	}
 }
 
@@ -324,10 +366,18 @@ func NoteActionRevert(writer io.Writer, noteID string, tuneApp *app.App) {
 	if noteID == "" {
 		PrintHelpAndExit(writer, 1)
 	}
+	// 'ok' only used to control the log messages
+	// call RevertNote in any case to get the chance of clean up
+	_, ok := tuneApp.IsNoteApplied(noteID)
 	if err := tuneApp.RevertNote(noteID, true); err != nil {
 		system.ErrorExit("Failed to revert note %s: %v", noteID, err)
 	}
-	fmt.Fprintf(writer, "Parameters tuned by the note have been successfully reverted.\n")
+	if ok {
+		system.InfoLog("Parameters tuned by the note '%s' have been successfully reverted.", noteID)
+		fmt.Fprintf(writer, "Parameters tuned by the note have been successfully reverted.\n")
+	} else {
+		system.NoticeLog("Note '%s' is not applied, so nothing to revert.", noteID)
+	}
 }
 
 // NoteActionEnabled lists all enabled Note definitions as list separated
@@ -336,4 +386,16 @@ func NoteActionEnabled(writer io.Writer, tuneApp *app.App) {
 	if len(tuneApp.NoteApplyOrder) != 0 {
 		fmt.Fprintf(writer, "%s", strings.Join(tuneApp.NoteApplyOrder, " "))
 	}
+}
+
+// NoteActionApplied lists all applied Note definitions as list separated
+// by blanks
+func NoteActionApplied(writer io.Writer, tuneApp *app.App) {
+	var notesApplied string
+	for _, note := range tuneApp.NoteApplyOrder {
+		if _, ok := tuneApp.IsNoteApplied(note); ok {
+			notesApplied = fmt.Sprintf("%s%s ", notesApplied, note)
+		}
+	}
+	fmt.Fprintf(writer, "%s", strings.TrimSpace(notesApplied))
 }

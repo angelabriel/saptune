@@ -1,15 +1,28 @@
-# v1.4
+# v1.4.3
 #
-#   saptune daemon [ start | status | stop ]
-#   saptune service [ start | status | stop | enable | disable | enablestart | stopdisable ]
-#   saptune note [ list | verify | enabled ]
-#   saptune note [ apply | simulate | verify | customise | revert | create | show | delete ] NoteID
-#   saptune note rename NoteID NoteID
-#   saptune solution [ list | verify | enabled ]
-#   saptune solution [ apply | simulate | verify | revert ] SolutionName
+# Daemon control:
+#   saptune daemon [ start | status | stop ]  ATTENTION: deprecated
+#   saptune service [ start | status | stop | restart | takeover | enable | disable | enablestart | disablestop ]
+# Tune system according to SAP and SUSE notes:
+#   saptune note [ list | verify | revertall | enabled | applied ]
+#   saptune note [ apply | simulate | verify | customise | create | edit | revert | show | delete ] NoteID
+#   saptune note rename NoteID newNoteID
+# Tune system for all notes applicable to your SAP solution:
+#   saptune solution [ list | verify | enabled | applied ]
+#   saptune solution [ apply | simulate | verify | customise | create | edit | revert | show | delete ] SolutionName
+#   saptune solution rename SolutionName newSolutionName
+# Staging control:
+#   saptune staging [ status | enable | disable | is-enabled | list | diff | analysis | release ]
+#   saptune staging [ analysis | diff | release ] [ NoteID... | SolutionID... | all ]
+# Revert all parameters tuned by the SAP notes or solutions:
 #   saptune revert all
+# Remove the pending lock file from a former saptune call
+#   saptune lock remove
+# Print current saptune status:
+#   saptune status
+# Print current saptune version:
 #   saptune version
-#   saptune --version
+# Print this message:
 #   saptune help
 
 _saptune() {
@@ -18,47 +31,52 @@ _saptune() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    
+
     case ${COMP_CWORD} in 
 
-        1)  opts="daemon service solution note revert version --version help"
+        1)  opts="daemon service staging solution note revert status version help"
             ;;
         
         2)  case "${prev}" in
                 daemon)     opts="start status stop"
                             ;;
-                service)    opts="start status stop enable disable enablestart stopdisable"
+                service)    opts="start status stop restart takeover enable disable enablestart disablestop"
                             ;;
-                solution)   opts="list verify apply simulate revert enabled"
+		        staging)    opts="status enable disable is-enabled list diff analysis release"
                             ;;
-                note)       opts="list verify apply simulate customise revert create show delete rename enabled"
+                solution)   opts="list verify apply simulate edit create revert show delete rename enabled applied"
                             ;;
-		revert)	    opts="all"	
-			    ;;
+                note)       opts="list verify apply simulate edit customise revert revertall create show delete rename enabled applied"
+                            ;;
+		        revert)	    opts="all"	
+			                ;;
                 *)          ;;
             esac
             ;;
 
         3)  case "${prev}" in
-                apply|simulate|verify|customise|revert|create|show|delete|rename)
-                        case "${COMP_WORDS[COMP_CWORD-2]}" in
-                            note)       opts=$((ls -1q /usr/share/saptune/notes/ ; find /etc/saptune/extra/ -name '*.conf' -printf '%f\n' | cut -d '-' -f 1 | sed 's/\.conf$//') | tr '\n' ' ') 
-                                        ;;
-                            solution)   case "$(uname -i)" in
-						x86_64)	pattern="^\[ArchX86\]$" ;;
-						?????)  pattern="^\[ArchPPC64LE\]$" ;;
-					            *)  pattern="%%%" ;; # impossible pattern
-					esac
-					opts=$(sed -n "/${pattern}/,/^\$/p" /usr/share/saptune/solutions |  grep '=' | cut -d '=' -f1 | tr '\n' ' ')
-                                        ;;
-                        esac
-			;;
+                apply|simulate|verify|customise|edit|revert|show|delete|rename|analysis|diff|release)
+                    case "${COMP_WORDS[COMP_CWORD-2]}" in
+                        note)       opts=$((ls -1q /var/lib/saptune/working/notes/ ; find /etc/saptune/extra/ -name '*.conf' -printf '%f\n' | sed 's/\.conf$//') | tr '\n' ' ')
+                                    ;;
+                        solution)   opts=$(find /var/lib/saptune/working/sols/ /etc/saptune/extra/ -name '*.sol' -printf '%f\n' | sed 's/\.sol$//' | tr '\n' ' ')
+                                    ;;
+                        staging)    opts="$((ls -1q /var/lib/saptune/staging/latest/ | cut -d '-' -f 1 ) | tr '\n' ' ') all"
+                                    ;;
+                    esac
+                    ;;
                 *)  return 0
                     ;;
             esac 
-	    ;;
+	        ;;
 
-        *)  return 0
+        *)  case "${COMP_WORDS[1]}-${COMP_WORDS[2]}" in
+                staging-analysis|staging-diff|staging-release)
+                    opts=$((ls -1q /var/lib/saptune/staging/latest/ | cut -d '-' -f 1 ) | tr '\n' ' ')
+                    ;;
+                *)  return 0
+                    ;;
+            esac         
             ;;
     esac
 

@@ -10,12 +10,18 @@ import (
 )
 
 var infoLogger *log.Logger    // Info logger
+var noticeLogger *log.Logger  // Notice logger
 var debugLogger *log.Logger   // Debug logger
 var errorLogger *log.Logger   // Error logger
 var warningLogger *log.Logger // Warning logger
 var debugSwitch string        // Switch Debug on or off
 var verboseSwitch string      // Switch verbose mode on or off
 var errorSwitch = ""          // Switch error mode on or off
+var severNoticeFormat = "NOTICE   "
+var severInfoFormat = "INFO     "
+var severWarnFormat = "WARNING  "
+var severErrorFormat = "ERROR    "
+var logpidFormat = fmt.Sprintf("saptune[%v] ", os.Getpid()) // format to add pid of current saptune process to the log message
 
 // DebugLog sents text to the debugLogger and stderr
 func DebugLog(txt string, stuff ...interface{}) {
@@ -25,13 +31,20 @@ func DebugLog(txt string, stuff ...interface{}) {
 	}
 }
 
-// InfoLog sents text to the infoLogger and stdout
+// NoticeLog sents text to the noticeLogger and stdout
+func NoticeLog(txt string, stuff ...interface{}) {
+	if noticeLogger != nil {
+		noticeLogger.Printf(CalledFrom()+txt+"\n", stuff...)
+		if verboseSwitch == "on" {
+			fmt.Fprintf(os.Stdout, "NOTICE: "+txt+"\n", stuff...)
+		}
+	}
+}
+
+// InfoLog sents text only to the infoLogger
 func InfoLog(txt string, stuff ...interface{}) {
 	if infoLogger != nil {
 		infoLogger.Printf(CalledFrom()+txt+"\n", stuff...)
-		if verboseSwitch == "on" {
-			fmt.Fprintf(os.Stdout, "    INFO: "+txt+"\n", stuff...)
-		}
 	}
 }
 
@@ -40,7 +53,7 @@ func WarningLog(txt string, stuff ...interface{}) {
 	if warningLogger != nil {
 		warningLogger.Printf(CalledFrom()+txt+"\n", stuff...)
 		if verboseSwitch == "on" {
-			fmt.Fprintf(os.Stderr, "    WARNING: "+txt+"\n", stuff...)
+			fmt.Fprintf(os.Stderr, "WARNING: "+txt+"\n", stuff...)
 		}
 	}
 }
@@ -57,7 +70,7 @@ func ErrorLog(txt string, stuff ...interface{}) error {
 }
 
 // LogInit initialise the different log writer saptune will use
-func LogInit(logFile, debug, verbose string) {
+func LogInit(logFile string, logSwitch map[string]string) {
 	var saptuneLog io.Writer
 
 	//define log format
@@ -73,19 +86,20 @@ func LogInit(logFile, debug, verbose string) {
 	//log.SetOutput(saptuneWriter)
 	//log.SetFlags(0)
 
-	debugLogger = log.New(saptuneLog, logTimeFormat+"DEBUG    saptune.", 0)
-	infoLogger = log.New(saptuneLog, logTimeFormat+"INFO     saptune.", 0)
-	warningLogger = log.New(saptuneLog, logTimeFormat+"WARNING  saptune.", 0)
-	errorLogger = log.New(saptuneLog, logTimeFormat+"ERROR    saptune.", 0)
+	debugLogger = log.New(saptuneLog, logTimeFormat+"DEBUG    "+logpidFormat, 0)
+	noticeLogger = log.New(saptuneLog, logTimeFormat+severNoticeFormat+logpidFormat, 0)
+	infoLogger = log.New(saptuneLog, logTimeFormat+severInfoFormat+logpidFormat, 0)
+	warningLogger = log.New(saptuneLog, logTimeFormat+severWarnFormat+logpidFormat, 0)
+	errorLogger = log.New(saptuneLog, logTimeFormat+severErrorFormat+logpidFormat, 0)
 
-	debugSwitch = debug
-	verboseSwitch = verbose
+	debugSwitch = logSwitch["debug"]
+	verboseSwitch = logSwitch["verbose"]
 	errorSwitch = "on"
 }
 
 // SwitchOffLogging disables logging
 func SwitchOffLogging() {
-	debugSwitch = "off"
+	debugSwitch = "0"
 	verboseSwitch = "off"
 	errorSwitch = "off"
 	log.SetOutput(ioutil.Discard)

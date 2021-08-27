@@ -12,6 +12,8 @@
 # upd_helper v1tov2pi
 # upd_helper v1tov2pt
 # upd_helper sle12to15pt
+# upd_helper cleanup
+# upd_helper staging
 
 if [ "$1" == "" ]; then
     echo "ERROR: missing argument"
@@ -24,9 +26,15 @@ SAPTUNE_SYSCONFIG=/etc/sysconfig/saptune
 CUSTOM_TUNED_CONF=/etc/tuned/saptune/tuned.conf
 
 OVERRIDEDIR=/etc/saptune/override
-SAVEDSTATEDIR=/var/lib/saptune/saved_state
-PARAMETERSTATEDIR=/var/lib/saptune/parameter
-SECTIONSTATEDIR=/var/lib/saptune/sections
+OLD_SAVEDSTATEDIR=/var/lib/saptune/saved_state
+SAVEDSTATEDIR=/run/saptune/saved_state
+OLD_PARAMETERSTATEDIR=/var/lib/saptune/parameter
+PARAMETERSTATEDIR=/run/saptune/parameter
+SECTIONSTATEDIR=/run/saptune/sections
+
+WORKINGAREA=/var/lib/saptune/working
+STAGINGAREA=/var/lib/saptune/staging
+PACKAGEAREA=/usr/share/saptune
 
 NOTEDIR=/usr/share/saptune/notes
 NOTES2CHANGE_12to15="1984787,2578899 2205917,2684254"
@@ -223,6 +231,67 @@ delete_notes() {
     done
 }
 
+adjust_workingarea() {
+    # called from the postinstall script of saptune to adjust the working area
+    # during a major release update (like 12 to 15)
+    # only needed, if staging is active. If not, postinstall of package is
+    # updating the working area
+    upd12to15="false"
+    OIFS=$IFS
+    for notepair in $NOTES2CHANGE_12to15; do
+        IFS=","
+        # shellcheck disable=SC2086
+        set -- $notepair
+        oldNote=$1
+        newNote=$2
+        IFS=$OIFS
+        if [ ! -f ${NOTEDIR}/"${oldNote}" ] && [ -f ${NOTEDIR}/"${newNote}" ]; then
+            # the old note definition name is NOT available, but the new one
+            # so update from SLE12 to SLE15
+            if [ -n "${oldNote}" ] && [ -f ${WORKINGAREA}/notes/"${oldNote}" ]; then
+                echo "### removing old sle12 note '${oldNote}' from working area"
+                rm -rf ${WORKINGAREA}/notes/${oldNote}
+            fi
+            if [ -n "${newNote}" ] && [ ! -f ${WORKINGAREA}/notes/"${newNote}" ]; then
+                echo "### adding new sle15 note '${newNote}' from package area to working area"
+                cp ${NOTEDIR}/"${newNote}" ${WORKINGAREA}/notes
+            fi
+
+            # adjust solution files
+            for wsol in ${WORKINGAREA}/sols/*; do
+                srch_pat1="[[:space:]]${oldNote}[[:space:]]"
+                new_pat1=" ${newNote} "
+                if grep "$srch_pat1" $wsol >/dev/null 2>&1; then
+                    echo "### changing old, SLE12 specific Note name '$oldNote' to the new, SLE15 Note name '$newNote' in solution '$wsol'"
+                    sed -i "s/$srch_pat1/$new_pat1/g" $wsol
+                fi
+                srch_pat2="[[:space:]]${oldNote}$"
+                new_pat2=" ${newNote}"
+                if grep "$srch_pat2" $wsol >/dev/null 2>&1; then
+                    echo "### changing old, SLE12 specific Note name '$oldNote' to the new, SLE15 Note name '$newNote' in solution '$wsol'"
+                    sed -i "s/$srch_pat2/$new_pat2/g" $wsol
+                fi
+                srch_pat3="^${oldNote}[[:space:]]"
+                new_pat3="${newNote} "
+                if grep "$srch_pat3" $wsol >/dev/null 2>&1; then
+                    echo "### changing old, SLE12 specific Note name '$oldNote' to the new, SLE15 Note name '$newNote' in solution '$wsol'"
+                    sed -i "s/$srch_pat3/$new_pat3/g" $wsol
+                fi
+            done
+        fi
+    done
+
+    for delnote in $NOTES2DELETE_15; do
+        if [ ! -f ${NOTEDIR}/"${delnote}" ]; then
+            if [ -n "${delnote}" ] && [ -f ${WORKINGAREA}/notes/"${delnote}" ]; then
+                echo "### removing no longer supported note '${delnote}' from working area"
+                rm -rf ${WORKINGAREA}/notes/${delnote}
+            fi
+            # adjust solution files - not needed yet
+        fi
+    done
+}
+
 cleanup_savestates() {
     # cleanup older, no longer handled savedState files
     param_filelist="/var/lib/saptune/parameter/IO_SCHEDULER_sr* /var/lib/saptune/parameter/IO_SCHEDULER_dm-*"
@@ -232,6 +301,89 @@ cleanup_savestates() {
     sle_vers=$(sed -n "s%.*baseversion>\(.*\)</base.*%\1%p" /etc/products.d/baseproduct)
     [[ $sle_vers != 12 ]] && rm -f /var/lib/saptune/parameter/UserTasksMax
     [[ $sle_vers != 12 ]] && rm -f /etc/systemd/logind.conf.d/saptune-UserTasksMax.conf
+
+    # move saved state files to /run
+    if [ ! -d /run/saptune ]; then
+        mkdir -p /run/saptune
+    fi
+    if [ -d "$OLD_PARAMETERSTATEDIR" ]; then
+        mv "$OLD_PARAMETERSTATEDIR" "$PARAMETERSTATEDIR"
+    fi
+    if [ -d "$OLD_SAVEDSTATEDIR" ]; then
+        mv "$OLD_SAVEDSTATEDIR" "$SAVEDSTATEDIR"
+    fi
+}
+
+copy_packednotes2staging() {
+    # called from the postinstall script of saptune to handle the staging area
+    # check for changed or new notes
+    for pnote in ${PACKAGEAREA}/notes/*; do
+        note=${pnote##*/}
+        if [ -f ${WORKINGAREA}/notes/${note} ]; then
+            md5_packed_note=$(/usr/bin/md5sum $pnote | awk '{print $1}')
+            md5_working_note=$(/usr/bin/md5sum ${WORKINGAREA}/notes/${note} | awk '{print $1}')
+            # check for unchanged notes
+            if [ "$md5_packed_note" == "$md5_working_note" ]; then
+                # ignore unchanged notes
+                continue
+            fi
+            # check for changed notes
+            if [ "$md5_packed_note" != "$md5_working_note" ]; then
+                # copy changed note from package area to staging area
+                cp $pnote ${STAGINGAREA}/latest
+            fi
+        else
+            # found new note
+            # copy new note from package area to staging area
+            cp $pnote ${STAGINGAREA}/latest
+        fi
+    done
+    # check for deleted notes
+    # available in working area but not in package area
+    for wnote in ${WORKINGAREA}/notes/*; do
+        note=${wnote##*/}
+        if [ ! -f ${PACKAGEAREA}/notes/${note} ]; then
+            # note deleted in the current installed package
+            # create a note file in staging area, which only contains the
+            # version information of the 'old' note
+            # as a flag for a later removal from the working area
+            grep '# .*VERSION=.*DATE=.*NAME=".*"' ${wnote} > ${STAGINGAREA}/latest/${note}
+        fi
+    done
+    # check for changed or new solutions
+    for psol in ${PACKAGEAREA}/sols/*; do
+        sol=${psol##*/}
+        if [ -f ${WORKINGAREA}/sols/${sol} ]; then
+            md5_packed_sol=$(/usr/bin/md5sum $psol | awk '{print $1}')
+            md5_working_sol=$(/usr/bin/md5sum ${WORKINGAREA}/sols/${sol} | awk '{print $1}')
+            # check for unchanged solutions
+            if [ "$md5_packed_sol" == "$md5_working_sol" ]; then
+                # ignore unchanged solution
+                continue
+            fi
+            # check for changed solutions
+            if [ "$md5_packed_sol" != "$md5_working_sol" ]; then
+                # copy changed solution from package area to staging area
+                cp $psol ${STAGINGAREA}/latest
+            fi
+        else
+            # found new solution
+            # copy new solution from package area to staging area
+            cp $psol ${STAGINGAREA}/latest
+        fi
+    done
+    # check for deleted solutions
+    # available in working area but not in package area
+    for wsol in ${WORKINGAREA}/sols/*; do
+        sol=${wsol##*/}
+        if [ ! -f ${PACKAGEAREA}/sols/${sole} ]; then
+            # solution deleted in the current installed package
+            # create a solution file in staging area, which only contains the
+            # version information of the 'old' solution
+            # as a flag for a later removal from the working area
+            grep '# .*VERSION=.*DATE=.*NAME=".*"' ${wsol} > ${STAGINGAREA}/latest/${sol}
+        fi
+    done
 }
 
 case "$upd_opt" in
@@ -251,10 +403,18 @@ sle12to15pt)
     # update from saptune version 2/3 to version 2/3
     change_note_names
     delete_notes
+    staging=$(grep ^STAGING= /etc/sysconfig/saptune | awk -F '"' '{ print $2 }')
+    if [ "$staging" == "true" ]; then
+        adjust_workingarea
+    fi
     ;;
 cleanup)
     # called from the postinstall script of saptune to clean up some leftover
     # files from older saptune operations
     cleanup_savestates
+    ;;
+staging)
+    # called from the postinstall script of saptune to handle the staging area
+    copy_packednotes2staging
     ;;
 esac

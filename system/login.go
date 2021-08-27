@@ -15,7 +15,12 @@ func GetCurrentLogins() []string {
 		WarningLog("command '%s' not found", cmdName)
 		return uID
 	}
-	if IsSystemRunning() {
+	running, err := IsSystemRunning()
+	if err != nil {
+		ErrorLog("%v - Failed to call command systemctl", err)
+		return uID
+	}
+	if running {
 		cmdOut, err := exec.Command(cmdName, cmdArgs...).CombinedOutput()
 		if err != nil {
 			WarningLog("failed to invoke external command '%s %v': %v, output: %s", cmdName, cmdArgs, err, string(cmdOut))
@@ -39,6 +44,7 @@ func GetTasksMax(userID string) string {
 	uSlice := "user-" + userID + ".slice"
 	cmdName := "/usr/bin/systemctl"
 	cmdArgs := []string{"show", "-p", "TasksMax", uSlice}
+	DebugLog("GetTasksMax - calling '%s' with '%s' args", cmdName, strings.Join(cmdArgs, " "))
 
 	if !CmdIsAvailable(cmdName) {
 		WarningLog("command '%s' not found", cmdName)
@@ -50,6 +56,7 @@ func GetTasksMax(userID string) string {
 		return ""
 	}
 	tasksMax := strings.Split(strings.TrimSpace(string(cmdOut)), "=")
+	DebugLog("GetTasksMax - cmd returns '%+v'", tasksMax)
 	// The result of strings.Split of an 'empty' string is a slice with
 	// one element - the empty string.
 	if len(tasksMax) == 1 && tasksMax[0] == "" {

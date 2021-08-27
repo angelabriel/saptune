@@ -3,7 +3,6 @@ package note
 import (
 	"fmt"
 	"github.com/SUSE/saptune/system"
-	"github.com/SUSE/saptune/txtparser"
 	"os"
 	"path"
 	"runtime"
@@ -13,70 +12,12 @@ import (
 )
 
 func cleanUp() {
-	var parameterStateDir = "/var/lib/saptune/parameter"
+	var parameterStateDir = "/run/saptune/parameter"
 	os.RemoveAll(parameterStateDir)
 	defer os.RemoveAll(parameterStateDir)
-	var saptuneSectionDir = "/var/lib/saptune/sections"
+	var saptuneSectionDir = "/run/saptune/sections"
 	os.RemoveAll(saptuneSectionDir)
 	defer os.RemoveAll(saptuneSectionDir)
-}
-
-func TestCalculateOptimumValue(t *testing.T) {
-	if val, err := CalculateOptimumValue(txtparser.OperatorMoreThan, "21", "20"); val != "21" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorMoreThan, "10", "20"); val != "21" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorMoreThan, "", "20"); val != "21" || err != nil {
-		t.Error(val, err)
-	}
-
-	if val, err := CalculateOptimumValue(txtparser.OperatorMoreThanEqual, "21", "20"); val != "21" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorMoreThanEqual, "20", "20"); val != "20" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorMoreThanEqual, "10", "20"); val != "20" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorMoreThanEqual, "", "20"); val != "20" || err != nil {
-		t.Error(val, err)
-	}
-
-	if val, err := CalculateOptimumValue(txtparser.OperatorLessThan, "10", "20"); val != "10" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorLessThan, "10", "10"); val != "9" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorLessThan, "", "10"); val != "9" || err != nil {
-		t.Error(val, err)
-	}
-
-	if val, err := CalculateOptimumValue(txtparser.OperatorLessThanEqual, "10", "8"); val != "8" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorLessThanEqual, "10", "20"); val != "10" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorLessThanEqual, "10", "10"); val != "10" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorLessThanEqual, "", "10"); val != "10" || err != nil {
-		t.Error(val, err)
-	}
-
-	if val, err := CalculateOptimumValue(txtparser.OperatorEqual, "21", "20"); val != "20" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorEqual, "10", "20"); val != "20" || err != nil {
-		t.Error(val, err)
-	}
-	if val, err := CalculateOptimumValue(txtparser.OperatorEqual, "", "20"); val != "20" || err != nil {
-		t.Error(val, err)
-	}
 }
 
 func TestVendorSettings(t *testing.T) {
@@ -472,7 +413,7 @@ func TestOverrideAllSettings(t *testing.T) {
 		t.Error(optimisedINI.SysctlParams)
 	}
 	// cleanup
-	CleanUpRun()
+	system.CleanUpRun()
 }
 
 func TestPageCacheSettings(t *testing.T) {

@@ -8,48 +8,40 @@ import (
 	"github.com/SUSE/saptune/sap/solution"
 	"github.com/SUSE/saptune/system"
 	"github.com/SUSE/saptune/txtparser"
+	"io"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // constant definitions
 const (
-	TunedService    = "tuned.service"
-	saptuneV1       = "/usr/sbin/saptune_v1"
-	logFile         = "/var/log/saptune/saptune.log"
-	exitNotYetTuned = 5
+	saptuneV1 = "/usr/sbin/saptune_v1"
+	logFile   = "/var/log/saptune/saptune.log"
 )
 
-var tuneApp *app.App                             // application configuration and tuning states
-var tuningOptions note.TuningOptions             // Collection of tuning options from SAP notes and 3rd party vendors.
-var debugSwitch = os.Getenv("SAPTUNE_DEBUG")     // Switch Debug on ("1") or off ("0" - default)
-var verboseSwitch = os.Getenv("SAPTUNE_VERBOSE") // Switch verbose mode on ("on" - default) or off ("off")
+var tuneApp *app.App                 // application configuration and tuning states
+var tuningOptions note.TuningOptions // Collection of tuning options from SAP notes and 3rd party vendors.
+// Switch to control log reaction
+var logSwitch = map[string]string{"verbose": os.Getenv("SAPTUNE_VERBOSE"), "debug": os.Getenv("SAPTUNE_DEBUG")}
 
 // SaptuneVersion is the saptune version from /etc/sysconfig/saptune
 var SaptuneVersion = ""
 
 func main() {
 	// get saptune version
-	sconf, err := txtparser.ParseSysconfigFile("/etc/sysconfig/saptune", true)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Unable to read file '/etc/sysconfig/saptune': %v\n", err)
-		system.ErrorExit("", 1)
-	}
-	SaptuneVersion = sconf.GetString("SAPTUNE_VERSION", "")
-	// check, if DEBUG is set in /etc/sysconfig/saptune
-	if debugSwitch == "" {
-		debugSwitch = sconf.GetString("DEBUG", "0")
-	}
-	if verboseSwitch == "" {
-		verboseSwitch = sconf.GetString("VERBOSE", "on")
-	}
+	SaptuneVersion, logSwitch = checkSaptuneConfigFile(os.Stderr, app.SysconfigSaptuneFile, logSwitch)
 
-	if arg1 := system.CliArg(1); arg1 == "" || arg1 == "help" || arg1 == "--help" {
-		actions.PrintHelpAndExit(os.Stdout, 0)
-	}
-	if arg1 := system.CliArg(1); arg1 == "version" || arg1 == "--version" {
+	arg1 := system.CliArg(1)
+	if arg1 == "version" || system.IsFlagSet("version") {
 		fmt.Printf("current active saptune version is '%s'\n", SaptuneVersion)
 		system.ErrorExit("", 0)
+	}
+	if arg1 == "help" || system.IsFlagSet("help") {
+		actions.PrintHelpAndExit(os.Stdout, 0)
+	}
+	if arg1 == "" {
+		actions.PrintHelpAndExit(os.Stdout, 1)
 	}
 
 	// All other actions require super user privilege
@@ -59,14 +51,15 @@ func main() {
 	}
 
 	// activate logging
-	system.LogInit(logFile, debugSwitch, verboseSwitch)
+	system.LogInit(logFile, logSwitch)
 	// now system.ErrorExit can write to log and os.Stderr. No longer extra
 	// care is needed.
+	system.InfoLog("saptune started with '%s'", strings.Join(os.Args, " "))
 
-	if arg1 := system.CliArg(1); arg1 == "lock" {
+	if arg1 == "lock" {
 		if arg2 := system.CliArg(2); arg2 == "remove" {
 			system.ReleaseSaptuneLock()
-			system.InfoLog("command line triggered remove of lock file '/var/run/.saptune.lock'\n")
+			system.InfoLog("command line triggered remove of lock file '/run/.saptune.lock'\n")
 			system.ErrorExit("", 0)
 		} else {
 			actions.PrintHelpAndExit(os.Stdout, 0)
@@ -78,8 +71,13 @@ func main() {
 	system.SaptuneLock()
 	defer system.ReleaseSaptuneLock()
 
-	// cleanup runtime file
-	note.CleanUpRun()
+	// cleanup runtime files
+	system.CleanUpRun()
+	// additional clear ignore flag for the sapconf/saptune service deadlock
+	os.Remove("/run/.saptune.ignore")
+
+	//check, running config exists
+	checkWorkingArea()
 
 	switch SaptuneVersion {
 	case "1":
@@ -101,6 +99,7 @@ func main() {
 
 	solutionSelector := system.GetSolutionSelector()
 	archSolutions, exist := solution.AllSolutions[solutionSelector]
+	fmt.Fprintf(os.Stdout, "\n")
 	if !exist {
 		system.ErrorExit("The system architecture (%s) is not supported.", solutionSelector)
 		return
@@ -115,28 +114,115 @@ func main() {
 	}
 	checkForTuned()
 	actions.SelectAction(tuneApp, SaptuneVersion)
+	system.ErrorExit("", 0)
 }
 
 // checkUpdateLeftOvers checks for left over files from the migration of
 // saptune version 1 to saptune version 2
 func checkUpdateLeftOvers() {
 	// check for the /etc/tuned/saptune/tuned.conf file created during
-	// the package update from saptune v1 to saptune v2
+	// the package update from saptune v1 to saptune v2/3
 	// give a Warning but go ahead tuning the system
 	if system.CheckForPattern("/etc/tuned/saptune/tuned.conf", "#stv1tov2#") {
-		system.WarningLog("found file '/etc/tuned/saptune/tuned.conf' left over from the migration of saptune version 1 to saptune version 2. Please check and remove this file as it may work against the settings of some SAP Notes. For more information refer to the man page saptune-migrate(7)")
+		system.WarningLog("found file '/etc/tuned/saptune/tuned.conf' left over from the migration of saptune version 1 to saptune version 3. Please check and remove this file as it may work against the settings of some SAP Notes. For more information refer to the man page saptune-migrate(7)")
 	}
 
 	// check if old solution or notes are applied
 	if tuneApp != nil && (len(tuneApp.NoteApplyOrder) == 0 && (len(tuneApp.TuneForNotes) != 0 || len(tuneApp.TuneForSolutions) != 0)) {
-		system.ErrorExit("There are 'old' solutions or notes defined in file '/etc/sysconfig/saptune'. Seems there were some steps missed during the migration from saptune version 1 to version 2. Please check. Refer to saptune-migrate(7) for more information")
+		system.ErrorExit("There are 'old' solutions or notes defined in file '/etc/sysconfig/saptune'. Seems there were some steps missed during the migration from saptune version 1 to version 3. Please check. Refer to saptune-migrate(7) for more information")
 	}
 }
 
 // checkForTuned checks for enabled and/or running tuned and prints out
 // a warning message
 func checkForTuned() {
-	if system.SystemctlIsEnabled(TunedService) || system.SystemctlIsRunning(TunedService) {
-		system.WarningLog("ATTENTION: tuned service is enabled/active, so we may encounter conflicting tuning values")
+	active, _ := system.SystemctlIsRunning(actions.TunedService)
+	enabled, _ := system.SystemctlIsEnabled(actions.TunedService)
+	if enabled || active {
+		system.WarningLog("ATTENTION: tuned service is active, so we may encounter conflicting tuning values")
 	}
+}
+
+// checkWorkingArea checks, if solution and note configs exist in the working
+// area
+// if not, copy the definition files from the package area into the working area
+// Should be covered by package installation but better safe than sorry
+func checkWorkingArea() {
+	if _, err := os.Stat(actions.NoteTuningSheets); os.IsNotExist(err) {
+		// missing working area /var/lib/saptune/working/notes/
+		system.WarningLog("missing the notes in the working area, so copy note definitions from package area to working area")
+		if err := os.MkdirAll(actions.NoteTuningSheets, 0755); err != nil {
+			system.ErrorExit("Problems creating directory '%s' - '%v'", actions.NoteTuningSheets, err)
+			return
+		}
+		packedNotes := fmt.Sprintf("%snotes/", actions.PackageArea)
+		_, files := system.ListDir(packedNotes, "")
+		for _, f := range files {
+			src := fmt.Sprintf("%s%s", packedNotes, f)
+			dest := fmt.Sprintf("%s%s", actions.NoteTuningSheets, f)
+			if err := system.CopyFile(src, dest); err != nil {
+				system.ErrorLog("Problems copying '%s' to '%s', continue with next file ...", src, dest)
+			}
+		}
+	}
+	if _, err := os.Stat(actions.SolutionSheets); os.IsNotExist(err) {
+		// missing working area /var/lib/saptune/working/sols/
+		system.WarningLog("missing the solutions in the working area, so copy solution definitions from package area to working area")
+		if err := os.MkdirAll(actions.SolutionSheets, 0755); err != nil {
+			system.ErrorExit("Problems creating directory '%s' - '%v'", actions.SolutionSheets, err)
+			return
+		}
+		packedSols := fmt.Sprintf("%ssols/", actions.PackageArea)
+		_, files := system.ListDir(packedSols, "")
+		for _, f := range files {
+			src := fmt.Sprintf("%s%s", packedSols, f)
+			dest := fmt.Sprintf("%s%s", actions.SolutionSheets, f)
+			if err := system.CopyFile(src, dest); err != nil {
+				system.ErrorLog("Problems copying '%s' to '%s', continue with next file ...", src, dest)
+			}
+		}
+	}
+}
+
+// checkSaptuneConfigFile checks the config file /etc/sysconfig/saptune
+// if it exists, if it contains all needed variables and for some variables
+// checks, if the values is valid
+// returns the saptune version and some log switches
+func checkSaptuneConfigFile(writer io.Writer, saptuneConf string, lswitch map[string]string) (string, map[string]string) {
+	missingKey := []string{}
+	keyList := []string{app.TuneForSolutionsKey, app.TuneForNotesKey, app.NoteApplyOrderKey, "SAPTUNE_VERSION", "STAGING"}
+	sconf, err := txtparser.ParseSysconfigFile(saptuneConf, false)
+	if err != nil {
+		fmt.Fprintf(writer, "Error: Unable to read file '%s': %v\n", saptuneConf, err)
+		system.ErrorExit("", 128)
+	}
+	// check, if all needed variables are available in the saptune
+	// config file
+	for _, key := range keyList {
+		if !sconf.IsKeyAvail(key) {
+			missingKey = append(missingKey, key)
+		}
+	}
+	if len(missingKey) != 0 {
+		fmt.Fprintf(writer, "Error: File '%s' is broken. Missing variables '%s'\n", saptuneConf, strings.Join(missingKey, ", "))
+		system.ErrorExit("", 128)
+	}
+	stageVal := sconf.GetString("STAGING", "")
+	if stageVal != "true" && stageVal != "false" {
+		fmt.Fprintf(writer, "Error: Variable 'STAGING' from file '%s' contains a wrong value '%s'. Needs to be 'true' or 'false'\n", saptuneConf, stageVal)
+		system.ErrorExit("", 128)
+	}
+
+	// set values read from the config file
+	saptuneVers := sconf.GetString("SAPTUNE_VERSION", "")
+	// Switch Debug on ("1") or off ("0" - default)
+	// Switch verbose mode on ("on" - default) or off ("off")
+	// check, if DEBUG or VERBOSE is set in /etc/sysconfig/saptune
+	if lswitch["debug"] == "" {
+		lswitch["debug"] = sconf.GetString("DEBUG", "0")
+	}
+	if lswitch["verbose"] == "" {
+		lswitch["verbose"] = sconf.GetString("VERBOSE", "on")
+	}
+	return saptuneVers, lswitch
 }

@@ -22,11 +22,6 @@ type ParameterNotes struct {
 	AllNotes []ParameterNoteEntry
 }
 
-// SaptuneParameterStateDir defines the directory where to store the
-// parameter state files
-// separated from the note state file directory
-const SaptuneParameterStateDir = "/var/lib/saptune/parameter"
-
 // GetPathToParameter returns path to the serialised parameter state file.
 func GetPathToParameter(param string) string {
 	return path.Join(SaptuneParameterStateDir, param)
@@ -70,7 +65,7 @@ func CreateParameterStartValues(param, value string) {
 	}
 	pEntries = GetSavedParameterNotes(param)
 	if len(pEntries.AllNotes) == 0 {
-		//system.InfoLog("Write parameter start value '%s' to file '%s'", value, GetPathToParameter(param))
+		system.DebugLog("Write parameter start value '%s' to file '%s'", value, GetPathToParameter(param))
 		// file does not exist, create start entry
 		pEntry := ParameterNoteEntry{
 			NoteID: "start",
@@ -91,7 +86,7 @@ func AddParameterNoteValues(param, value, noteID string) {
 	}
 	pEntries = GetSavedParameterNotes(param)
 	if len(pEntries.AllNotes) != 0 && !IDInParameterList(noteID, pEntries.AllNotes) {
-		//system.InfoLog("Write note '%s' parameter value '%s' to file '%s'", noteID, value, GetPathToParameter(param))
+		system.DebugLog("Write note '%s' parameter value '%s' to file '%s'", noteID, value, GetPathToParameter(param))
 		// file exis
 		pEntry := ParameterNoteEntry{
 			NoteID: noteID,
