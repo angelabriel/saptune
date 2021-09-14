@@ -21,14 +21,14 @@ jobs:
       - name: Set ENV for codeclimate (pull_request)
         run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.head_ref }}:refs/remotes/origin/${{ github.head_ref }}
-          echo "::set-env name=GIT_BRANCH::${{ github.head_ref }}"
-          echo "::set-env name=GIT_COMMIT_SHA::$(git rev-parse origin/${{ github.head_ref }})"
+          echo "GIT_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
+          echo "GIT_COMMIT_SHA=$(git rev-parse origin/${{ github.head_ref }})" >> $GITHUB_ENV
         if: github.event_name == 'pull_request'
 
       - name: Set ENV for codeclimate (push)
         run: |
-          echo "::set-env name=GIT_BRANCH::${{ github.ref }}"
-          echo "::set-env name=GIT_COMMIT_SHA::${{ github.sha }}"
+          echo "GIT_BRANCH=${{ github.ref }}" >> $GITHUB_ENV
+          echo "GIT_COMMIT_SHA=${{ github.sha }}" >> $GITHUB_ENV
         if: github.event_name == 'push'
 
       - name: Download test coverage reporter
