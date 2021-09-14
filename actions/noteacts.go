@@ -20,7 +20,7 @@ func NoteAction(actionName, noteID, newNoteID string, tuneApp *app.App) {
 	case "apply":
 		NoteActionApply(os.Stdout, noteID, tuneApp)
 	case "list":
-		NoteActionList(os.Stdout, tuneApp, tuningOptions)
+		NoteActionList(os.Stdout, tuneApp)
 	case "verify":
 		NoteActionVerify(os.Stdout, noteID, tuneApp)
 	case "simulate":
@@ -74,11 +74,11 @@ func NoteActionApply(writer io.Writer, noteID string, tuneApp *app.App) {
 }
 
 // NoteActionList lists all available Note definitions
-func NoteActionList(writer io.Writer, tuneApp *app.App, tOptions note.TuningOptions) {
+func NoteActionList(writer io.Writer, tuneApp *app.App) {
 	fmt.Fprintf(writer, "\nAll notes (+ denotes manually enabled notes, * denotes notes enabled by solutions, - denotes notes enabled by solutions but reverted manually later, O denotes override file exists for note, C denotes custom note):\n")
 	solutionNoteIDs := tuneApp.GetSortedSolutionEnabledNotes()
-	for _, noteID := range tOptions.GetSortedIDs() {
-		noteObj := tOptions[noteID]
+	for _, noteID := range tuneApp.GetSortedAllNotes() {
+		noteObj := tuneApp.AllNotes[noteID]
 		format := "\t%s\t\t%s\n"
 		if len(noteID) >= 8 {
 			format = "\t%s\t%s\n"
@@ -282,14 +282,17 @@ func NoteActionDelete(reader io.Reader, writer io.Writer, noteID string, tuneApp
 
 	// check, if note is active - applied
 	if _, ok := tuneApp.IsNoteApplied(noteID); ok {
-		system.NoticeLog("The Note definition file you want to delete is currently in use, which means it is already applied.")
-		system.NoticeLog("So please 'revert' the Note first and then try deleting again.\n")
-		system.ErrorExit("", 0)
+		system.ErrorExit("The Note definition file you want to delete is currently in use, which means it is already applied.\nSo please 'revert' the Note first and then try deleting again.")
 	}
 
 	if !extraNote && !overrideNote {
 		system.ErrorExit("The Note definition file you want to delete is a saptune internal (shipped) Note and can NOT be deleted. Exiting ...")
 	}
+	inSolution, _ := getNoteInSol(tuneApp, noteID)
+	if inSolution != "" {
+		system.ErrorExit("The Note definition file you want to delete is part of a Solution(s) (%s). Please fix the Solution first and then try deleting again.", inSolution)
+	}
+
 	if !extraNote && overrideNote {
 		// system note, override file exists
 		txtConfirm = fmt.Sprintf("Note to delete is a saptune internal (shipped) Note, so it can NOT be deleted. But an override file for the Note exists.\nDo you want to remove the override file for Note %s?", noteID)
@@ -338,9 +341,11 @@ func NoteActionRename(reader io.Reader, writer io.Writer, noteID, newNoteID stri
 
 	// check, if note is active - applied
 	if _, ok := tuneApp.IsNoteApplied(noteID); ok {
-		system.NoticeLog("The Note definition file you want to rename is currently in use, which means it is already applied.")
-		system.NoticeLog("So please 'revert' the Note first and then try renaming again.\n")
-		system.ErrorExit("", 0)
+		system.ErrorExit("The Note definition file you want to rename is currently in use, which means it is already applied.\nSo please 'revert' the Note first and then try renaming again.")
+	}
+	inSolution, _ := getNoteInSol(tuneApp, noteID)
+	if inSolution != "" {
+		system.ErrorExit("The Note definition file you want to rename is part of a Solution(s) (%s). Please fix the Solution first and then try renaming again.", inSolution)
 	}
 
 	if extraNote && overrideNote {

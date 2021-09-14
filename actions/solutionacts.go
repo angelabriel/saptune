@@ -15,7 +15,6 @@ import (
 )
 
 var solTemplate = "/usr/share/saptune/SolutionTemplate.conf"
-var solutionSelector = system.GetSolutionSelector()
 
 // SolutionAction  Solution actions like apply, revert, verify asm.
 func SolutionAction(actionName, solName, newSolName string, tuneApp *app.App) {
@@ -79,7 +78,6 @@ func SolutionActionApply(writer io.Writer, solName string, tuneApp *app.App) {
 // SolutionActionList lists all available solution definitions
 func SolutionActionList(writer io.Writer, tuneApp *app.App) {
 	setColor := false
-	solutionSelector := system.GetSolutionSelector()
 	fmt.Fprintf(writer, "\nAll solutions (* denotes enabled solution, O denotes override file exists for solution, C denotes custom solutions, D denotes deprecated solutions):\n")
 	for _, solName := range solution.GetSortedSolutionNames(solutionSelector) {
 		format := "\t%-18s -"
@@ -361,9 +359,7 @@ func SolutionActionDelete(reader io.Reader, writer io.Writer, solName string, tu
 
 	// check, if solution is active - applied
 	if i := sort.SearchStrings(tuneApp.TuneForSolutions, solName); i < len(tuneApp.TuneForSolutions) && tuneApp.TuneForSolutions[i] == solName {
-		system.NoticeLog("The Solution file you want to delete is currently in use, which means the Solution is already applied.")
-		system.NoticeLog("So please 'revert' the Solution first and then try deleting again.\n")
-		system.ErrorExit("", 0)
+		system.ErrorExit("The Solution file you want to delete is currently in use, which means the Solution is already applied.\nSo please 'revert' the Solution first and then try deleting again.")
 	}
 
 	if !extraSol && !overrideSol {
@@ -420,9 +416,7 @@ func SolutionActionRename(reader io.Reader, writer io.Writer, solName, newSolNam
 
 	// check, if solution is active - applied
 	if i := sort.SearchStrings(tuneApp.TuneForSolutions, solName); i < len(tuneApp.TuneForSolutions) && tuneApp.TuneForSolutions[i] == solName {
-		system.NoticeLog("The Solution definition file you want to rename is currently in use, which means the Solution is already applied.")
-		system.NoticeLog("So please 'revert' the Solution first and then try renaming it again.\n")
-		system.ErrorExit("", 0)
+		system.ErrorExit("The Solution definition file you want to rename is currently in use, which means the Solution is already applied.\nSo please 'revert' the Solution first and then try renaming again.")
 	}
 
 	if extraSol && overrideSol {
@@ -491,4 +485,39 @@ func replaceSolName(r io.Reader, w io.Writer, oldSol, newSol string) error {
 		}
 	}
 	return sc.Err()
+}
+
+// getNoteInSol checks, if a Note is part of a Solution
+// returns Solution names
+func getNoteInSol(tApp *app.App, noteName string) (string, string) {
+	noteInSols := ""
+	noteInCustomSols := ""
+	sols := []string{}
+	for sol := range tApp.AllSolutions {
+		sols = append(sols, sol)
+	}
+	sort.Strings(sols)
+	for _, sol := range sols {
+		for _, noteID := range tApp.AllSolutions[sol] {
+			if noteName != noteID {
+				continue
+			}
+			// note is part of solution sol
+			if len(noteInSols) == 0 {
+				noteInSols = sol
+			} else {
+				noteInSols = fmt.Sprintf("%s, %s", noteInSols, sol)
+			}
+			// check for custom solution
+			if len(solution.CustomSolutions[solutionSelector][sol]) != 0 {
+				// sol is custom solution
+				if len(noteInCustomSols) == 0 {
+					noteInCustomSols = sol
+				} else {
+					noteInCustomSols = fmt.Sprintf("%s, %s", noteInCustomSols, sol)
+				}
+			}
+		}
+	}
+	return noteInSols, noteInCustomSols
 }

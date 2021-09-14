@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/SUSE/saptune/app"
-	"github.com/SUSE/saptune/sap/note"
 	"github.com/SUSE/saptune/system"
 	"io"
 	"os"
@@ -53,8 +52,8 @@ var RPMVersion = "undef"
 // built and released packages (not possible because of 'reproducible' builds)
 var RPMDate = "undef"
 
-// Collection of tuning options from SAP notes and 3rd party vendors.
-var tuningOptions = note.GetTuningOptions(NoteTuningSheets, ExtraTuningSheets)
+// solutionSelector used in solutionacts and statgingacts
+var solutionSelector = system.GetSolutionSelector()
 
 // set colors for the table and list output
 //var setBlueText = "\033[34m"
@@ -169,9 +168,13 @@ func getFileName(defName, workingDir, extraDir string) (string, bool) {
 		// Note/solution is NOT an internal Note/solution,
 		// but may be a custom Note/solution
 		extraDef = true
+		chkName := defName
+		if defType == "Note" {
+			chkName = defName + ".conf"
+		}
 		_, files := system.ListDir(extraDir, "")
 		for _, f := range files {
-			if strings.HasPrefix(f, defName) {
+			if f == chkName {
 				fileName = fmt.Sprintf("%s%s", extraDir, f)
 			}
 		}

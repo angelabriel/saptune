@@ -174,7 +174,7 @@ func GetSystemState() (string, error) {
 	out, err := exec.Command(systemctlCmd, "is-system-running").CombinedOutput()
 	DebugLog("IsSystemRunning - /usr/bin/systemctl is-system-running : '%+v %s'", err, string(out))
 	if len(out) != 0 {
-		retval = string(out)
+		retval = strings.TrimSpace(string(out))
 	}
 	return retval, err
 }
@@ -323,7 +323,7 @@ func TunedAdmProfile(profileName string) error {
 func GetTunedAdmProfile() string {
 	out, err := exec.Command(tunedAdmCmd, "active").CombinedOutput()
 	if err != nil {
-		_ = ErrorLog("Failed to call tuned-adm to get the active profile - %v %s", err, string(out))
+		InfoLog("Failed to call tuned-adm to get the active profile - %v %s", err, string(out))
 		return ""
 	}
 	re := regexp.MustCompile(`Current active profile: ([\w-]+)`)

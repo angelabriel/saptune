@@ -131,9 +131,11 @@ func (ior BlockDeviceNrRequests) Apply(blkdev interface{}) error {
 		// do not use the stored (and may be outdated) value from
 		// blkDev.BlockAttributes[bdev]["IO_SCHEDULER"]
 		// need the current elevator, so need to ask again.
+		// and in case of 'revert' we do not have blkDev.BlockAttributes
 		elev, _ := system.GetSysChoice(path.Join("block", bdev, "queue", "scheduler"))
 		if elev == "none" {
-			nrtags := blkDev.BlockAttributes[bdev]["NR_TAGS"]
+			nrtags, _ := system.GetSysString(path.Join("block", bdev, "mq", "0", "nr_tags"))
+			// future - change message in case of 'revert'
 			system.ErrorLog("skipping device '%s', not valid for setting 'number of requests' to '%v'.\n The SAP recommendation does not work in the context of multiqueue block framework. Maximal supported value by the hardware is '%v'\n.", bdev, nrreq, nrtags)
 		} else {
 			system.WarningLog("skipping device '%s', not valid for setting 'number of requests' to '%v'", bdev, nrreq)
@@ -304,7 +306,7 @@ func IsValidScheduler(blockdev, scheduler string) bool {
 			}
 		}
 	}
-	system.WarningLog("'%s' is not a valid scheduler for device '%s', skipping.", scheduler, blockdev)
+	system.InfoLog("'%s' is not a valid scheduler for device '%s', skipping.", scheduler, blockdev)
 	return false
 }
 

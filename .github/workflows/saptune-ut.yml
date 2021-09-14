@@ -1,0 +1,56 @@
+name: saptuneUnittst
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on pull request events but only for the master and sle-12 branch
+  push:
+    branches: [ saptune_test ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CC_TEST_REPORTER_URL: https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
+  CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+
+jobs:
+  saptuneUt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set ENV for codeclimate (pull_request)
+        run: |
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.head_ref }}:refs/remotes/origin/${{ github.head_ref }}
+          echo "::set-env name=GIT_BRANCH::${{ github.head_ref }}"
+          echo "::set-env name=GIT_COMMIT_SHA::$(git rev-parse origin/${{ github.head_ref }})"
+        if: github.event_name == 'pull_request'
+
+      - name: Set ENV for codeclimate (push)
+        run: |
+          echo "::set-env name=GIT_BRANCH::${{ github.ref }}"
+          echo "::set-env name=GIT_COMMIT_SHA::${{ github.sha }}"
+        if: github.event_name == 'push'
+
+      - name: Download test coverage reporter
+        run: |
+          curl -L $CC_TEST_REPORTER_URL > ./cc-test-reporter
+          chmod +x ./cc-test-reporter
+          ./cc-test-reporter before-build
+
+      - name: Pull the Docker Image
+        run: docker pull shap/crmsh:latest
+
+      - name: Run Docker Image
+        run: docker run --name travis-st-ci --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -td -v "${{ github.workspace }}:/app" shap/crmsh
+
+      - name: Run saptune unit tests
+        run: docker exec -t travis-st-ci /bin/sh -c "cd /app; ./run_travis_tst.sh;"
+
+      - name: Run saptune unit tests
+        run: |
+          docker stop travis-st-ci
+          docker rm travis-st-ci
+
+      - name: Report coverage
+        run: ./cc-test-reporter after-build --exit-code $?
+

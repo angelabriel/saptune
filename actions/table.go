@@ -11,14 +11,13 @@ import (
 )
 
 // PrintNoteFields Print mismatching fields in the note comparison result.
-//func PrintNoteFields(header string, noteComparisons map[string]map[string]note.FieldComparison, printComparison bool) {
 func PrintNoteFields(writer io.Writer, header string, noteComparisons map[string]map[string]note.FieldComparison, printComparison bool) {
 
 	// initialise
 	compliant := "yes"
 	printHead := ""
 	noteField := ""
-	footnote := make([]string, 14, 14)
+	footnote := make([]string, 15, 15)
 	reminder := make(map[string]string)
 	override := ""
 	comment := ""
