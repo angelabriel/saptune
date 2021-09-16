@@ -66,6 +66,10 @@ func TestSetLoginVal(t *testing.T) {
 	if !system.CheckForPattern(utmFile, val) {
 		t.Errorf("wrong value in file '%s'\n", utmFile)
 	}
+	err = system.ResetFailed()
+	if err != nil {
+		t.Error(err)
+	}
 	val = "10813"
 	err = SetLoginVal("UserTasksMax", val, true)
 	if err != nil {

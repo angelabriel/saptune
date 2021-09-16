@@ -200,6 +200,26 @@ func IsSystemRunning() (bool, error) {
 	return match, nil
 }
 
+// ResetFailed checks, if any service if failed and the system is reported
+// as 'degraded'
+// If yes, try to reset the failed sevices
+func ResetFailed() error {
+	state, err := GetSystemState()
+	DebugLog("ResetFailed - GetSystemState returned : '%+v %s'", err, state)
+	if err != nil {
+		return ErrorLog("%v - Failed to call GetSystemState", err)
+	}
+	if state == "degraded" {
+		DebugLog("ResetFailed - system is degraded")
+		out, err := exec.Command(systemctlCmd, "reset-failed").CombinedOutput()
+		if err != nil {
+			return ErrorLog("%v - Failed to call systemctl reset-failed - %v", err, string(out))
+		}
+		DebugLog("ResetFailed - reset failed state")
+	}
+	return err
+}
+
 // IsServiceAvailable checks, if a systemd service is available on the system
 func IsServiceAvailable(service string) bool {
 	match := false
