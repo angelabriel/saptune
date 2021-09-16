@@ -206,8 +206,9 @@ func IsSystemRunning() (bool, error) {
 func ResetFailed() error {
 	state, err := GetSystemState()
 	DebugLog("ResetFailed - GetSystemState returned : '%+v %s'", err, state)
-	if err != nil {
-		return ErrorLog("%v - Failed to call GetSystemState", err)
+	if err == nil {
+		// state is ok
+		return err
 	}
 	if state == "degraded" {
 		DebugLog("ResetFailed - system is degraded")

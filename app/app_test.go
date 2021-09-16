@@ -137,11 +137,7 @@ func TestReadConfig(t *testing.T) {
 	}
 
 	// Read from testdata config 'testdata/etc/sysconfig/saptune'
-	_, err := os.Stat(path.Join(TstFilesInGOPATH, SysconfigSaptuneFile))
 	tuneApp = InitialiseApp(TstFilesInGOPATH, "", AllTestNotes, AllTestSolutions)
-	fmt.Printf("ANGI: TstFilesInGOPATH is '%+v', SysconfigSaptuneFile is '%+v', tuneApp is '%+v' - err is '%+v'\n", TstFilesInGOPATH, SysconfigSaptuneFile, tuneApp, err)
-	content, cerr := ioutil.ReadFile(path.Join(TstFilesInGOPATH, SysconfigSaptuneFile))
-	fmt.Printf("ANGI: content is '%+v', cerr is '%+v'\n", string(content), cerr)
 	matchTxt := `
 current order of enabled notes is: 2205917 2684254 1680803
 
