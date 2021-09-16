@@ -55,6 +55,8 @@ sleep 10
 ps -ef
 loginctl --no-pager
 
+systemctl status systemd-logind.service
+
 echo "exchange /etc/os-release"
 cp /etc/os-release /etc/os-release_OrG
 

@@ -45,6 +45,7 @@ func TestSetLoginVal(t *testing.T) {
 	utmFile := "/etc/systemd/logind.conf.d/saptune-UserTasksMax.conf"
 	val := "18446744073709"
 
+	sleep 5
 	err := SetLoginVal("UserTasksMax", val, false)
 	if err != nil {
 		t.Error(err)
@@ -55,6 +56,7 @@ func TestSetLoginVal(t *testing.T) {
 	if !system.CheckForPattern(utmFile, val) {
 		t.Errorf("wrong value in file '%s'\n", utmFile)
 	}
+	sleep 5
 	val = "infinity"
 	err = SetLoginVal("UserTasksMax", val, false)
 	if err != nil {
@@ -66,6 +68,7 @@ func TestSetLoginVal(t *testing.T) {
 	if !system.CheckForPattern(utmFile, val) {
 		t.Errorf("wrong value in file '%s'\n", utmFile)
 	}
+	sleep 5
 	val = "10813"
 	err = SetLoginVal("UserTasksMax", val, true)
 	if err != nil {
