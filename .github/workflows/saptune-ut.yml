@@ -54,7 +54,7 @@ jobs:
       - name: Code Climate test reporter
         env:
             CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-        run: ./cc-test-reporter after-build --prefix github.com/SUSE/ --exit-code $?
+        run: ./cc-test-reporter after-build --debug --prefix ${{github.workspace}} --exit-code $?
 
       - name: Stop and remove Docker Image
         run: |
