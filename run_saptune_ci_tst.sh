@@ -16,20 +16,20 @@ systemctl --no-pager status
 systemctl reset-failed
 systemctl --no-pager status
 
-echo "PATH is $PATH, GOPATH is $GOPATH, TRAVIS_HOME is $TRAVIS_HOME"
+echo "PATH is $PATH, GOPATH is $GOPATH, CI_TST_HOME is $CI_TST_HOME"
 
-export TRAVIS_HOME=/home/travis
-mkdir -p ${TRAVIS_HOME}/gopath/src/github.com/SUSE
-cd ${TRAVIS_HOME}/gopath/src/github.com/SUSE
+export CI_TST_HOME=/home/ci_tst
+mkdir -p ${CI_TST_HOME}/gopath/src/github.com/SUSE
+cd ${CI_TST_HOME}/gopath/src/github.com/SUSE
 if [ ! -f saptune ]; then
 	ln -s /app saptune
 fi
 export GO111MODULE=off
-export GOPATH=${TRAVIS_HOME}/gopath
-export PATH=${TRAVIS_HOME}/gopath/bin:$PATH
-export TRAVIS_BUILD_DIR=${TRAVIS_HOME}/gopath/src/github.com/SUSE/saptune
+export GOPATH=${CI_TST_HOME}/gopath
+export PATH=${CI_TST_HOME}/gopath/bin:$PATH
+export CI_TST_BUILD_DIR=${CI_TST_HOME}/gopath/src/github.com/SUSE/saptune
 
-echo "PATH is $PATH, GOPATH is $GOPATH, TRAVIS_HOME is $TRAVIS_HOME"
+echo "PATH is $PATH, GOPATH is $GOPATH, CI_TST_HOME is $CI_TST_HOME"
 echo "ls -l /etc/saptune/*"
 ls -l /etc/saptune/*
 
@@ -54,8 +54,6 @@ su --login nobody -c "sleep 4m" &
 sleep 10
 ps -ef
 loginctl --no-pager
-
-systemctl status systemd-logind.service
 
 echo "exchange /etc/os-release"
 cp /etc/os-release /etc/os-release_OrG

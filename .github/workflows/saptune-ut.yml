@@ -10,7 +10,7 @@ on:
 
 env:
   CC_TEST_REPORTER_URL: https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
-  CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+#  CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
 
 jobs:
   saptuneUt:
@@ -41,16 +41,25 @@ jobs:
         run: docker pull shap/crmsh:latest
 
       - name: Run Docker Image
-        run: docker run --name travis-st-ci --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -td -v "${{ github.workspace }}:/app" shap/crmsh
+        run: docker run --name saptune-ci --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -td -v "${{ github.workspace }}:/app" shap/crmsh
 
       - name: Run saptune unit tests
-        run: docker exec -t travis-st-ci /bin/sh -c "cd /app; ./run_travis_tst.sh;"
+        run: docker exec -t saptune-ci /bin/sh -c "cd /app; ./run_saptune_ci_tst.sh;"
 
-      - name: Run saptune unit tests
+      - name: Check test result file
         run: |
-          docker stop travis-st-ci
-          docker rm travis-st-ci
+          ls -l ${{github.workspace}}
 
-      - name: Report coverage
+      - name: Code Climate test reporter
+          env:
+            CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         run: ./cc-test-reporter after-build --exit-code $?
+
+      - name: Stop and remove Docker Image
+        run: |
+          docker stop saptune-ci
+          docker rm saptune-ci
+
+      # - name: Report coverage
+      #   run: ./cc-test-reporter after-build --exit-code $?
 
