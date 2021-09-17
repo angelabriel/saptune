@@ -49,7 +49,7 @@ jobs:
       - name: Check test result file
         run: |
           ls -l ${{github.workspace}}
-          grep action.go ${{github.workspace}}/c.out
+          grep action ${{github.workspace}}/c.out
 
       - name: Code Climate test reporter
         env:
