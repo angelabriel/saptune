@@ -51,7 +51,7 @@ jobs:
           ls -l ${{github.workspace}}
 
       - name: Code Climate test reporter
-          env:
+        env:
             CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         run: ./cc-test-reporter after-build --exit-code $?
 
