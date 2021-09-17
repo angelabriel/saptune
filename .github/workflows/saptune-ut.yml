@@ -10,7 +10,8 @@ on:
 
 env:
   CC_TEST_REPORTER_URL: https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
-#  CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+  CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+  CC_PREFIX: github.com/SUSE/saptune/
 
 jobs:
   saptuneUt:
@@ -31,11 +32,6 @@ jobs:
           echo "GIT_COMMIT_SHA=${{ github.sha }}" >> $GITHUB_ENV
         if: github.event_name == 'push'
 
-      - name: Set codeclimate prefix
-        run: |
-          echo "CC_PREFIX=github.com/SUSE/saptune/" >> $GITHUB_ENV
-          #echo "CC_PREFIX=$(go list -m)" >> $GITHUB_ENV
-
       - name: Download test coverage reporter
         run: |
           curl -L $CC_TEST_REPORTER_URL > ./cc-test-reporter
@@ -51,23 +47,16 @@ jobs:
       - name: Run saptune unit tests
         run: docker exec -t saptune-ci /bin/sh -c "cd /app; ./run_saptune_ci_tst.sh;"
 
-      - name: Check test result file
-        run: |
-          ls -l ${{github.workspace}}
-          grep action ${{github.workspace}}/c.out
+      #- name: Check test result file for debug
+        #run: |
+          #ls -l ${{github.workspace}}
+          #grep action ${{github.workspace}}/c.out
 
-      - name: Code Climate test reporter
-        env:
-            CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-        run: |
-          echo "CC_PREFIX is ${{ env.CC_PREFIX }} or $CC_PREFIX"
-          ./cc-test-reporter after-build --debug --prefix github.com/SUSE/saptune/ --exit-code $?
+      - name: Code Climate report coverage
+        run: ./cc-test-reporter after-build --debug --prefix ${{ env.CC_PREFIX }} --exit-code $?
 
       - name: Stop and remove Docker Image
         run: |
           docker stop saptune-ci
           docker rm saptune-ci
-
-      # - name: Report coverage
-      #   run: ./cc-test-reporter after-build --exit-code $?
 
