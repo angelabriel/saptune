@@ -42,7 +42,7 @@ jobs:
         run: docker pull registry.opensuse.org/home/angelabriel/st-ci-base/containers/st-ci-base:latest
 
       - name: Run Docker Image
-        run: docker run --name saptune-ci --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -td -v "${{ github.workspace }}:/app" home/angelabriel/st-ci-base/containers/st-ci-base
+        run: docker run --name saptune-ci --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -td -v "${{ github.workspace }}:/app" registry.opensuse.org/home/angelabriel/st-ci-base/containers/st-ci-base:latest
 
       - name: Run saptune unit tests
         run: docker exec -t saptune-ci /bin/sh -c "cd /app; ./run_saptune_ci_tst.sh;"
