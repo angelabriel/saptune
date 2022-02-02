@@ -1,16 +1,8 @@
 #!/bin/sh
 
-# this tests do not need any HA/cluster stuff, so remove the repo
-echo "zypper remove unneeded repo"
-zypper rr network:ha-clustering:Factory
-
 echo "zypper in ..."
-#/bin/systemctl start dbus -> does not work any longer
-# additional libs needed to get 'tuned' working
-zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in glib2 glib2-tools libgio-2_0-0 libglib-2_0-0 libgmodule-2_0-0 libgobject-2_0-0 go1.10 go rpcbind cpupower uuidd polkit tuned sysstat
+zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go1.10 go rpcbind cpupower uuidd polkit tuned sysstat
 
-# dbus can not be started directly, only by dependency - so start 'tuned' instead
-/bin/systemctl start tuned
 systemctl --no-pager status
 # try to resolve systemd status 'degraded'
 systemctl reset-failed

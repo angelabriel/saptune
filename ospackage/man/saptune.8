@@ -21,10 +21,8 @@ saptune \- Comprehensive system optimisation management for SAP solutions (\fBVe
 ATTENTION: If you still use version \fB1\fP of saptune it's now time to migrate to saptune version \fB3\fP, so please refer to man page saptune-migrate(7).
 
 .SH SYNOPSIS
-ATTENTION: deprecated
-.br
 \fBsaptune daemon\fP
-[ start | status | stop ]
+[ start | status | stop ] \fBATTENTION: deprecated\fP
 
 \fBsaptune service\fP
 [ start | status | stop | restart | takeover | enable | disable | enablestart | disablestop ]
@@ -111,31 +109,43 @@ If the action was successfully the exit code is 0, otherwise 1.
 Reports the following status information on stdout:
 .RS 5
 .IP \[bu] 2
-status of saptune.service (enabled/disabled, running/stopped)
+status of saptune.service (enabled/disabled, active/inactive/failed/...the other possible unit states...)
 .IP \[bu]
 saptune package version
 .IP \[bu]
 configured saptune major version (from \fI/etc/sysconfig/saptune\fP)
 .IP \[bu]
-configured Solution and Notes
+configured Solution
+.br
+The entry 'configured Solution' shows the Solution, which was manually applied by '\fIsaptune solution apply <solution name>\fP'.
+.IP \[bu]
+configured Notes
+.br
+The entry 'configured Notes' shows all Notes, which were manually applied by '\fIsaptune note apply <note name>\fP'. They are \fBone\fP part of the list of notes in the entry 'applied Notes' and 'order of enabled Notes'.
 .IP \[bu]
 all selected Notes in applied order
+.br
+The list of 'order of enabled Notes' includes all Notes from 'configured Notes' and additional all the Notes related to the 'configured Solution' too. The list shows the order in which these Notes were applied and will be re-applied after a system reboot, if the \fBsaptune.service\fP is enabled.
 .IP \[bu]
 all currently applied Notes, sorted lexicographically
+.br
+The list of 'applied Notes' includes the \fBmanually\fP applied Notes. Additional it includes all the Notes related to the 'configured Solution' too. These Notes get applied when using '\fIsaptune solution apply\fP'. The solutions and their related notes can be listed by '\fIsaptune solution list\fP'.
+
+And additional 'applied Notes' shows you, if your system is '\fBactively\fP' tuned at the moment. If the list is empty, your system is \fBnot\fP tuned. If the list is \fBnot\fP empty, your system \fBis\fP tuned.
 .IP \[bu]
 state of staging
 .IP \[bu]
 all objects in staging area
 .IP \[bu]
-status of sapconf.service (enabled/disabled, running/stopped)
+status of sapconf.service (enabled/disabled, active/inactive/failed/...the other possible unit states...)
 .IP \[bu]
-status of tuned (enabled/disabled, running/stopped, profile)
+status of tuned (enabled/disabled, active/inactive/failed/...the other possible unit states..., profile)
 .IP \[bu]
-systemd status
+the overall systemd 'system' status, read from \fI'systemctl is-system-running'\fP (running, degraded, ....)
 
 This information is not logged, but only printed to stdout.
 
-If saptune.service is not running(stopped) the exit code is 1, if the system is '\fBnot tuned\fP' - which means no Note or Solution is enabled - the exit code is 3, otherwise the exit code is 0.
+If saptune.service is \fBnot\fP 'active' the exit code is 1, if the system is '\fBnot tuned\fP' - which means no Note or Solution is enabled - the exit code is 3, otherwise the exit code is 0.
 .SS
 .TP
 .B stop

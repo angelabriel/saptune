@@ -4,7 +4,6 @@ import (
 	"github.com/SUSE/saptune/system"
 	"os"
 	"testing"
-	"time"
 )
 
 func TestGetLoginVal(t *testing.T) {
@@ -46,7 +45,6 @@ func TestSetLoginVal(t *testing.T) {
 	utmFile := "/etc/systemd/logind.conf.d/saptune-UserTasksMax.conf"
 	val := "18446744073709"
 
-	time.Sleep(5 * time.Second)
 	err := SetLoginVal("UserTasksMax", val, false)
 	if err != nil {
 		t.Error(err)
@@ -57,7 +55,6 @@ func TestSetLoginVal(t *testing.T) {
 	if !system.CheckForPattern(utmFile, val) {
 		t.Errorf("wrong value in file '%s'\n", utmFile)
 	}
-	time.Sleep(5 * time.Second)
 	val = "infinity"
 	err = SetLoginVal("UserTasksMax", val, false)
 	if err != nil {
@@ -69,12 +66,10 @@ func TestSetLoginVal(t *testing.T) {
 	if !system.CheckForPattern(utmFile, val) {
 		t.Errorf("wrong value in file '%s'\n", utmFile)
 	}
-	time.Sleep(5 * time.Second)
 	val = "10813"
 	err = SetLoginVal("UserTasksMax", val, true)
 	if err != nil {
-		serr := system.SystemctlStatus("systemd-logind.service")
-		t.Error(err, serr)
+		t.Error(err)
 	}
 	if _, err = os.Stat(utmFile); err == nil {
 		os.Remove(utmFile)

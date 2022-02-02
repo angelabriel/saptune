@@ -168,6 +168,17 @@ func SystemctlIsRunning(thing string) (bool, error) {
 	return match, nil
 }
 
+// SystemctlIsActive return true only if systemctl suggests that the thing is
+// running.
+func SystemctlIsActive(thing string) (string, error) {
+	out, err := exec.Command(systemctlCmd, "is-active", thing).CombinedOutput()
+	DebugLog("SystemctlIsRunning - /usr/bin/systemctl is-active : '%+v %s'", err, string(out))
+	if len(out) == 0 && err != nil {
+		return "", ErrorLog("%v - Failed to call systemctl is-active", err)
+	}
+	return strings.TrimSpace(string(out)), err
+}
+
 // GetSystemState returns the output of 'systemctl is-system-running'
 func GetSystemState() (string, error) {
 	retval := ""
@@ -198,27 +209,6 @@ func IsSystemRunning() (bool, error) {
 		return match, ErrorLog("%v - Failed to call systemctl is-system-running", err)
 	}
 	return match, nil
-}
-
-// ResetFailed checks, if any service if failed and the system is reported
-// as 'degraded'
-// If yes, try to reset the failed sevices
-func ResetFailed() error {
-	state, err := GetSystemState()
-	DebugLog("ResetFailed - GetSystemState returned : '%+v %s'", err, state)
-	if err == nil {
-		// state is ok
-		return err
-	}
-	if state == "degraded" {
-		DebugLog("ResetFailed - system is degraded")
-		out, err := exec.Command(systemctlCmd, "reset-failed").CombinedOutput()
-		if err != nil {
-			return ErrorLog("%v - Failed to call systemctl reset-failed - %v", err, string(out))
-		}
-		DebugLog("ResetFailed - reset failed state")
-	}
-	return err
 }
 
 // IsServiceAvailable checks, if a systemd service is available on the system

@@ -61,7 +61,7 @@ var setUpSol = func(t *testing.T) {
 	solution.OverrideSolutions = solution.GetOtherSolution(OverTstFilesInGOPATH, noteFiles, "")
 	solution.DeprecSolutions = solution.GetOtherSolution(DeprecFilesInGOPATH, "", "")
 	//solution.AllSolutions = solution.GetSolutionDefintion(solution.SolutionSheets)
-	solution.AllSolutions = solution.GetSolutionDefintion(SolutionSheetsInGOPATH)
+	solution.AllSolutions = solution.GetSolutionDefintion(SolutionSheetsInGOPATH, extraNoteFiles, noteFiles)
 }
 
 var tearDownSol = func(t *testing.T) {
@@ -70,7 +70,7 @@ var tearDownSol = func(t *testing.T) {
 	solution.OverrideSolutions = solution.GetOtherSolution("", "", "")
 	solution.DeprecSolutions = solution.GetOtherSolution("", "", "")
 	//solution.AllSolutions = solution.GetSolutionDefintion(solution.SolutionSheets)
-	solution.AllSolutions = solution.GetSolutionDefintion(SolutionSheetsInGOPATH)
+	solution.AllSolutions = solution.GetSolutionDefintion(SolutionSheetsInGOPATH, ExtraTuningSheets, NoteTuningSheets)
 }
 
 var setUp = func(t *testing.T) {
@@ -149,6 +149,8 @@ Parameters tuned by the notes and solutions have been successfully reverted.
 `)
 
 	buffer.Reset()
+	// reset tApp variables, which were deleted by 'revert all'
+	tearDown(t)
 	errExitbuffer := bytes.Buffer{}
 	tstwriter = &errExitbuffer
 	RevertAction(&buffer, "NotAll", tApp)
@@ -161,6 +163,8 @@ Parameters tuned by the notes and solutions have been successfully reverted.
 	if errExOut != "" {
 		t.Errorf("wrong text returned by ErrorExit: '%v' instead of ''\n", errExOut)
 	}
+	// reset tApp variables, which were deleted by 'revert all'
+	tearDown(t)
 }
 
 func TestGetFileName(t *testing.T) {

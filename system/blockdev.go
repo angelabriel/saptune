@@ -18,18 +18,18 @@ type BlockDev struct {
 }
 
 // IsSched matches block device scheduler tag
-var IsSched = regexp.MustCompile(`^IO_SCHEDULER_\w+$`)
+var IsSched = regexp.MustCompile(`^IO_SCHEDULER_\w+\-?\d*$`)
 
 // IsNrreq matches block device nrreq tag
-var IsNrreq = regexp.MustCompile(`^NRREQ_\w+$`)
+var IsNrreq = regexp.MustCompile(`^NRREQ_\w+\-?\d*$`)
 
 // IsRahead matches block device read_ahead_kb tag
-var IsRahead = regexp.MustCompile(`^READ_AHEAD_KB_\w+$`)
+var IsRahead = regexp.MustCompile(`^READ_AHEAD_KB_\w+\-?\d*$`)
 
 // IsMsect matches block device max_sectors_kb tag
-var IsMsect = regexp.MustCompile(`^MAX_SECTORS_KB_\w+$`)
+var IsMsect = regexp.MustCompile(`^MAX_SECTORS_KB_\w+\-?\d*$`)
 
-var isVD = regexp.MustCompile(`^vd\w+$`)
+var isVD = regexp.MustCompile(`^x?vd\w+$`)
 
 // devices like /dev/nvme0n1 are the NVME storage namespaces: the devices you
 // use for actual storage, which will behave essentially as disks.
@@ -74,10 +74,9 @@ func GetBlockDeviceInfo() (*BlockDev, error) {
 
 // getValidBlockDevices reads all block devices from /sys/block
 // and select the block devices, which are 'real disks' or a multipath
-// device (/sys/block/*/dm/uuid starts with 'mpath-'
+// device (/sys/block/*/dm/uuid starts with 'mpath-')
 func getValidBlockDevices() (valDevs []string) {
 	var isMpath = regexp.MustCompile(`^mpath-\w+`)
-	var isMpathPart = regexp.MustCompile(`^part.*-mpath-\w+`)
 	var isLVM = regexp.MustCompile(`^LVM-\w+`)
 	candidates := []string{}
 	excludedevs := []string{}
@@ -90,18 +89,20 @@ func getValidBlockDevices() (valDevs []string) {
 			cont, _ := ioutil.ReadFile(dmUUID)
 			if isMpath.MatchString(string(cont)) {
 				candidates = append(candidates, bdev)
-			} else {
-				// skip unsupported devices
-				InfoLog("skipping device '%s', unsupported", bdev)
-			}
-			_, slaves := ListDir(fmt.Sprintf("/sys/block/%s/slaves", bdev), "dm slaves")
-			if len(slaves) != 0 && (isMpath.MatchString(string(cont)) || isLVM.MatchString(string(cont))) && !isMpathPart.MatchString(string(cont)) {
+				_, slaves := ListDir(fmt.Sprintf("/sys/block/%s/slaves", bdev), "dm slaves")
 				excludedevs = append(excludedevs, slaves...)
+			} else {
+				// skip not applicable devices
+				if isLVM.MatchString(string(cont)) {
+					InfoLog("skipping device '%s' (LVM), not applicable", bdev)
+				} else {
+					InfoLog("skipping device '%s', not applicable", bdev)
+				}
 			}
 		} else {
 			if !BlockDeviceIsDisk(bdev) {
-				// skip unsupported devices
-				InfoLog("skipping device '%s', unsupported", bdev)
+				// skip not applicable devices
+				InfoLog("skipping device '%s', not applicable", bdev)
 				continue
 			}
 			candidates = append(candidates, bdev)
@@ -114,8 +115,8 @@ func getValidBlockDevices() (valDevs []string) {
 		exclude := false
 		for _, edev := range excludedevs {
 			if bdev == edev {
-				// skip unsupported devices
-				InfoLog("skipping device '%s', md slaves unsupported", bdev)
+				// skip not applicable devices
+				InfoLog("skipping device '%s', not applicable for dm slaves", bdev)
 				exclude = true
 				break
 			}
@@ -143,6 +144,9 @@ func CollectBlockDeviceInfo() []string {
 
 		// Remember, GetSysChoice does not accept the leading /sys/
 		elev, _ := GetSysChoice(path.Join("block", bdev, "queue", "scheduler"))
+		if elev == "" {
+			elev, _ = GetSysString(path.Join("block", bdev, "queue", "scheduler"))
+		}
 		blockMap["IO_SCHEDULER"] = elev
 		val, err := ioutil.ReadFile(path.Join("/sys/block/", bdev, "/queue/scheduler"))
 		sched := ""
@@ -173,8 +177,18 @@ func CollectBlockDeviceInfo() []string {
 		model := ""
 		// virtio block devices do not have useful values.
 		if !isVD.MatchString(bdev) {
-			vendor, _ = GetSysString(path.Join("block", bdev, "device", "vendor"))
-			model, _ = GetSysString(path.Join("block", bdev, "device", "model"))
+			vendFile := path.Join("block", bdev, "device", "vendor")
+			if _, err := os.Stat(path.Join("/sys", vendFile)); err == nil {
+				vendor, _ = GetSysString(vendFile)
+			} else {
+				InfoLog("missing vendor information for block device '%s', file '%s' does not exist.", bdev, vendFile)
+			}
+			modelFile := path.Join("block", bdev, "device", "model")
+			if _, err := os.Stat(path.Join("/sys", modelFile)); err == nil {
+				model, _ = GetSysString(modelFile)
+			} else {
+				InfoLog("missing model information for block device '%s', file '%s' does not exist.", bdev, modelFile)
+			}
 		}
 		blockMap["VENDOR"] = vendor
 		blockMap["MODEL"] = model
