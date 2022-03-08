@@ -35,7 +35,7 @@ It is possible to limit the scope of a section (e.g. to a special \fIhardware ar
 .br
 Tags are separated by ':' and can appear in any order. Unsupported tags are considered an error and the whole section is ignored.
 .br
-For some tags the value of the tag is treated as a string and used as a regular expression to match the content of the respective source. This is mentioned in the description of the possible tags below. As a reference https://golang.org/pkg/regexp/#MatchString can be used to see, what additional expressions may be possible inside the tag value. But attention, only some basic ones are really supported (like 'sd[ab]' for block devices).
+For some tags the value of the tag is treated as a string and used as a regular expression to match the content of the respective source. This is mentioned in the description of the possible tags below. As a reference https://golang.org/pkg/regexp/#MatchString can be used to see, what additional expressions may be possible inside the tag value. But attention, only some basic ones are really supprted (like 'sd[ab]' for block devices).
 
 Attention: as the IBM Power platform (hardware architecture 'ppc64le') does not support files in \fI/sys/class/dmi\fP (the directory is not available on this hardware architecture) some of the tags listed below are not usable on Power systems for now.
 
