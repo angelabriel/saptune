@@ -11,6 +11,7 @@ import (
 	"path"
 	"reflect"
 	"testing"
+	"time"
 )
 
 var OSPackageInGOPATH = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/")
@@ -136,6 +137,7 @@ func TestReadConfig(t *testing.T) {
 		t.Fatal(tuneApp)
 	}
 
+	time.Sleep(5 * time.Second)
 	// Read from testdata config 'testdata/etc/sysconfig/saptune'
 	tApp := InitialiseApp(TstFilesInGOPATH, "", AllTestNotes, AllTestSolutions)
 	matchTxt := `
