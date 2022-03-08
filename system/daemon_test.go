@@ -109,7 +109,7 @@ func TestSystemctl(t *testing.T) {
 	if err != nil {
 		t.Error("systemctl reset-failed did not help")
 	}
-	sysState, err := GetSystemState()
+	sysState, err = GetSystemState()
 	if err != nil {
 		t.Fatal(err, sysState)
 	}
