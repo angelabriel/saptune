@@ -494,7 +494,7 @@ func TestStripComments(t *testing.T) {
 		t.Errorf("Test failed, expected: '%s', got: '%s'", exp, res)
 	}
 	str = "Test string without comment to strip"
-	exp = "Test string with"
+	exp = "Test string without comment to strip"
 	res = StripComment(str, "#")
 	if res != exp {
 		t.Errorf("Test failed, expected: '%s', got: '%s'", exp, res)
