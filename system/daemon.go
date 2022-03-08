@@ -74,6 +74,22 @@ func SystemctlReloadTryRestart(thing string) error {
 	return nil
 }
 
+// SystemctlResetFailed call systemctl reset-failed.
+func SystemctlResetFailed() error {
+	running, err := IsSystemRunning()
+	if err != nil {
+		return ErrorLog("%v - Failed to call systemctl reset-failed", err)
+	}
+	if running {
+		out, err := exec.Command(systemctlCmd, "reset-failed").CombinedOutput()
+		if err != nil {
+			return ErrorLog("%v - Failed to call systemctl reset-failed - %s", err, string(out))
+		}
+		DebugLog("SystemctlResetFailed( - /usr/bin/systemctl reset-failed : '%+v %s'", err, string(out))
+	}
+	return nil
+}
+
 // SystemctlStart call systemctl start on thing.
 func SystemctlStart(thing string) error {
 	running, err := IsSystemRunning()
@@ -183,7 +199,7 @@ func SystemctlIsActive(thing string) (string, error) {
 func GetSystemState() (string, error) {
 	retval := ""
 	out, err := exec.Command(systemctlCmd, "is-system-running").CombinedOutput()
-	DebugLog("IsSystemRunning - /usr/bin/systemctl is-system-running : '%+v %s'", err, string(out))
+	DebugLog("GetSystemState - /usr/bin/systemctl is-system-running : '%+v %s'", err, string(out))
 	if len(out) != 0 {
 		retval = strings.TrimSpace(string(out))
 	}
