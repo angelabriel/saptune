@@ -38,7 +38,7 @@ Remember: if you wish to automatically activate the solution's tuning options af
 All solutions (* denotes enabled solution, O denotes override file exists for solution, C denotes custom solutions, D denotes deprecated solutions):
 	BWA                - 941735 2534844 SAP_BWA
  O	HANA               - HANA1 NEWNOTE HANA2
-	MAXDB              - 941735 1771258 1984787
+ D	MAXDB              - 941735 1771258 1984787
 	NETW               - 941735 1771258 1980196 1984787 2534844
  C	NEWSOL1            - SOL1NOTE1 NEWSOL1NOTE SOL1NOTE2
  C	NEWSOL2            - SOL2NOTE1 NEWSOL2NOTE SOL2NOTE2
@@ -251,6 +251,8 @@ Revert all parameters tuned by the SAP notes or solutions:
   saptune revert all
 Remove the pending lock file from a former saptune call
   saptune lock remove
+Call external script '/usr/sbin/saptune_check'
+  saptune check
 Print current saptune status:
   saptune status
 Print current saptune version:
@@ -307,6 +309,8 @@ Revert all parameters tuned by the SAP notes or solutions:
   saptune revert all
 Remove the pending lock file from a former saptune call
   saptune lock remove
+Call external script '/usr/sbin/saptune_check'
+  saptune check
 Print current saptune status:
   saptune status
 Print current saptune version:
@@ -366,6 +370,8 @@ Revert all parameters tuned by the SAP notes or solutions:
   saptune revert all
 Remove the pending lock file from a former saptune call
   saptune lock remove
+Call external script '/usr/sbin/saptune_check'
+  saptune check
 Print current saptune status:
   saptune status
 Print current saptune version:
