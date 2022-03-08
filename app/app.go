@@ -53,6 +53,7 @@ func InitialiseApp(sysconfigPrefix, stateDirPrefix string, allNotes map[string]n
 		app.TuneForNotes = []string{}
 		app.NoteApplyOrder = []string{}
 	}
+	fmt.Printf("ANGI: InitialiseApp - sysconfigPrefix is '%+v', allNotes is '%+v', sysconfig is '%+v', err is '%+v', app.TuneForNotes is '%+v'\n", sysconfigPrefix, allNotes, sysconfig, err, app.TuneForNotes)
 	sort.Strings(app.TuneForSolutions)
 	sort.Strings(app.TuneForNotes)
 	// Never ever sort app.NoteApplyOrder !
