@@ -30,6 +30,9 @@ func SystemctlStatus(thing string) error {
 		return ErrorLog("%v - Failed to call systemctl status on %s - %s", err, thing, string(out))
 	}
 	NoticeLog("SystemctlStatus - '%+v'\n", string(out))
+	if thing == "systemd-logind.service" {
+		fmt.Printf("ANGI: SystemctlStatus - '%+v'\n", string(out))
+	}
 	return nil
 }
 

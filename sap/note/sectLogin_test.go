@@ -67,9 +67,11 @@ func TestSetLoginVal(t *testing.T) {
 		t.Errorf("wrong value in file '%s'\n", utmFile)
 	}
 	sysState, err := system.GetSystemState()
+	t.Logf("system state is '%s'", sysState)
 	if sysState == "degraded" {
 		err = system.SystemctlResetFailed()
 	}
+	_ = system.SystemctlStatus(systemd-logind.service)
 	val = "10813"
 	err = SetLoginVal("UserTasksMax", val, true)
 	if err != nil {

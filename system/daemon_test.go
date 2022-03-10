@@ -411,16 +411,10 @@ func TestDaemonErrorCases(t *testing.T) {
 }
 
 func TestSystemdDetectVirt(t *testing.T) {
+	opt := ""
 	oldSystemddvCmd := systemddvCmd
-	virt, vtype, err := SystemdDetectVirt("-v")
+	virt, vtype, err = SystemdDetectVirt(opt)
 	t.Logf("virt: %v - vtype: %s - err: %v", virt, vtype, err)
-	virt, vtype, err = SystemdDetectVirt("-c")
-	t.Logf("virt: %v - vtype: %s - err: %v", virt, vtype, err)
-	virt, vtype, err = SystemdDetectVirt("-r")
-	t.Logf("virt: %v - vtype: %s - err: %v", virt, vtype, err)
-	virt, vtype, err = SystemdDetectVirt("")
-	t.Logf("virt: %v - vtype: %s - err: %v", virt, vtype, err)
-	
 	// test: virtualization found
 	systemddvCmd = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/systemdDVOK")
 	exp := "kvm"
@@ -460,7 +454,8 @@ func TestSystemdDetectVirt(t *testing.T) {
 	}
 
 	exp = "none"
-	virt, vtype, err = SystemdDetectVirt("")
+	opt := ""
+	virt, vtype, err = SystemdDetectVirt(opt)
 	if !virt {
 		t.Error("virtualization should be true, but is false")
 	}
@@ -494,7 +489,7 @@ func TestSystemdDetectVirt(t *testing.T) {
 	if err == nil {
 		t.Errorf("Test failed, returned error should be NOT 'nil', but got: '%v'", err)
 	}
-	virt, vtype, err = SystemdDetectVirt("-r")
+	virt, vtype, err = SystemdDetectVirt(opt)
 	if virt {
 		t.Error("virtualization should be false, but is true")
 	}
@@ -504,7 +499,8 @@ func TestSystemdDetectVirt(t *testing.T) {
 	if err == nil {
 		t.Errorf("Test failed, returned error should be NOT 'nil', but got: '%v'", err)
 	}
-	virt, vtype, err = SystemdDetectVirt("")
+	exp = ""
+	virt, vtype, err = SystemdDetectVirt("-r")
 	if virt {
 		t.Error("virtualization should be false, but is true")
 	}
