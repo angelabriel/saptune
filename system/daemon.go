@@ -82,9 +82,16 @@ func SystemctlReloadTryRestart(thing string) error {
 // option can be '-r' (chroot), -c (container), -v (vm)
 // '-r' only returns 0 or 1 without any output
 func SystemdDetectVirt(opt string) (bool, string, error) {
+	var out []byte
+	var err error
+
 	virt := false
 	vtype := ""
-	out, err := exec.Command(systemddvCmd, opt).CombinedOutput()
+	if opt == "" {
+		out, err = exec.Command(systemddvCmd).CombinedOutput()
+	} else {
+		out, err = exec.Command(systemddvCmd, opt).CombinedOutput()
+	}
 	DebugLog("SystemdDetectVirt - /usr/bin/systemd-detect-virt %s : '%+v %s'", opt, err, string(out))
 	if err == nil {
 		// virtualized environment detected
