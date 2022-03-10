@@ -91,7 +91,7 @@ func SystemdDetectVirt(opt string) (bool, string, error) {
 		return virt, vtype, ErrorLog("%v - Failed to call systemd-detect-virt %s - %s", err, opt, string(out))
 	}
 	vtype = string(out)
-	return virt, vtype, err
+	return virt, strings.TrimSpace(vtype), err
 }
 
 // SystemctlResetFailed calls systemctl reset-failed.
