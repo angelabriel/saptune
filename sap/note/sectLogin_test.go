@@ -71,18 +71,14 @@ func TestSetLoginVal(t *testing.T) {
 	if sysState == "degraded" {
 		err = system.SystemctlResetFailed()
 	}
-	dtime := system.Watch
-	t.Logf("time - %s", dtime)
+	t.Logf("time - %s", system.Watch())
 	_ = system.SystemctlStatus("systemd-logind.service")
-	dtime = system.Watch
-	t.Logf("time - %s", dtime)
+	t.Logf("time - %s", system.Watch())
 	val = "10813"
 	err = SetLoginVal("UserTasksMax", val, true)
-	dtime = system.Watch
-	t.Logf("time - %s", dtime)
+	t.Logf("time - %s", system.Watch())
 	_ = system.SystemctlStatus("systemd-logind.service")
-	dtime = system.Watch
-	t.Logf("time - %s", dtime)
+	t.Logf("time - %s", system.Watch())
 	if err != nil {
 		t.Log(err)
 	}
