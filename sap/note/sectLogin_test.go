@@ -71,7 +71,7 @@ func TestSetLoginVal(t *testing.T) {
 	if sysState == "degraded" {
 		err = system.SystemctlResetFailed()
 	}
-	_ = system.SystemctlStatus(systemd-logind.service)
+	_ = system.SystemctlStatus("systemd-logind.service")
 	val = "10813"
 	err = SetLoginVal("UserTasksMax", val, true)
 	if err != nil {
