@@ -25,13 +25,14 @@ func SystemctlEnable(thing string) error {
 
 // SystemctlStatus call systemctl status on thing.
 func SystemctlStatus(thing string) error {
+	fmt.Printf("ANGI: SystemctlStatus - '%s' - '%s'\n", thing, Watch())
 	out, err := exec.Command(systemctlCmd, "status", thing).CombinedOutput()
 	if err != nil {
 		return ErrorLog("%v - Failed to call systemctl status on %s - %s", err, thing, string(out))
 	}
 	NoticeLog("SystemctlStatus - '%+v'\n", string(out))
 	if thing == "systemd-logind.service" {
-		fmt.Printf("ANGI: SystemctlStatus - '%+v'\n", string(out))
+		fmt.Printf("ANGI: SystemctlStatus - '%s' - '%+v'\n", Watch(), string(out))
 	}
 	return nil
 }
