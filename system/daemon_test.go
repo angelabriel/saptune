@@ -413,13 +413,13 @@ func TestDaemonErrorCases(t *testing.T) {
 func TestSystemdDetectVirt(t *testing.T) {
 	oldSystemddvCmd := systemddvCmd
 	virt, vtype, err := SystemdDetectVirt("-v")
-	t.Log(virt - vtype - err)
+	t.Logf("virt: %s - vtype: %v - err: %v", virt, vtype, err)
 	virt, vtype, err = SystemdDetectVirt("-c")
-	t.Log(virt - vtype - err)
+	t.Logf("virt: %s - vtype: %v - err: %v", virt, vtype, err)
 	virt, vtype, err = SystemdDetectVirt("-r")
-	t.Log(virt - vtype - err)
+	t.Logf("virt: %s - vtype: %v - err: %v", virt, vtype, err)
 	virt, vtype, err = SystemdDetectVirt("")
-	t.Log(virt - vtype - err)
+	t.Logf("virt: %s - vtype: %v - err: %v", virt, vtype, err)
 	
 	// test: virtualization found
 	systemddvCmd = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/systemdDVOK")
