@@ -207,6 +207,9 @@ func ServiceActionStatus(writer io.Writer, tuneApp *app.App, saptuneVersion stri
 	// check for system(d) state
 	infoTrigger["chkHint"] = printSystemStatus(writer)
 
+	// check for virtualization environment
+	printVirtStatus(writer)
+
 	printInfoBlock(writer, infoTrigger)
 
 	// order of exit codes important for yast2 module!
@@ -602,6 +605,44 @@ func printSystemStatus(writer io.Writer) bool {
 		chkHint = true
 	}
 	return chkHint
+}
+
+// printVirtStatus prints the virtualization environment
+func printVirtStatus(writer io.Writer) {
+	vtype := ""
+	// first check vm (-v)
+	virt, vm, _ := system.SystemdDetectVirt("-v")
+	if virt {
+		// vm detected
+		vtype = vm
+	}
+	// next check container (-c)
+	virt, container, _ := system.SystemdDetectVirt("-c")
+	if virt {
+		// container detected
+		if vtype == "" {
+			vtype = container
+		} else {
+			vtype = vtype + " " + container
+		}
+	}
+	// last check for chroot (-r)
+	// be in mind, that the command will not deliver any output, but only
+	// return 0, if it found a chroot env or 1, if not
+	virt, _, _ = system.SystemdDetectVirt("-r")
+	if virt {
+		// chroot detected
+		if vtype == "" {
+			vtype = "chroot"
+		} else {
+			vtype = vtype + " chroot"
+		}
+	}
+	if vtype == "" {
+		vtype = "none"
+	}
+	system.InfoLog("Following virtualized environment was detected: %s", vtype)
+	fmt.Fprintf(writer, "virtualization:         %s\n", vtype)
 }
 
 // printInfoBlock prints additional info for the status

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# fake output of /usr/bin/systemd-detect-virt for unittests
+# use-case - no virtualization found
+
+case "$1" in
+"-r")
+    echo ""
+    ;;
+"-c")
+    echo "none"
+    ;;
+"-v")
+    echo "none"
+    ;;
+*)
+    echo "none"
+    ;;
+esac
+exit 1
