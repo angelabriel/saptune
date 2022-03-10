@@ -423,7 +423,7 @@ func TestSystemdDetectVirt(t *testing.T) {
 		t.Errorf("Test failed, expected: '%s', got: '%s'", exp, vtype)
 	}
 	if err != nil {
-		t.Error("Test failed, returned error should be 'nil', but got: '%v'", err)
+		t.Errorf("Test failed, returned error should be 'nil', but got: '%v'", err)
 	}
 
 	exp = "lxc"
@@ -435,7 +435,7 @@ func TestSystemdDetectVirt(t *testing.T) {
 		t.Errorf("Test failed, expected: '%s', got: '%s'", exp, vtype)
 	}
 	if err != nil {
-		t.Error("Test failed, returned error should be 'nil', but got: '%v'", err)
+		t.Errorf("Test failed, returned error should be 'nil', but got: '%v'", err)
 	}
 
 	exp = ""
@@ -447,7 +447,7 @@ func TestSystemdDetectVirt(t *testing.T) {
 		t.Errorf("Test failed, expected: '%s', got: '%s'", exp, vtype)
 	}
 	if err != nil {
-		t.Error("Test failed, returned error should be 'nil', but got: '%v'", err)
+		t.Errorf("Test failed, returned error should be 'nil', but got: '%v'", err)
 	}
 
 	exp = "none"
@@ -459,7 +459,7 @@ func TestSystemdDetectVirt(t *testing.T) {
 		t.Errorf("Test failed, expected: '%s', got: '%s'", exp, vtype)
 	}
 	if err != nil {
-		t.Error("Test failed, returned error should be 'nil', but got: '%v'", err)
+		t.Errorf("Test failed, returned error should be 'nil', but got: '%v'", err)
 	}
 
 	// test: virtualization NOT available
@@ -473,7 +473,7 @@ func TestSystemdDetectVirt(t *testing.T) {
 		t.Errorf("Test failed, expected: '%s', got: '%s'", exp, vtype)
 	}
 	if err == nil {
-		t.Error("Test failed, returned error should be NOT 'nil', but got: '%v'", err)
+		t.Errorf("Test failed, returned error should be NOT 'nil', but got: '%v'", err)
 	}
 	virt, vtype, err = SystemdDetectVirt("-c")
 	if virt {
@@ -483,7 +483,7 @@ func TestSystemdDetectVirt(t *testing.T) {
 		t.Errorf("Test failed, expected: '%s', got: '%s'", exp, vtype)
 	}
 	if err == nil {
-		t.Error("Test failed, returned error should be NOT 'nil', but got: '%v'", err)
+		t.Errorf("Test failed, returned error should be NOT 'nil', but got: '%v'", err)
 	}
 	virt, vtype, err = SystemdDetectVirt("-r")
 	if virt {
@@ -493,7 +493,7 @@ func TestSystemdDetectVirt(t *testing.T) {
 		t.Errorf("Test failed, expected: '%s', got: '%s'", exp, vtype)
 	}
 	if err == nil {
-		t.Error("Test failed, returned error should be NOT 'nil', but got: '%v'", err)
+		t.Errorf("Test failed, returned error should be NOT 'nil', but got: '%v'", err)
 	}
 	virt, vtype, err = SystemdDetectVirt("")
 	if virt {
@@ -503,7 +503,7 @@ func TestSystemdDetectVirt(t *testing.T) {
 		t.Errorf("Test failed, expected: '%s', got: '%s'", exp, vtype)
 	}
 	if err == nil {
-		t.Error("Test failed, returned error should be NOT 'nil', but got: '%v'", err)
+		t.Errorf("Test failed, returned error should be NOT 'nil', but got: '%v'", err)
 	}
 
 	systemddvCmd = oldSystemddvCmd
