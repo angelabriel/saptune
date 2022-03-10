@@ -74,6 +74,7 @@ func TestSetLoginVal(t *testing.T) {
 	_ = system.SystemctlStatus("systemd-logind.service")
 	val = "10813"
 	err = SetLoginVal("UserTasksMax", val, true)
+	_ = system.SystemctlStatus("systemd-logind.service")
 	if err != nil {
 		t.Error(err)
 	}
