@@ -3,7 +3,6 @@ package note
 import (
 	"github.com/SUSE/saptune/system"
 	"os"
-	//"os/exec"
 	"testing"
 	"time"
 )
@@ -57,6 +56,7 @@ func TestSetLoginVal(t *testing.T) {
 	if !system.CheckForPattern(utmFile, val) {
 		t.Errorf("wrong value in file '%s'\n", utmFile)
 	}
+	// adding sleep to prevent 'service start-limit-hit'
 	time.Sleep(5 * time.Second)
 	val = "infinity"
 	err = SetLoginVal("UserTasksMax", val, false)
@@ -69,14 +69,12 @@ func TestSetLoginVal(t *testing.T) {
 	if !system.CheckForPattern(utmFile, val) {
 		t.Errorf("wrong value in file '%s'\n", utmFile)
 	}
+	// adding sleep to prevent 'service start-limit-hit'
 	time.Sleep(10 * time.Second)
 	val = "10813"
 	err = SetLoginVal("UserTasksMax", val, true)
-	_ = system.SystemctlStatus("systemd-logind.service")
-//	out, err := exec.Command("/usr/bin/journalctl", "-xe").CombinedOutput()
-//	t.Logf("ANGI - journalctl: '%v' - %s", err, string(out))
 	if err != nil {
-		t.Log(err)
+		t.Error(err)
 	}
 	if _, err = os.Stat(utmFile); err == nil {
 		os.Remove(utmFile)
