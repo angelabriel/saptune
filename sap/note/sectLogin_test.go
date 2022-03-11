@@ -3,8 +3,9 @@ package note
 import (
 	"github.com/SUSE/saptune/system"
 	"os"
-	"os/exec"
+	//"os/exec"
 	"testing"
+	"time"
 )
 
 func TestGetLoginVal(t *testing.T) {
@@ -56,6 +57,7 @@ func TestSetLoginVal(t *testing.T) {
 	if !system.CheckForPattern(utmFile, val) {
 		t.Errorf("wrong value in file '%s'\n", utmFile)
 	}
+	time.Sleep(5 * time.Second)
 	val = "infinity"
 	err = SetLoginVal("UserTasksMax", val, false)
 	if err != nil {
@@ -67,21 +69,12 @@ func TestSetLoginVal(t *testing.T) {
 	if !system.CheckForPattern(utmFile, val) {
 		t.Errorf("wrong value in file '%s'\n", utmFile)
 	}
-	sysState, err := system.GetSystemState()
-	t.Logf("system state is '%s'", sysState)
-	if sysState == "degraded" {
-		err = system.SystemctlResetFailed()
-	}
-	t.Logf("time - %s", system.Watch())
-	_ = system.SystemctlStatus("systemd-logind.service")
-	t.Logf("time - %s", system.Watch())
+	time.Sleep(10 * time.Second)
 	val = "10813"
 	err = SetLoginVal("UserTasksMax", val, true)
-	t.Logf("time - %s", system.Watch())
 	_ = system.SystemctlStatus("systemd-logind.service")
-	out, err := exec.Command("/usr/bin/journalctl", "-xe").CombinedOutput()
-	t.Logf("ANGI - journalctl: '%v' - %s", err, string(out))
-	t.Logf("time - %s", system.Watch())
+//	out, err := exec.Command("/usr/bin/journalctl", "-xe").CombinedOutput()
+//	t.Logf("ANGI - journalctl: '%v' - %s", err, string(out))
 	if err != nil {
 		t.Log(err)
 	}
