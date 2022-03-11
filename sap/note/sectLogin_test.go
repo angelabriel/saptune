@@ -3,6 +3,7 @@ package note
 import (
 	"github.com/SUSE/saptune/system"
 	"os"
+	"os/exec"
 	"testing"
 )
 
@@ -78,6 +79,8 @@ func TestSetLoginVal(t *testing.T) {
 	err = SetLoginVal("UserTasksMax", val, true)
 	t.Logf("time - %s", system.Watch())
 	_ = system.SystemctlStatus("systemd-logind.service")
+	out, err := exec.Command("/usr/bin/journalctl", "-xe").CombinedOutput()
+	t.Logf("ANGI - journalctl: '%v' - %s", err, string(out))
 	t.Logf("time - %s", system.Watch())
 	if err != nil {
 		t.Log(err)
