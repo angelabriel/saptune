@@ -15,7 +15,6 @@ func TestSolutionActions(t *testing.T) {
 
 	// Test SolutionActionList
 	t.Run("SolutionActionList", func(t *testing.T) {
-		tearDownSol(t)
 		buffer := bytes.Buffer{}
 		SolutionActionList(&buffer, tApp)
 		txt := buffer.String()
