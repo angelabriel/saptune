@@ -1,11 +1,7 @@
 #!/bin/sh
 
-echo "zypper in ..."
+#echo "zypper in ..."
 #zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go1.10 go rpcbind cpupower uuidd polkit tuned sysstat
-zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go
-
-/bin/systemctl start tuned
-tuned-adm profile balanced
 
 systemctl --no-pager status
 # try to resolve systemd status 'degraded'
@@ -43,6 +39,13 @@ go version
 cd saptune
 pwd
 ls -al
+
+echo "start tuned and set profile 'balanced'"
+/bin/systemctl start tuned
+tuned-adm profile balanced
+tuned-adm list
+
+/bin/systemctl status saptune
 
 # to get TasksMax settings work, needs a user login session
 echo "start nobody login session in background"

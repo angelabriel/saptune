@@ -2,6 +2,7 @@ package system
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -21,17 +22,21 @@ const SaptuneSectionDir = "/run/saptune/sections"
 // map to hold the current available systemd services
 var services map[string]string
 
+// stdOutOrg contains the origin stdout for resetting, if needed
+var stdOutOrg = os.Stdout
+
 // OSExit defines, which exit function should be used
 var OSExit = os.Exit
 
 // ErrorExitOut defines, which exit output function should be used
 var ErrorExitOut = ErrorLog
 
+// ErrExitOut defines the output function, which should be used in case
+// of colored output
+var ErrExitOut = errExitOut
+
 // InfoOut defines, which log output function should be used
 var InfoOut = InfoLog
-
-// get saptune arguments and flags
-var saptArgs, saptFlags = ParseCliArgs()
 
 // DmiID is the path to the dmidecode representation in the /sys filesystem
 var DmiID = "/sys/class/dmi/id"
@@ -39,82 +44,6 @@ var DmiID = "/sys/class/dmi/id"
 // IsUserRoot return true only if the current user is root.
 func IsUserRoot() bool {
 	return os.Getuid() == 0
-}
-
-// CliArg returns the i-th command line parameter,
-// or empty string if it is not specified.
-func CliArg(i int) string {
-	if len(saptArgs) >= i+1 {
-		return saptArgs[i]
-	}
-	return ""
-}
-
-// CliArgs returns all remaining command line parameters starting with i,
-// or empty string if it is not specified.
-func CliArgs(i int) []string {
-	if len(saptArgs) >= i+1 {
-		return saptArgs[i:]
-	}
-	return []string{}
-}
-
-// IsFlagSet returns true, if the flag is available on the command line
-// or false, if not
-func IsFlagSet(flag string) bool {
-	if saptFlags[flag] == "true" {
-		return true
-	}
-	return false
-}
-
-// GetOutTarget returns the target for the saptune command output
-// default is 'screen'
-func GetOutTarget() string {
-	return saptFlags["output"]
-}
-
-// ParseCliArgs parses the command line to identify special flags and the
-// 'normal' arguments
-// returns a map of Flags (set or not) and a slice containing the remaining
-// arguments
-// possible Flags - force, dryrun, help, version, output
-// on command line - --force, --dry-run or --dryrun, --help, --version, --out or --output
-// Only the Flag 'output' can have an argument (--out=json or --output=csv)
-func ParseCliArgs() ([]string, map[string]string) {
-	var isOutFlag = regexp.MustCompile(`-([\w-]+)=.*`)
-	var isOutArg = regexp.MustCompile(`--out.*=(\w+)`)
-	stArgs := []string{os.Args[0]}
-	stFlags := map[string]string{"force": "false", "dryrun": "false", "help": "false", "version": "false", "output": "screen", "notSupported": ""}
-	for _, arg := range os.Args[1:] {
-		if strings.HasPrefix(arg, "--") || strings.HasPrefix(arg, "-") {
-			// flag handling
-			if isOutFlag.MatchString(arg) {
-				// --out=screen // --output=json
-				matches := isOutArg.FindStringSubmatch(arg)
-				if len(matches) > 0 {
-					stFlags["output"] = matches[1]
-				}
-				continue
-			}
-			switch arg {
-			case "--force", "-force":
-				stFlags["force"] = "true"
-			case "--dry-run", "-dry-run", "--dryrun", "-dryrun":
-				stFlags["dryrun"] = "true"
-			case "--help", "-help", "-h":
-				stFlags["help"] = "true"
-			case "--version", "-version":
-				stFlags["version"] = "true"
-			default:
-				stFlags["notSupported"] = "arg"
-			}
-			continue
-		}
-		// other args
-		stArgs = append(stArgs, arg)
-	}
-	return stArgs, stFlags
 }
 
 // GetSolutionSelector returns the architecture string
@@ -209,6 +138,16 @@ func CalledFrom() string {
 	return ret
 }
 
+func errExitOut(writer io.Writer, template string, stuff ...interface{}) {
+	// stuff is: color, bold, text/template, reset bold, reset color
+	stuff = stuff[1:]
+	fmt.Fprintf(writer, "%s%sERROR: "+template+"%s%s\n", stuff...)
+	if len(stuff) >=  4 {
+		stuff = stuff[2 : len(stuff)-2]
+	}
+	ErrLog(template+"\n", stuff...)
+}
+
 // ErrorExit prints the message to stderr and exit 1.
 func ErrorExit(template string, stuff ...interface{}) {
 	exState := 1
@@ -228,10 +167,17 @@ func ErrorExit(template string, stuff ...interface{}) {
 		stuff = stuff[:len(stuff)-1]
 	}
 	if len(template) != 0 {
-		ErrorExitOut(template+"\n", stuff...)
+		if len(stuff) > 0 && stuff[0] == "colorPrint" {
+			ErrExitOut(os.Stderr, template, stuff...)
+		} else {
+			ErrorExitOut(template+"\n", stuff...)
+		}
 	}
 	if isOwnLock() {
 		ReleaseSaptuneLock()
+	}
+	if jerr := jOut(exState); jerr != nil {
+		exState = 130
 	}
 	InfoOut("saptune terminated with exit code '%v'", exState)
 	OSExit(exState)
@@ -240,10 +186,23 @@ func ErrorExit(template string, stuff ...interface{}) {
 // OutIsTerm returns true, if Stdout is a terminal
 func OutIsTerm(writer *os.File) bool {
 	fileInfo, _ := writer.Stat()
-	if (fileInfo.Mode() & os.ModeCharDevice) == 0 {
-		return false
+	return (fileInfo.Mode() & os.ModeCharDevice) != 0
+}
+
+// InitOut initializes the various output methodes
+// currently only json and screen are supported
+func InitOut(logSwitch map[string]string) {
+	if GetFlagVal("format") == "json" {
+		// if writing json format, switch off
+		// the stdout and stderr output of the log messages
+		logSwitch["verbose"] = "off"
+		logSwitch["error"] = "off"
+		// switch off stdout
+		if os.Getenv("SAPTUNE_JDEBUG") != "on" {
+			os.Stdout, _ = os.Open(os.DevNull)
+		}
+		jInit()
 	}
-	return true
 }
 
 // WrapTxt implements something like 'fold' command
@@ -315,19 +274,34 @@ func GetDmiID(file string) (string, error) {
 func GetHWIdentity(info string) (string, error) {
 	var err error
 	var content []byte
+	fix := ""
 	fileName := ""
 	ret := ""
 
 	switch info {
 	case "vendor":
-		fileName = fmt.Sprintf("%s/board_vendor", DmiID)
+		if runtime.GOARCH == "ppc64le" {
+			fix = "IBM"
+		} else {
+			fileName = fmt.Sprintf("%s/board_vendor", DmiID)
+		}
 	case "model":
-		fileName = fmt.Sprintf("%s/product_name", DmiID)
+		if runtime.GOARCH == "ppc64le" {
+			fileName = "/sys/firmware/devicetree/base/model"
+		} else {
+			fileName = fmt.Sprintf("%s/product_name", DmiID)
+		}
 	}
-	if content, err = ioutil.ReadFile(fileName); err == nil {
-		ret = strings.TrimSpace(string(content))
-	} else {
-		InfoLog("failed to read %s - %v", fileName, err)
+	if fileName != "" {
+		if content, err = ioutil.ReadFile(fileName); err == nil {
+			ret = strings.TrimSpace(string(content))
+		} else {
+			InfoLog("failed to read %s - %v", fileName, err)
+		}
+	}
+	if fix != "" {
+		ret = fix
+		err = nil
 	}
 	return ret, err
 }
@@ -335,11 +309,17 @@ func GetHWIdentity(info string) (string, error) {
 // StripComment will strip everything right from the given comment character
 // (including the comment character) and returns the resulting string
 // comment characters can be '#' or ';' or something else
+// or a regex like `\s#[^#]|"\s#[^#]`
 func StripComment(str, commentChars string) string {
-	if cut := strings.IndexAny(str, commentChars); cut >= 0 {
-		return strings.TrimRightFunc(str[:cut], unicode.IsSpace)
+	ret := str
+	re := regexp.MustCompile(commentChars)
+	if cut := re.FindStringIndex(str); cut != nil {
+		ret = strings.TrimRightFunc(str[:cut[0]], unicode.IsSpace)
+		// strip masked # (\s## -> \s#) inside the text
+		re = regexp.MustCompile(`\s(##)`)
+		ret = re.ReplaceAllString(ret, "#")
 	}
-	return str
+	return ret
 }
 
 // GetVirtStatus gets the status of virtualization environment
@@ -383,6 +363,6 @@ func GetVirtStatus() string {
 func Watch() string {
 	t := time.Now()
 	//watch := fmt.Sprintf("%s", t.Format(time.UnixDate))
-	watch := fmt.Sprintf("%s", t.Format("2006/01/02 15:04:05.99999999"))
+	watch := t.Format("2006/01/02 15:04:05.99999999")
 	return watch
 }

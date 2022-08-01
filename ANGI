@@ -1,0 +1,11 @@
+staticcheck - Fix
+
+* unnecessary use of fmt.Sprintf (S1039)
+* should use make ... instead (S1019)
+* (S1008)
+* printf-style function with dynamic format string and no further arguments should use print-style function instead (SA1006)
+* should replace loop with .... (S1011)
+* should omit nil check; len() for nil maps is defined as zero (S1009)
+* the argument is already a string, there's no need to use fmt.Sprintf (S1025)
+* should omit comparison to bool constant, can be simplified to !ret (S1002)
+* this value of <variable> is never used (SA4006) - partial solved
