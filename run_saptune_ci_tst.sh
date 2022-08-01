@@ -47,6 +47,11 @@ tuned-adm list
 
 /bin/systemctl status saptune
 
+systemctl --no-pager status
+# try to resolve systemd status 'degraded'
+systemctl reset-failed
+systemctl --no-pager status
+
 # to get TasksMax settings work, needs a user login session
 echo "start nobody login session in background"
 su --login nobody -c "sleep 4m" &
