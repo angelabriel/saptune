@@ -43,7 +43,8 @@ jobs:
         run: docker pull registry.suse.com/bci/bci-init:latest
 
       - name: Run Container Image
-        run: docker run --name saptune-ci --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -td -v "${{ github.workspace }}:/app" registry.opensuse.org/home/angelabriel/st-ci-base/containers/st-ci-base:latest
+#        run: docker run --name saptune-ci --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -td -v "${{ github.workspace }}:/app" registry.opensuse.org/home/angelabriel/st-ci-base/containers/st-ci-base:latest
+        run: docker run --name saptune-ci --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -td -v "${{ github.workspace }}:/app" registry.suse.com/bci/bci-init:latest
 
       - name: Get Container Logs
         run: docker logs saptune-ci
