@@ -4,7 +4,7 @@ name: saptuneUnittst
 on:
   # Triggers the workflow on pull request events but only for the master and sle-12 branch
   push:
-    branches: [ master, saptune_test ]
+    branches: [ master, saptune_test, ci_tests ]
   pull_request:
     branches: [ master ]
 
