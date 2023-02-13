@@ -59,8 +59,9 @@ sleep 10
 ps -ef
 loginctl --no-pager
 
-echo "exchange /etc/os-release"
+echo "prepare exchange of /etc/os-release"
 cp /etc/os-release /etc/os-release_OrG
+ls -l /etc/os-release /etc/os-release_OrG
 
 # for some sysctl tests
 echo "vm.pagecache_limit_ignore_dirty = 1" > /etc/sysctl.d/saptune_test.conf

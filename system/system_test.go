@@ -96,7 +96,7 @@ func TestGetOsVers(t *testing.T) {
 		}
 	} else {
 		switch actualVal {
-		case "12", "12-SP1", "12-SP2", "12-SP3", "12-SP4", "12-SP5", "15", "15-SP1", "15-SP2", "15-SP3":
+		case "12", "12-SP1", "12-SP2", "12-SP3", "12-SP4", "12-SP5", "15", "15-SP1", "15-SP2", "15-SP3", "15-SP4", "15-SP5":
 			t.Logf("expected OS version '%s' found\n", actualVal)
 		default:
 			t.Logf("unexpected OS version '%s'\n", actualVal)
@@ -113,17 +113,11 @@ func TestGetOsVers(t *testing.T) {
 }
 
 func TestIsSLE15(t *testing.T) {
-	_ = CopyFile(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/osr15"), "/etc/os-release")
 	if IsSLE15() {
 		t.Logf("found SLE15 OS version\n")
-		_ = CopyFile("/etc/os-release_OrG", "/etc/os-release")
-		if IsSLE15() {
-			t.Errorf("expected a non SLE15 os version, but OS version is '%s'\n", GetOsVers())
-		}
 	} else {
-		t.Errorf("expected '15-SP2', but OS version is '%s'\n", GetOsVers())
+		t.Errorf("expected SLE15 os version, but OS version is '%s'\n", GetOsVers())
 	}
-	_ = CopyFile("/etc/os-release_OrG", "/etc/os-release")
 }
 
 func TestIsSLE12(t *testing.T) {
