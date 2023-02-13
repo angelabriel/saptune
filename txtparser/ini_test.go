@@ -3,7 +3,6 @@ package txtparser
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/SUSE/saptune/system"
 	"io/ioutil"
 	"os"
 	"path"

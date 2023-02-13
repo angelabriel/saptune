@@ -200,8 +200,8 @@ func TestAllSettings(t *testing.T) {
 		case "12", "12-SP1", "12-SP2", "12-SP3", "12-SP4", "12-SP5":
 			t.Error(optimisedINI.SysctlParams)
 		case "15", "15-SP1", "15-SP2", "15-SP3", "15-SP4", "15-SP5":
-			t.Log("UserTasksMax not set in SLE15 - OK")
-		defaut:
+			t.Logf("UserTasksMax not set in SLE15 - OK\n")
+		default:
 			t.Error(optimisedINI.SysctlParams)
 		}
 	}
@@ -409,8 +409,8 @@ func TestOverrideAllSettings(t *testing.T) {
 		case "12", "12-SP1", "12-SP2", "12-SP3", "12-SP4", "12-SP5":
 			t.Error(optimisedINI.SysctlParams)
 		case "15", "15-SP1", "15-SP2", "15-SP3", "15-SP4", "15-SP5":
-			t.Log("UserTasksMax not set in SLE15 - OK")
-		defaut:
+			t.Logf("UserTasksMax not set in SLE15 - OK\n")
+		default:
 			t.Error(optimisedINI.SysctlParams)
 		}
 	}
