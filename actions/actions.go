@@ -100,19 +100,9 @@ func SelectAction(writer io.Writer, stApp *app.App, saptuneVers string) {
 		StagingAction(system.CliArg(2), system.CliArgs(3), stApp)
 	case "status":
 		ServiceAction(writer, "status", saptuneVers, stApp)
-	case "verify":
-		VerifyAction(writer, system.CliArg(2), stApp)
 	default:
 		PrintHelpAndExit(writer, 1)
 	}
-}
-
-// Verify all applied Notes
-func VerifyAction(writer io.Writer, actionName string, tuneApp *app.App) {
-	if actionName != "applied" {
-		PrintHelpAndExit(writer, 1)
-	}
-	VerifyAllParameters(writer, tuneApp)
 }
 
 // RevertAction Revert all notes and solutions
@@ -198,11 +188,14 @@ func chkFileName(defName, workingDir, extraDir string) (string, bool, error) {
 		if defType == "Note" {
 			chkName = defName + ".conf"
 		}
-		fName := fmt.Sprintf("%s%s", extraDir, chkName)
-		_, err = os.Stat(fName)
-		if err == nil {
+		_, files := system.ListDir(extraDir, "")
+		for _, f := range files {
+			if f == chkName {
+				fileName = fmt.Sprintf("%s%s", extraDir, f)
+			}
+		}
+		if _, err = os.Stat(fileName); err == nil {
 			extraDef = true
-			fileName = fName
 		}
 	}
 	return fileName, extraDef, err
@@ -282,8 +275,7 @@ func deleteDefFile(fileName string) {
 // switchOffColor turns off color and highlighting, if Stdout is not a terminal
 func switchOffColor() {
 	// switch off color and highlighting, if Stdout is not a terminal
-	// command line option --force-color will override the 'switch off'
-	if !system.OutIsTerm(os.Stdout) && !system.IsFlagSet("force-color") {
+	if !system.OutIsTerm(os.Stdout) {
 		setGreenText = ""
 		setRedText = ""
 		setYellowText = ""
@@ -302,37 +294,35 @@ func PrintHelpAndExit(writer io.Writer, exitStatus int) {
 	}
 	fmt.Fprintln(writer, `saptune: Comprehensive system optimisation management for SAP solutions.
 Daemon control:
-  saptune [--format FORMAT] [--force-color] daemon ( start | stop | status [--non-compliance-check] ) ATTENTION: deprecated
-  saptune [--format FORMAT] [--force-color] service ( start | stop | restart | takeover | enable | disable | enablestart | disablestop | status [--non-compliance-check] )
+  saptune [--format FORMAT] daemon ( start | stop | status [--non-compliance-check] ) ATTENTION: deprecated
+  saptune [--format FORMAT] service ( start | stop | restart | takeover | enable | disable | enablestart | disablestop | status [--non-compliance-check] )
 Tune system according to SAP and SUSE notes:
-  saptune [--format FORMAT] [--force-color] note ( list | verify | revertall | enabled | applied )
-  saptune [--format FORMAT] [--force-color] note ( apply | simulate | customise | create | edit | revert | show | delete ) NOTEID
-  saptune [--format FORMAT] [--force-color] note verify [--colorscheme SCHEME] [--show-non-compliant] [NOTEID|applied]
-  saptune [--format FORMAT] [--force-color] note rename NOTEID NEWNOTEID
+  saptune [--format FORMAT] note ( list | revertall | enabled | applied )
+  saptune [--format FORMAT] note ( apply | simulate | customise | create | edit | revert | show | delete ) NOTEID
+  saptune [--format FORMAT] note verify [--colorscheme SCHEME] [--show-non-compliant] [NOTEID]
+  saptune [--format FORMAT] note rename NOTEID NEWNOTEID
 Tune system for all notes applicable to your SAP solution:
-  saptune [--format FORMAT] [--force-color] solution ( list | verify | enabled | applied )
-  saptune [--format FORMAT] [--force-color] solution ( apply | simulate | customise | create | edit | revert | show | delete ) SOLUTIONNAME
-  saptune [--format FORMAT] [--force-color] solution change [--force] SOLUTIONNAME
-  saptune [--format FORMAT] [--force-color] solution verify [--colorscheme SCHEME] [--show-non-compliant] [SOLUTIONNAME]
-  saptune [--format FORMAT] [--force-color] solution rename SOLUTIONNAME NEWSOLUTIONNAME
+  saptune [--format FORMAT] solution ( list | verify | enabled | applied )
+  saptune [--format FORMAT] solution ( apply | simulate | customise | create | edit | revert | show | delete ) SOLUTIONNAME
+  saptune [--format FORMAT] solution change [--force] SOLUTIONNAME
+  saptune [--format FORMAT] solution verify [--colorscheme SCHEME] [--show-non-compliant] [SOLUTIONNAME]
+  saptune [--format FORMAT] solution rename SOLUTIONNAME NEWSOLUTIONNAME
 Staging control:
-   saptune [--format FORMAT] [--force-color] staging ( status | enable | disable | is-enabled | list )
-   saptune [--format FORMAT] [--force-color] staging ( analysis | diff ) [ ( NOTEID | SOLUTIONNAME )... | all ]
-   saptune [--format FORMAT] [--force-color] staging release [--force|--dry-run] [ ( NOTEID | SOLUTIONNAME )... | all ]
-Verify all applied Notes:
-  saptune [--format FORMAT] [--force-color] verify applied
+   saptune [--format FORMAT] staging ( status | enable | disable | is-enabled | list )
+   saptune [--format FORMAT] staging ( analysis | diff ) [ ( NOTEID | SOLUTIONNAME )... | all ]
+   saptune [--format FORMAT] staging release [--force|--dry-run] [ ( NOTEID | SOLUTIONNAME )... | all ]
 Revert all parameters tuned by the SAP notes or solutions:
-  saptune [--format FORMAT] [--force-color] revert all
+  saptune [--format FORMAT] revert all
 Remove the pending lock file from a former saptune call
-  saptune [--format FORMAT] [--force-color] lock remove
+  saptune [--format FORMAT] lock remove
 Call external script '/usr/sbin/saptune_check'
-  saptune [--format FORMAT] [--force-color] check
+  saptune [--format FORMAT] check
 Print current saptune status:
-  saptune [--format FORMAT] [--force-color] status [--non-compliance-check]
+  saptune [--format FORMAT] status [--non-compliance-check]
 Print current saptune version:
-  saptune [--format FORMAT] [--force-color] version
+  saptune [--format FORMAT] version
 Print this message:
-  saptune [--format FORMAT] [--force-color] help
+  saptune [--format FORMAT] help
 
 Deprecation list:
   all 'saptune daemon' actions

@@ -13,24 +13,24 @@ import (
 
 // define max column width
 var fmtmax = 30
-// number of lines printed for 'verify'
-var lineCnt = 0
 
 // PrintNoteFields Print mismatching fields in the note comparison result.
 func PrintNoteFields(writer io.Writer, header string, noteComparisons map[string]map[string]note.FieldComparison, printComparison bool, result *system.JPNotes) {
 	// initialise
 	colFormat := ""
 	colCompliant := ""
-	compliant := "yes"
 	printHead := ""
 	noteField := ""
-	footnote := make([]string, 16)
 	reminder := make(map[string]string)
 	override := ""
-	comment := ""
+	hasDiff := false
 	pExp := ""
 	noteLine := system.JPNotesLine{}
 	noteList := []system.JPNotesLine{}
+
+	var compliant string
+	var comment string
+	var footnote []string = make([]string, 16)
 
 	colorScheme := getColorScheme()
 	// sort output
@@ -53,7 +53,7 @@ func PrintNoteFields(writer io.Writer, header string, noteComparisons map[string
 			continue
 		}
 		// set compliant information according to the comparison result
-		compliant = setCompliant(comparison)
+		hasDiff, compliant = setCompliant(comparison, hasDiff)
 
 		// check inform map for special settings
 		inform := getInformSettings(noteID, noteComparisons, comparison)
@@ -96,7 +96,7 @@ func PrintNoteFields(writer io.Writer, header string, noteComparisons map[string
 
 	// print footer
 	reminderList := []system.JPNotesRemind{}
-	printTableFooter(writer, header, footnote, reminder, &reminderList)
+	printTableFooter(writer, header, footnote, reminder, hasDiff, &reminderList)
 	if result != nil {
 		if printComparison {
 			// verify
@@ -270,9 +270,12 @@ func printTableHeader(writer io.Writer, format string, col0, col1, col2, col3, c
 
 // printTableFooter prints the footer of the table
 // footnotes and reminder section
-func printTableFooter(writer io.Writer, header string, footnote []string, reminder map[string]string, noteReminder *[]system.JPNotesRemind) {
+func printTableFooter(writer io.Writer, header string, footnote []string, reminder map[string]string, hasDiff bool, noteReminder *[]system.JPNotesRemind) {
+	if header != "NONE" && !hasDiff {
+		fmt.Fprintf(writer, "\n   (no change)\n")
+	}
 	for _, fn := range footnote {
-		if fn != "" && lineCnt > 0 {
+		if fn != "" {
 			fmt.Fprintf(writer, "\n %s", fn)
 		}
 	}
@@ -303,9 +306,10 @@ func getNoteAndVersion(kField, nID, nField string, nComparisons map[string]map[s
 }
 
 // setCompliant sets compliant information according to the comparison result
-func setCompliant(comparison note.FieldComparison) string {
+func setCompliant(comparison note.FieldComparison, hasd bool) (bool, string) {
 	comp := ""
 	if !comparison.MatchExpectation {
+		hasd = true
 		comp = "no "
 	} else {
 		comp = "yes"
@@ -313,7 +317,7 @@ func setCompliant(comparison note.FieldComparison) string {
 	if comparison.ActualValue.(string) == "all:none" {
 		comp = " - "
 	}
-	return comp
+	return hasd, comp
 }
 
 // getInformSettings checks inform map for special settings
@@ -474,7 +478,6 @@ func colorFormating(colCmpl, colNonCmpl, txt, compliant string) string {
 // if override exists, expected == override, so compare of width of expected and
 // actual column is sufficient
 func printTableRow(writer io.Writer, rowElements map[string]string) {
-	lineCnt = lineCnt + 1
 	wrappedActual := system.WrapTxt(rowElements["actual"], fmtmax)
 	wrappedExpected := system.WrapTxt(rowElements["expected"], fmtmax)
 	wrappedOverride := system.WrapTxt(rowElements["override"], fmtmax)
@@ -543,17 +546,25 @@ func printWrappedRow(writer io.Writer, wrappedElem map[string][]string, rowEleme
 
 // printRow prints now the row of the table
 func printRow(writer io.Writer, twist bool, cols []string, rowElements map[string]string) {
-	if twist {
-		if rowElements["type"] == "verify" {
-			fmt.Fprintf(writer, rowElements["colFormat"], rowElements["note"], rowElements["parameter"], cols[1], cols[2], cols[0], rowElements["compliant"])
-		} else {
-			fmt.Fprintf(writer, rowElements["colFormat"], rowElements["parameter"], cols[0], cols[1], cols[2], rowElements["comment"])
-		}
+	if rowElements["type"] == "verify" {
+		printVerifiedRow(twist, writer, rowElements, cols)
 	} else {
-		if rowElements["type"] == "verify" {
-			fmt.Fprintf(writer, rowElements["colFormat"], rowElements["note"], rowElements["parameter"], cols[0], cols[2], cols[1], rowElements["compliant"])
-		} else {
-			fmt.Fprintf(writer, rowElements["colFormat"], rowElements["parameter"], cols[1], cols[0], cols[2], rowElements["comment"])
-		}
+		printSimulateRow(twist, writer, rowElements, cols)
+	}
+}
+
+func printSimulateRow(twist bool, writer io.Writer, rowElements map[string]string, cols []string) {
+	if twist {
+		fmt.Fprintf(writer, rowElements["colFormat"], rowElements["parameter"], cols[0], cols[1], cols[2], rowElements["comment"])
+	} else {
+		fmt.Fprintf(writer, rowElements["colFormat"], rowElements["parameter"], cols[1], cols[0], cols[2], rowElements["comment"])
+	}
+}
+
+func printVerifiedRow(twist bool, writer io.Writer, rowElements map[string]string, cols []string) {
+	if twist {
+		fmt.Fprintf(writer, rowElements["colFormat"], rowElements["note"], rowElements["parameter"], cols[1], cols[2], cols[0], rowElements["compliant"])
+	} else {
+		fmt.Fprintf(writer, rowElements["colFormat"], rowElements["note"], rowElements["parameter"], cols[0], cols[2], cols[1], rowElements["compliant"])
 	}
 }

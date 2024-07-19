@@ -7,7 +7,6 @@ import (
 	"github.com/SUSE/saptune/system"
 	"os"
 	"testing"
-	"time"
 )
 
 var sApp *app.App
@@ -166,26 +165,8 @@ func TestServiceActions(t *testing.T) {
 
 	// Test ServiceActionApply
 	t.Run("ServiceActionApply", func(t *testing.T) {
-		oldOSExit := system.OSExit
-		defer func() { system.OSExit = oldOSExit }()
-		system.OSExit = tstosExit
-		oldErrorExitOut := system.ErrorExitOut
-		defer func() { system.ErrorExitOut = oldErrorExitOut }()
-		system.ErrorExitOut = tstErrorExitOut
-
-		errExitbuffer := bytes.Buffer{}
-		tstwriter = &errExitbuffer
-
 		ServiceActionApply(sApp)
-		if tstRetErrorExit != 0 {
-			t.Errorf("error exit should be '0' and NOT '%v'\n", tstRetErrorExit)
-		}
-		errExOut := errExitbuffer.String()
-		if errExOut != "" {
-			t.Errorf("wrong text returned by ErrorExit: '%v' instead of ''\n", errExOut)
-		}
 	})
-
 	// Test ServiceActionRevert
 	t.Run("ServiceActionRevert", func(t *testing.T) {
 		ServiceActionRevert(sApp)
@@ -194,10 +175,6 @@ func TestServiceActions(t *testing.T) {
 	// Test ServiceActionStatus
 	t.Run("ServiceActionStatus", func(t *testing.T) {
 		ServiceActionStart(false, sApp)
-		if err := system.TunedAdmProfile("balanced"); err != nil {
-			t.Log(err)
-		}
-		time.Sleep(10 * time.Second)
 
 		oldOSExit := system.OSExit
 		defer func() { system.OSExit = oldOSExit }()

@@ -81,7 +81,7 @@ func prepareFootnote(comparison note.FieldComparison, compliant, comment, inform
 	// set footnote for unsupported or not available parameter [1],[2]
 	compliant, comment, footnote = setUsNa(comparison.ActualValue.(string), compliant, comment, footnote)
 	// set footnote for rpm or grub parameter [3],[6]
-	compliant, comment, footnote = setRpmGrub(comparison, compliant, comment, footnote)
+	compliant, comment, footnote = setRpmGrub(comparison.ReflectMapKey, compliant, comment, footnote)
 	// set footnote for diffs in force_latency parameter [4]
 	compliant, comment, footnote = setFLdiffs(comparison.ReflectMapKey, compliant, comment, inform, footnote)
 	// set footnote for unsupported scheduler [5]
@@ -130,8 +130,7 @@ func setUsNa(actVal, compliant, comment string, footnote []string) (string, stri
 }
 
 // setRpmGrub sets footnote for rpm or grub parameter
-func setRpmGrub(comparison note.FieldComparison, compliant, comment string, footnote []string) (string, string, []string) {
-	mapKey := comparison.ReflectMapKey
+func setRpmGrub(mapKey, compliant, comment string, footnote []string) (string, string, []string) {
 	if strings.Contains(mapKey, "rpm") || strings.Contains(mapKey, "grub") {
 		compliant = compliant + " [3]"
 		comment = comment + " [3]"
@@ -139,9 +138,6 @@ func setRpmGrub(comparison note.FieldComparison, compliant, comment string, foot
 	}
 	if strings.Contains(mapKey, "grub") {
 		compliant = compliant + " [6]"
-		if comparison.ActualValue.(string) == "NA" {
-			compliant = strings.Replace(compliant, "no ", " - ", 1)
-		}
 		comment = comment + " [6]"
 		footnote[5] = footnote6
 	}
