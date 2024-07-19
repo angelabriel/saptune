@@ -189,7 +189,7 @@ func TestNrRequests(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	
+
 	applied, err = BlockDeviceNrRequests{}.Inspect()
 	if err != nil {
 		t.Error(err, applied)

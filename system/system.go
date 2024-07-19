@@ -142,7 +142,7 @@ func errExitOut(writer io.Writer, template string, stuff ...interface{}) {
 	// stuff is: color, bold, text/template, reset bold, reset color
 	stuff = stuff[1:]
 	fmt.Fprintf(writer, "%s%sERROR: "+template+"%s%s\n", stuff...)
-	if len(stuff) >=  4 {
+	if len(stuff) >= 4 {
 		stuff = stuff[2 : len(stuff)-2]
 	}
 	ErrLog(template+"\n", stuff...)
@@ -205,11 +205,36 @@ func InitOut(logSwitch map[string]string) {
 	}
 }
 
+// SwitchOffOut disables stdout and stderr
+func SwitchOffOut() (*os.File, *os.File) {
+	oldStdout := os.Stdout
+	oldSdterr := os.Stderr
+	os.Stdout, _ = os.Open(os.DevNull)
+	os.Stderr, _ = os.Open(os.DevNull)
+	return oldStdout, oldSdterr
+}
+
+// SwitchOnOut restores stdout and stderr to the settings before SwitchOffOut
+// was called
+func SwitchOnOut(stdout *os.File, stderr *os.File) {
+	os.Stdout = stdout
+	os.Stderr = stderr
+}
+
 // WrapTxt implements something like 'fold' command
 // A given text string will be wrapped at word borders into
 // lines of a given width
 func WrapTxt(text string, width int) (folded []string) {
-	words := strings.Split(text, " ")
+	var words []string
+	fallback := false
+
+	if strings.Contains(text, " ") {
+		words = strings.Split(text, " ")
+	} else {
+		// fallback (e.g. net.ipv4.ip_local_reserved_ports)
+		words = strings.Split(text, ",")
+		fallback = true
+	}
 	if len(words) == 0 {
 		return
 	}
@@ -225,7 +250,11 @@ func WrapTxt(text string, width int) (folded []string) {
 		}
 		if len(word)+1 > spaceLeft {
 			// fold; start next row
-			foldedTxt += "\n" + word
+			if fallback {
+				foldedTxt += ",\n" + word
+			} else {
+				foldedTxt += "\n" + word
+			}
 			if strings.HasSuffix(word, "\n") {
 				spaceLeft = width
 				noSpace = true
@@ -238,6 +267,9 @@ func WrapTxt(text string, width int) (folded []string) {
 				foldedTxt += word
 				spaceLeft -= len(word)
 				noSpace = false
+			} else if fallback {
+				foldedTxt += "," + word
+				spaceLeft -= 1 + len(word)
 			} else {
 				foldedTxt += " " + word
 				spaceLeft -= 1 + len(word)

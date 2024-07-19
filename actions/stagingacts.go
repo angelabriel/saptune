@@ -33,6 +33,7 @@ var stagingSolutions = solution.GetOtherSolution(StagingSheets, "", "")
 
 // StagingAction  Staging actions like apply, revert, verify asm.
 func StagingAction(actionName string, stageName []string, tuneApp *app.App) {
+	txtparser.ResetVersionSectCnts("/staging/")
 	stagingSwitch = getStagingFromConf()
 	if len(stgFiles.AllStageFiles) == 0 && len(stgFiles.StageAttributes) == 0 {
 		stgFiles = collectStageFileInfo(tuneApp)
@@ -401,7 +402,7 @@ func printNoteAnalysis(writer io.Writer, stageName, txtPrefix, flag string) (boo
 		txtNoteEnabled = txtPrefix + "Note is enabled and must be reverted.\n"
 		txtNoteApplied = txtPrefix + "Note is applied and must be reverted.\n"
 		txtSolEnabled = txtPrefix + "Note is part of the currently enabled solution '%s'. Release would break the solution!\n"
-		txtSolNotEnabled = txtPrefix + "Note is part of the not-enabled solution '%s'. Release would break the solution(s)!\n"
+		txtSolNotEnabled = txtPrefix + "Note is part of the not-enabled solution '%s'. Release would break the solution!\n"
 		txtCustomSolEnabled = txtPrefix + "Note is part of the currently enabled custom solution '%s'. Release would break the solution!\n"
 		txtCustomSolNotEnabled = txtPrefix + "Note is part of the not-enabled custom solution '%s'. Release would break the solution!\n"
 
@@ -514,7 +515,8 @@ func writeStagingToConf(staging string) error {
 	return ioutil.WriteFile(saptuneSysconfig, []byte(sconf.ToText()), 0644)
 }
 
-//func collectStageFileInfo() *stageFiles {
+// collectStageFileInfo is collecting all needed info about the file
+// available in the staging area for later processing
 func collectStageFileInfo(tuneApp *app.App) stageFiles {
 	stageConf := stageFiles{
 		AllStageFiles:   make([]string, 0, 64),
@@ -526,13 +528,18 @@ func collectStageFileInfo(tuneApp *app.App) stageFiles {
 
 		// get Note/Solution Description and setup absolute filenames
 		solStageName, name, workingFile, packageFile := getSolOrNoteEnv(stageName)
-		stagingFile := fmt.Sprintf("%s/%s", StagingSheets, stageName)
-		// Description
-		stageMap["desc"] = name
-		// Version
-		stageMap["version"] = txtparser.GetINIFileVersionSectionEntry(stagingFile, "version")
-		// Date
-		stageMap["date"] = txtparser.GetINIFileVersionSectionEntry(stagingFile, "date")
+		stagingFile := fmt.Sprintf("%s%s", StagingSheets, stageName)
+		// get flags
+		stageMap["new"], stageMap["deleted"], stageMap["updated"] = collectStageFlags(workingFile, packageFile)
+
+		if stageMap["deleted"] != "true" {
+			// Description
+			stageMap["desc"] = name
+			// Version
+			stageMap["version"] = txtparser.GetINIFileVersionSectionEntry(stagingFile, "version")
+			// Date
+			stageMap["date"] = txtparser.GetINIFileVersionSectionEntry(stagingFile, "date")
+		}
 		// filenames
 		stageMap["wfilename"] = workingFile
 		stageMap["pfilename"] = packageFile
@@ -541,9 +548,6 @@ func collectStageFileInfo(tuneApp *app.App) stageFiles {
 		if len(tuneApp.TuneForSolutions) > 0 {
 			stageMap["enabledSol"] = tuneApp.TuneForSolutions[0]
 		}
-
-		// get flags
-		stageMap["new"], stageMap["deleted"], stageMap["updated"] = collectStageFlags(workingFile, packageFile)
 
 		// check for override file
 		stageMap["override"] = "false"
@@ -572,7 +576,7 @@ func collectStageFileInfo(tuneApp *app.App) stageFiles {
 func getSolOrNoteEnv(stgName string) (string, string, string, string) {
 	sName := ""
 	dName := stagingOptions[stgName].Name()
-	wFile := fmt.Sprintf("%s/%s", NoteTuningSheets, stgName)
+	wFile := fmt.Sprintf("%s%s", NoteTuningSheets, stgName)
 	pFile := fmt.Sprintf("%snotes/%s", PackageArea, stgName)
 	if strings.HasSuffix(stgName, ".sol") {
 		// stage file is a solution file
@@ -703,7 +707,7 @@ func diffStageObj(writer io.Writer, sName string) {
 		return
 	}
 	for _, param := range stagingNote.AllValues {
-		if solName != "" && param.Section != solSelect {
+		if (solName != "" && param.Section != solSelect) || param.Section == "version" {
 			continue
 		}
 		stgNote[param.Key] = param.Value
@@ -717,7 +721,7 @@ func diffStageObj(writer io.Writer, sName string) {
 			return
 		}
 		for _, param := range workingNote.AllValues {
-			if solName != "" && param.Section != solSelect {
+			if solName != "" && param.Section != solSelect || param.Section == "version" {
 				continue
 			}
 			wrkNote[param.Key] = param.Value
@@ -767,7 +771,8 @@ func compareStageFields(sName string, stage, work map[string]string) (allMatch b
 	// changed Notes
 	// check for deleted parameter in staging Note
 	for Key, workValue := range work {
-		if stage[Key] != "" {
+		_, ok := stage[Key]
+		if ok {
 			continue
 		}
 		comparisons[Key] = stageComparison{
@@ -779,14 +784,14 @@ func compareStageFields(sName string, stage, work map[string]string) (allMatch b
 		allMatch = false
 	}
 	for Key, stageValue := range stage {
-		// new/additional parameter settings in staging Note - workValue will be '' and match is false
-		// no extra handling needed
-		workValue := work[Key]
+		// new/additional parameter settings in staging Note - Key will not be available in map
+		workValue, ok := work[Key]
+		if !ok {
+			workValue = "-"
+		}
+
 		stageValueJS, workValueJS, match := note.CompareJSValue(stageValue, workValue, "")
 		if !match {
-			if workValueJS == "" {
-				workValueJS = "-"
-			}
 			comparisons[Key] = stageComparison{
 				FieldName:        Key,
 				stgVal:           stageValueJS,

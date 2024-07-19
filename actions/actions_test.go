@@ -216,82 +216,6 @@ func TestReadYesNo(t *testing.T) {
 	checkOut(t, txt, yesnoMatchText)
 }
 
-/* Needs some more care to make the tests reliable
-func TestSelectAction(t *testing.T) {
-	// test setup
-	setUp(t)
-
-	tstRetErrorExit = -1
-	oldOSExit := system.OSExit
-	defer func() { system.OSExit = oldOSExit }()
-	system.OSExit = tstosExit
-	oldErrorExitOut := system.ErrorExitOut
-	defer func() { system.ErrorExitOut = oldErrorExitOut }()
-	system.ErrorExitOut = tstErrorExitOut
-
-	//errExitMatchText := PrintHelpAndExitMatchText
-	errExitbuffer := bytes.Buffer{}
-	tstwriter = &errExitbuffer
-	buffer := bytes.Buffer{}
-
-	// saptune note list
-	os.Args = []string{"saptune", "note", "list"}
-	system.RereadArgs()
-	actionMatchText := noteListMatchText
-	SelectAction(&buffer, tApp, "3")
-
-	txt := buffer.String()
-	checkOut(t, txt, actionMatchText)
-	if tstRetErrorExit != -1 {
-		t.Errorf("error exit should be '-1' and NOT '%v'\n", tstRetErrorExit)
-	}
-	errExOut := errExitbuffer.String()
-	if errExOut != "" {
-		t.Errorf("wrong text returned by ErrorExit: '%v' instead of ''\n", errExOut)
-	}
-
-	// saptune solution list
-	buffer.Reset()
-	errExitbuffer.Reset()
-	tstRetErrorExit = -1
-	actionMatchText = solutionListMatchText
-	os.Args = []string{"saptune", "solution", "list"}
-	system.RereadArgs()
-	SelectAction(&buffer, tApp, "3")
-	txt = buffer.String()
-	checkOut(t, txt, actionMatchText)
-	if tstRetErrorExit != -1 {
-		t.Errorf("error exit should be '-1' and NOT '%v'\n", tstRetErrorExit)
-	}
-	errExOut = errExitbuffer.String()
-	if errExOut != "" {
-		t.Errorf("wrong text returned by ErrorExit: '%v' instead of ''\n", errExOut)
-	}
-
-	// saptune status
-	buffer.Reset()
-	errExitbuffer.Reset()
-	tstRetErrorExit = -1
-	actionMatchText = saptuneStatMatchText
-	os.Args = []string{"saptune", "status"}
-	system.RereadArgs()
-	SelectAction(&buffer, tApp, "3")
-	txt = buffer.String()
-	checkOut(t, txt, actionMatchText)
-	if tstRetErrorExit != 3 {
-		t.Errorf("error exit should be '3' and NOT '%v'\n", tstRetErrorExit)
-	}
-	errExOut = errExitbuffer.String()
-	if errExOut != "" {
-		t.Errorf("wrong text returned by ErrorExit: '%v' instead of ''\n", errExOut)
-	}
-
-
-	switchOnColor(t)
-	tearDown(t)
-}
-*/
-
 func TestPrintHelpAndExit(t *testing.T) {
 	tstRetErrorExit = -1
 	oldOSExit := system.OSExit
@@ -316,3 +240,43 @@ func TestPrintHelpAndExit(t *testing.T) {
 		t.Errorf("wrong text returned by ErrorExit: '%v' instead of ''\n", errExOut)
 	}
 }
+
+/*
+func TestVerifyAction(t *testing.T) {
+	var verifyMatchText = `
+No notes or solutions enabled, nothing to verify.
+`
+	buffer := bytes.Buffer{}
+	VerifyAction(&buffer, "applied", tApp)
+	txt := buffer.String()
+	checkOut(t, txt, verifyMatchText)
+
+	// test for PrintHelpAndExit
+	oldOSExit := system.OSExit
+	defer func() { system.OSExit = oldOSExit }()
+	system.OSExit = tstosExit
+	oldErrorExitOut := system.ErrorExitOut
+	defer func() { system.ErrorExitOut = oldErrorExitOut }()
+	system.ErrorExitOut = tstErrorExitOut
+
+	// this errExitMatchText differs from the 'real' text by the last 2 lines
+	// because of test situation, the 'exit 1' in PrintHelpAndExit is not
+	// executed (as designed for testing)
+	errExitMatchText := PrintHelpAndExitMatchText + `
+No notes or solutions enabled, nothing to verify.
+`
+	buffer.Reset()
+	errExitbuffer := bytes.Buffer{}
+	tstwriter = &errExitbuffer
+	VerifyAction(&buffer, "NotApplied", tApp)
+	txt = buffer.String()
+	checkOut(t, txt, errExitMatchText)
+	if tstRetErrorExit != 1 {
+		t.Errorf("error exit should be '1' and NOT '%v'\n", tstRetErrorExit)
+	}
+	errExOut := errExitbuffer.String()
+	if errExOut != "" {
+		t.Errorf("wrong text returned by ErrorExit: '%v' instead of ''\n", errExOut)
+	}
+}
+*/

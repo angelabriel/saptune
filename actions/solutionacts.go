@@ -27,6 +27,7 @@ func SolutionAction(writer io.Writer, actionName, solName, newSolName string, tu
 	case "verify":
 		SolutionActionVerify(writer, solName, tuneApp)
 	case "simulate":
+		system.WarningLog("the action 'solution simulate' is deprecated!.\nsaptune will still handle this action in the current version, but it will be removed in future versions of saptune.")
 		SolutionActionSimulate(writer, solName, tuneApp)
 	case "customise", "customize":
 		SolutionActionCustomise(writer, solName, tuneApp)
@@ -40,6 +41,8 @@ func SolutionAction(writer io.Writer, actionName, solName, newSolName string, tu
 		SolutionActionDelete(os.Stdin, writer, solName, tuneApp)
 	case "rename":
 		SolutionActionRename(os.Stdin, writer, solName, newSolName, tuneApp)
+	case "change":
+		SolutionActionChange(os.Stdin, writer, solName, tuneApp)
 	case "revert":
 		SolutionActionRevert(writer, solName, tuneApp)
 	case "applied":
@@ -62,18 +65,7 @@ func SolutionActionApply(writer io.Writer, solName string, tuneApp *app.App) {
 		// do not apply another solution. Does not make sense
 		system.ErrorExit("There is already one solution applied. Applying another solution is NOT supported.", 1)
 	}
-	removedAdditionalNotes, err := tuneApp.TuneSolution(solName)
-	if err != nil {
-		system.ErrorExit("Failed to tune for solution %s: %v", solName, err)
-	}
-	fmt.Fprintf(writer, "All tuning options for the SAP solution have been applied successfully.\n")
-	if len(removedAdditionalNotes) > 0 {
-		fmt.Fprintf(writer, "\nThe following previously-enabled notes are now tuned by the SAP solution:\n")
-		for _, noteNumber := range removedAdditionalNotes {
-			fmt.Fprintf(writer, "\t%s\t%s\n", noteNumber, tuneApp.AllNotes[noteNumber].Name())
-		}
-	}
-	rememberMessage(writer)
+	applySolution(writer, solName, tuneApp)
 }
 
 // SolutionActionList lists all available solution definitions
@@ -160,18 +152,27 @@ func SolutionActionVerify(writer io.Writer, solName string, tuneApp *app.App) {
 	if solName == "" {
 		VerifyAllParameters(writer, tuneApp)
 	} else {
-		result := system.JPNotes{}
+		result := system.JPNotes{
+			Verifications: []system.JPNotesLine{},
+			Attentions:    []system.JPNotesRemind{},
+			NotesOrder:    []string{},
+		}
 		// Check system parameters against the specified solution, no matter the solution has been tuned for or not.
 		unsatisfiedNotes, comparisons, err := tuneApp.VerifySolution(solName)
 		if err != nil {
+			system.Jcollect(result)
 			system.ErrorExit("Failed to test the current system against the specified SAP solution: %v", err)
 		}
 		PrintNoteFields(writer, "NONE", comparisons, true, &result)
+		sysComp := len(unsatisfiedNotes) == 0
+		result.SysCompliance = &sysComp
 		if len(unsatisfiedNotes) == 0 {
 			fmt.Fprintf(writer, "%s%sThe system fully conforms to the tuning guidelines of the specified SAP solution.%s%s\n", setGreenText, setBoldText, resetBoldText, resetTextColor)
 		} else {
+			system.Jcollect(result)
 			system.ErrorExit("The parameters listed above have deviated from the specified SAP solution recommendations.\n", "colorPrint", setRedText, setBoldText, resetBoldText, resetTextColor)
 		}
+		system.Jcollect(result)
 	}
 }
 
@@ -212,6 +213,48 @@ func SolutionActionRevert(writer io.Writer, solName string, tuneApp *app.App) {
 	}
 }
 
+// SolutionActionChange switches to a new solution even that another solution
+// was already applied
+// It's basically a 'revert OLDSOLUTION' && 'apply NEWSOLUTION'.
+// This will change the Note order in case of additional applied Notes, but
+// this is intended and accepted.
+// The confirmation can be suppressed by '--force'
+func SolutionActionChange(reader io.Reader, writer io.Writer, solName string, tuneApp *app.App) {
+	if solName == "" {
+		PrintHelpAndExit(writer, 1)
+	}
+	// check if the new solution really exists
+	if !solution.IsAvailableSolution(solName, solutionSelector) {
+		system.ErrorExit(`the new Solution "%s" does not exist.
+Run "saptune solution list" for a complete list of supported solutions.
+and then please double check your input`, solName)
+	}
+
+	if len(tuneApp.TuneForSolutions) > 0 {
+		// already one solution applied.
+		oldSol := tuneApp.TuneForSolutions[0]
+		if oldSol == solName {
+			system.NoticeLog("Solution '%s' already applied, nothing to do.", solName)
+			system.ErrorExit("", 0)
+		}
+		system.NoticeLog("Exchange applied solution '%s' with new solution '%s'", oldSol, solName)
+		if !system.IsFlagSet("force") {
+			txtConfirm := fmt.Sprintf("Do you really want to exchange the applied solution (%s) with the new solution '%s'?", oldSol, solName)
+			if !readYesNo(txtConfirm, reader, writer) {
+				system.ErrorExit("Solution action 'change' aborted by user interaction", 0)
+			}
+		}
+		// revert old solution
+		if err := tuneApp.RevertSolution(oldSol); err != nil {
+			system.ErrorExit("Failed to revert tuning for the old solution %s: %v", oldSol, err)
+		}
+		system.InfoLog("Change solution - revert of old solution '%s' done.", oldSol)
+	}
+	// apply new solution
+	system.InfoLog("Change solution - apply new solution '%s'.", solName)
+	applySolution(writer, solName, tuneApp)
+}
+
 // SolutionActionEnabled prints out the enabled solution definition
 func SolutionActionEnabled(writer io.Writer, tuneApp *app.App) {
 	if len(tuneApp.TuneForSolutions) != 0 {
@@ -223,6 +266,7 @@ func SolutionActionEnabled(writer io.Writer, tuneApp *app.App) {
 
 // SolutionActionApplied prints out the applied solution
 func SolutionActionApplied(writer io.Writer, tuneApp *app.App) {
+	var appSol system.JAppliedSol
 	partial := false
 	solApplied, state := tuneApp.AppliedSolution()
 	if state == "partial" {
@@ -231,9 +275,11 @@ func SolutionActionApplied(writer io.Writer, tuneApp *app.App) {
 	} else {
 		fmt.Fprintf(writer, "%s", solApplied)
 	}
-	appSol := system.JAppliedSol{
-		SolName: solApplied,
-		Partial: partial,
+	if solApplied != "" {
+		appSol = system.JAppliedSol{
+			SolName: solApplied,
+			Partial: &partial,
+		}
 	}
 	system.Jcollect(appSol)
 }
@@ -297,9 +343,6 @@ func SolutionActionEdit(writer io.Writer, customSol string, tuneApp *app.App) {
 	} else {
 		customSol = strings.TrimSuffix(customSol, ".sol")
 	}
-	if !solution.IsAvailableSolution(customSol, solutionSelector) {
-		system.ErrorExit("Solution '%s' does not exist.", customSol)
-	}
 
 	fileName, extraSol := getFileName(solFName, SolutionSheets, ExtraTuningSheets)
 	ovFileName, overrideSol := getovFile(solFName, OverrideTuningSheets)
@@ -325,6 +368,10 @@ func SolutionActionEdit(writer io.Writer, customSol string, tuneApp *app.App) {
 		}
 	} else {
 		system.NoticeLog("Nothing changed during the editor session, so no update of the solution definition file '%s'", fileName)
+	}
+	solution.Refresh()
+	if !solution.IsAvailableSolution(customSol, solutionSelector) {
+		system.ErrorExit("Solution '%s' contains errors. Please check carefully.", customSol)
 	}
 }
 
@@ -386,14 +433,15 @@ func SolutionActionDelete(reader io.Reader, writer io.Writer, solName string, tu
 	if solName == "" {
 		PrintHelpAndExit(writer, 1)
 	}
-	// check if solution really exists
-	if !solution.IsAvailableSolution(solName, solutionSelector) {
-		system.NoticeLog("Solution '%s' does not exist. Nothing to do.", solName)
-		system.ErrorExit("", 0)
-	}
 	solFName := fmt.Sprintf("%s.sol", solName)
+	fileName, extraSol, err := chkFileName(solFName, SolutionSheets, ExtraTuningSheets)
+	// check if solution file exists - allow deletion of 'wrong' solutions
+	if os.IsNotExist(err) {
+		system.ErrorExit(`the Solution "%s" is not recognised by saptune.
+Run "saptune solution list" for a complete list of supported solutions.
+and then please double check your input`, solName)
+	}
 	txtConfirm := fmt.Sprintf("Do you really want to delete Solution '%s'?", solName)
-	fileName, extraSol := getFileName(solFName, SolutionSheets, ExtraTuningSheets)
 	ovFileName, overrideSol := getovFile(solFName, OverrideTuningSheets)
 
 	// check, if solution is active - enabled
@@ -436,8 +484,9 @@ func SolutionActionRename(reader io.Reader, writer io.Writer, solName, newSolNam
 	}
 	// check if old solution name really exists
 	if !solution.IsAvailableSolution(solName, solutionSelector) {
-		system.NoticeLog("Solution '%s' does not exist. Nothing to do.", solName)
-		system.ErrorExit("", 0)
+		system.ErrorExit(`the Solution "%s" is not recognised by saptune.
+Run "saptune solution list" for a complete list of supported solutions.
+and then please double check your input`, solName)
 	}
 	// check if new solution name already exists
 	if solution.IsAvailableSolution(newSolName, solutionSelector) {
@@ -559,4 +608,20 @@ func getNoteInSol(tApp *app.App, noteName string) (string, string) {
 		}
 	}
 	return noteInSols, noteInCustomSols
+}
+
+// applySolution will apply the given solution
+func applySolution(writer io.Writer, solName string, tuneApp *app.App) {
+	removedAdditionalNotes, err := tuneApp.TuneSolution(solName)
+	if err != nil {
+		system.ErrorExit("Failed to tune for solution %s: %v", solName, err)
+	}
+	fmt.Fprintf(writer, "All tuning options for the SAP solution have been applied successfully.\n")
+	if len(removedAdditionalNotes) > 0 {
+		fmt.Fprintf(writer, "\nThe following previously-enabled notes are now tuned by the SAP solution:\n")
+		for _, noteNumber := range removedAdditionalNotes {
+			fmt.Fprintf(writer, "\t%s\t%s\n", noteNumber, tuneApp.AllNotes[noteNumber].Name())
+		}
+	}
+	rememberMessage(writer)
 }

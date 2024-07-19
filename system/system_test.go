@@ -26,7 +26,7 @@ var tstErrExitOut = func(errw io.Writer, str string, out ...interface{}) {
 	out = out[1:]
 	fmt.Printf("%v\n", errw)
 	fmt.Fprintf(errwriter, "%s%sERROR: "+str+"%s%s\n", out...)
-	if len(out) >=  4 {
+	if len(out) >= 4 {
 		out = out[2 : len(out)-2]
 	}
 	fmt.Fprintf(tstwriter, "ERROR: "+str, out...)
@@ -60,16 +60,9 @@ func TestGetSolutionSelector(t *testing.T) {
 }
 
 func TestGetOsName(t *testing.T) {
-	_ = CopyFile("/etc/os-release_OrG", "/etc/os-release")
 	actualVal := GetOsName()
-	//if actualVal != "SLES" && actualVal != "openSUSE Leap" {
 	if actualVal != "SLES" {
-		t.Logf("OS is '%s' and not 'SLES'\n", actualVal)
-		_ = CopyFile(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/osr15"), "/etc/os-release")
-		actualVal = GetOsName()
-		if actualVal != "SLES" {
-			t.Errorf("OS is '%s' and not 'SLES'\n", actualVal)
-		}
+		t.Errorf("OS is '%s' and not 'SLES'\n", actualVal)
 	}
 	// test with non existing file
 	os.Remove("/etc/os-release")
@@ -81,26 +74,22 @@ func TestGetOsName(t *testing.T) {
 }
 
 func TestGetOsVers(t *testing.T) {
-	_ = CopyFile("/etc/os-release_OrG", "/etc/os-release")
 	actualVal := GetOsVers()
-	if actualVal == "" {
-		_ = CopyFile(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/osr15"), "/etc/os-release")
-		actualVal = GetOsVers()
-		if actualVal != "15-SP2" {
-			t.Errorf("unexpected OS version '%s'\n", actualVal)
-		}
-		_ = CopyFile(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/osr12"), "/etc/os-release")
-		actualVal = GetOsVers()
-		if actualVal != "12-SP5" {
-			t.Errorf("unexpected OS version '%s'\n", actualVal)
-		}
-	} else {
-		switch actualVal {
-		case "12", "12-SP1", "12-SP2", "12-SP3", "12-SP4", "12-SP5", "15", "15-SP1", "15-SP2", "15-SP3":
-			t.Logf("expected OS version '%s' found\n", actualVal)
-		default:
-			t.Logf("unexpected OS version '%s'\n", actualVal)
-		}
+	switch actualVal {
+	case "12", "12-SP1", "12-SP2", "12-SP3", "12-SP4", "12-SP5", "15", "15-SP1", "15-SP2", "15-SP3", "15-SP4", "15-SP5":
+		t.Logf("expected OS version '%s' found\n", actualVal)
+	default:
+		t.Errorf("unexpected OS version '%s'\n", actualVal)
+	}
+	_ = CopyFile(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/osr15"), "/etc/os-release")
+	actualVal = GetOsVers()
+	if actualVal != "15-SP2" {
+		t.Errorf("unexpected OS version '%s'\n", actualVal)
+	}
+	_ = CopyFile(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/osr12"), "/etc/os-release")
+	actualVal = GetOsVers()
+	if actualVal != "12-SP5" {
+		t.Errorf("unexpected OS version '%s'\n", actualVal)
 	}
 
 	// test with non existing file
@@ -113,15 +102,14 @@ func TestGetOsVers(t *testing.T) {
 }
 
 func TestIsSLE15(t *testing.T) {
-	_ = CopyFile(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/osr15"), "/etc/os-release")
 	if IsSLE15() {
 		t.Logf("found SLE15 OS version\n")
-		_ = CopyFile("/etc/os-release_OrG", "/etc/os-release")
+		_ = CopyFile(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/osr12"), "/etc/os-release")
 		if IsSLE15() {
 			t.Errorf("expected a non SLE15 os version, but OS version is '%s'\n", GetOsVers())
 		}
 	} else {
-		t.Errorf("expected '15-SP2', but OS version is '%s'\n", GetOsVers())
+		t.Errorf("expected SLE15 os version, but OS version is '%s'\n", GetOsVers())
 	}
 	_ = CopyFile("/etc/os-release_OrG", "/etc/os-release")
 }
@@ -197,13 +185,14 @@ func TestErrorExit(t *testing.T) {
 	txt = buffer.String()
 	checkOut(t, txt, "ERROR: Colored Hallo")
 	errtxt := errbuf.String()
+	//lint:ignore ST1018 Unicode control characters are expected here
 	checkOut(t, errtxt, "[31m[1mERROR: Colored Hallo[22m[0m\n")
 
 	// check errExitOut function
 	outbuf := bytes.Buffer{}
 	errExitOut(&outbuf, "Colored Hallo direct", "colorPrint", setRedText, setBoldText, resetBoldText, resetTextColor)
 	txt = outbuf.String()
-	//checkOut(t, txt, "ERROR: Colored Hallo")
+	//lint:ignore ST1018 Unicode control characters are expected here
 	checkOut(t, txt, "[31m[1mERROR: Colored Hallo direct[22m[0m\n")
 
 	SaptuneLock()

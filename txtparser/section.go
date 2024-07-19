@@ -99,11 +99,17 @@ func GetOverrides(filetype, ID string) (bool, *INIFile) {
 // readVersionSection read content of [version] section from config file
 func readVersionSection(fileName string) ([]string, bool, error) {
 	skipSection := false
+	staging := false
 	chkVersEntries := map[string]bool{"missing": false, "found": false, "isNew": false, "isOld": false, "skip": false, "mandVers": false, "mandDate": false, "mandDesc": false, "mandRefs": false}
 	vsection := []string{}
 	fName := filepath.Base(fileName)
+	if strings.Contains(filepath.Dir(fileName), "/staging/") {
+		staging = true
+	}
 	versRun := fmt.Sprintf("%s/version_%s.run", saptuneSectionDir, fName)
-	if _, err := os.Stat(versRun); err == nil {
+	// if processing a note from the staging area, read from staging file
+	// and NOT from the stored 'run' file
+	if _, err := os.Stat(versRun); err == nil && !staging {
 		return getVersionRunInfo(versRun)
 	}
 	content, err := ioutil.ReadFile(fileName)
@@ -147,7 +153,10 @@ func readVersionSection(fileName string) ([]string, bool, error) {
 	}
 
 	err = chkVersEntriesResult(fileName, chkVersEntries)
-	if !chkVersEntries["missing"] {
+	// if processing a note from the staging area do NOT store the version
+	// info in the 'run' file to not override the section info from the
+	// working area
+	if !chkVersEntries["missing"] && !staging {
 		err = storeVersionRunInfo(versRun, vsection, chkVersEntries["isNew"])
 	}
 	return vsection, chkVersEntries["isNew"], err
@@ -221,6 +230,10 @@ func chkVersEntriesSyntax(line string, chkVents map[string]bool) {
 // print and return error message
 func chkVersEntriesResult(fileName string, chkVents map[string]bool) error {
 	var err error
+	object := "Note"
+	if strings.HasSuffix(fileName, ".sol") {
+		object = "Solution"
+	}
 	if !chkVents["mandVers"] && !chkVents["mandDate"] && !chkVents["mandRefs"] && !chkVents["mandDesc"] {
 		chkVents["isNew"] = false
 	} else {
@@ -230,7 +243,7 @@ func chkVersEntriesResult(fileName string, chkVents map[string]bool) error {
 		// missing version section
 		chkVents["missing"] = true
 		if missVersionCnt[fileName] < 1 {
-			err = system.ErrorLog("missing version section in Note definition file '%s'. Please check", fileName)
+			err = system.ErrorLog("missing version section in %s definition file '%s'. Please check", object, fileName)
 			missVersionCnt[fileName] = missVersionCnt[fileName] + 1
 		} else {
 			err = fmt.Errorf("1")
@@ -242,9 +255,9 @@ func chkVersEntriesResult(fileName string, chkVents map[string]bool) error {
 		if missVersionCnt[fileName] < 1 {
 			if chkVents["isOld"] {
 				// version section mismatch
-				system.ErrorLog("version section mismatch in Note definition file '%s - old and (partial) new style version header found. Please check", fileName)
+				system.ErrorLog("version section mismatch in %s definition file '%s' - old and (partial) new style version header found. Please check", object, fileName)
 			}
-			system.ErrorLog("wrong version section found in Note definition file '%s'. At least one of the mandatory fields is missing. Please check", fileName)
+			system.ErrorLog("wrong version section found in %s definition file '%s'. At least one of the mandatory fields is missing. Please check", object, fileName)
 			missVersionCnt[fileName] = missVersionCnt[fileName] + 1
 		}
 	}
@@ -290,7 +303,11 @@ func selectVersionExpression(newStyle bool, entry, file string) string {
 		regex = newStyleVersionSectionEntry(entry)
 	} else {
 		if oldStyleCnt[file] < 1 {
-			system.WarningLog("You are still using the old style version section syntax in Note definition file '%s' which is deprecated. Please adapt.", file)
+			object := "Note"
+			if strings.HasSuffix(file, ".sol") {
+				object = "Solution"
+			}
+			system.WarningLog("You are still using the old style version section syntax in %s definition file '%s' which is deprecated. Please adapt.", object, file)
 			oldStyleCnt[file] = oldStyleCnt[file] + 1
 		}
 		regex = oldStyleVersionSectionEntry(entry)
@@ -339,4 +356,21 @@ func oldStyleVersionSectionEntry(entryName string) string {
 		re = `# .*NOTE=.*VERSION=[\w.+-_]+\s*DATE=.*\s*NAME="([^"]*)"`
 	}
 	return re
+}
+
+// ResetVersionSectCnts resets the counters to control
+// the error message of missing or wrong version section
+// the warning message for the use of old style version section
+// needed for staging to get the Warnings and Errors displayed
+func ResetVersionSectCnts(tag string) {
+	for key := range oldStyleCnt {
+		if strings.Contains(filepath.Dir(key), tag) {
+			oldStyleCnt[key] = 0
+		}
+	}
+	for key := range missVersionCnt {
+		if strings.Contains(filepath.Dir(key), tag) {
+			missVersionCnt[key] = 0
+		}
+	}
 }

@@ -28,24 +28,6 @@ func TestNoteActions(t *testing.T) {
 
 	// Test NoteActionList
 	t.Run("NoteActionList", func(t *testing.T) {
-/*
-		var listMatchText = `
-All notes (+ denotes manually enabled notes, * denotes notes enabled by solutions, - denotes notes enabled by solutions but reverted manually later, O denotes override file exists for note, C denotes custom note):
-	900929		Linux: STORAGE_PARAMETERS_WRONG_SET and 'mmap() failed'
-			Version 7 from 31.07.2017
-			https://launchpad.support.sap.com/#/notes/900929
-	NEWSOL2NOTE	
-	extraNote	Configuration drop in for extra tests
-			Version 0 from 04.06.2019
-	oldFile		Name_syntax
-	simpleNote	Configuration drop in for simple tests
-			Version 1 from 09.07.2019
-	wrongFileNamesyntax	
-
-Remember: if you wish to automatically activate the solution's tuning options after a reboot, you must enable and start saptune.service by running:
-    saptune service enablestart
-`
-*/
 		listMatchText := noteListMatchText
 		buffer := bytes.Buffer{}
 		NoteActionList(&buffer, tApp)
@@ -218,8 +200,6 @@ simpleNote - Configuration drop in for simple tests
 --------------------+------------------------------+-------------+-----------+-------------+-----------
    simpleNote, 1    | net.ipv4.ip_local_port_range | 31768 61999 |           | 31768 61999 | yes
 
-   (no change)
-
 
 [31mAttention for SAP Note simpleNote:
 Hints or values not yet handled by saptune. So please read carefully, check and set manually, if needed:
@@ -234,6 +214,32 @@ current order of enabled notes is: simpleNote
 `
 		buffer := bytes.Buffer{}
 		nID := "simpleNote"
+		NoteActionVerify(&buffer, nID, tApp)
+		txt := buffer.String()
+		checkOut(t, txt, verifyMatchText)
+	})
+
+	// Test NoteActionVerifyApplied
+	t.Run("NoteActionVerifyApplied", func(t *testing.T) {
+		var verifyMatchText = `
+   SAPNote, Version | Parameter                    | Expected    | Override  | Actual      | Compliant
+--------------------+------------------------------+-------------+-----------+-------------+-----------
+   simpleNote, 1    | net.ipv4.ip_local_port_range | 31768 61999 |           | 31768 61999 | yes
+
+
+[31mAttention for SAP Note simpleNote:
+Hints or values not yet handled by saptune. So please read carefully, check and set manually, if needed:
+# Text to ignore for apply but to display.
+# Everything the customer should know about this note, especially
+# which parameters are NOT handled and the reason.
+[0m
+
+current order of enabled notes is: simpleNote
+
+[32m[1mThe running system is currently well-tuned according to all of the enabled notes.[22m[0m
+`
+		buffer := bytes.Buffer{}
+		nID := "applied"
 		NoteActionVerify(&buffer, nID, tApp)
 		txt := buffer.String()
 		checkOut(t, txt, verifyMatchText)
@@ -563,12 +569,12 @@ func TestNoteActionCustomise(t *testing.T) {
 	defer func() { NoteTuningSheets = oldNoteTuningSheets }()
 	NoteTuningSheets = TstFilesInGOPATH
 	newTuningOpts := note.GetTuningOptions(TstFilesInGOPATH, ExtraTstFilesInGOPATH)
-        cApp := app.InitialiseApp(TstFilesInGOPATH, "", newTuningOpts, AllTestSolutions)
+	cApp := app.InitialiseApp(TstFilesInGOPATH, "", newTuningOpts, AllTestSolutions)
 
 	// test with empty noteID
 	custBuffer := bytes.Buffer{}
 	custMatchText := ""
-	// as we are in 'test mode' collect all errExit messages and continue, 
+	// as we are in 'test mode' collect all errExit messages and continue,
 	// instead of exit function - so differ from real life
 	// test with missing note id
 	errMatchText := `ERROR: the Note ID "" is not recognised by saptune.
@@ -706,12 +712,12 @@ func TestNoteActionEdit(t *testing.T) {
 	defer func() { NoteTuningSheets = oldNoteTuningSheets }()
 	NoteTuningSheets = TstFilesInGOPATH
 	newTuningOpts := note.GetTuningOptions(TstFilesInGOPATH, ExtraTstFilesInGOPATH)
-        eApp := app.InitialiseApp(TstFilesInGOPATH, "", newTuningOpts, AllTestSolutions)
+	eApp := app.InitialiseApp(TstFilesInGOPATH, "", newTuningOpts, AllTestSolutions)
 
 	// test with empty noteID
 	editBuffer := bytes.Buffer{}
 	editMatchText := ""
-	// as we are in 'test mode' collect all errExit messages and continue, 
+	// as we are in 'test mode' collect all errExit messages and continue,
 	// instead of exit function - so differ from real life
 	// test with missing note id
 	errMatchText := `ERROR: the Note ID "" is not recognised by saptune.
@@ -806,7 +812,7 @@ ERROR: Problems while editing Note definition file '/home/ci_tst/gopath/src/gith
 	txt = buffer.String()
 	checkOut(t, txt, errMatchText)
 	eApp.NoteApplyOrder = []string{}
-	
+
 	// test without changes - extraTest2Note
 	os.Setenv("EDITOR", "/usr/bin/echo")
 	buffer.Reset()
@@ -823,4 +829,10 @@ ERROR: Problems while editing Note definition file '/home/ci_tst/gopath/src/gith
 	txt = buffer.String()
 	checkOut(t, txt, errMatchText)
 
+	// cleanup
+	if _, err := os.Stat("/var/log/saptune"); os.IsNotExist(err) {
+		t.Logf("All good - /var/log/saptune does not exist.")
+	} else {
+		os.RemoveAll("/var/log/saptune")
+	}
 }

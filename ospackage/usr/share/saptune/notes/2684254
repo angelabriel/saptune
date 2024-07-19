@@ -1,10 +1,9 @@
 # 2684254 - SAP HANA DB: Recommended OS settings for SLES 15 / SLES for SAP Applications 15
 # Description:    HANA DB settings
-# Version 20 from 02.07.2021 in English
 
 [version]
-VERSION=20
-DATE=02.07.2021
+VERSION=23
+DATE=03.05.2023
 DESCRIPTION=SAP HANA DB: Recommended OS settings for SLES 15 / SLES for SAP Applications 15
 REFERENCES=https://launchpad.support.sap.com/#/notes/2684254
 
@@ -26,7 +25,7 @@ THP=never
 #
 KSM=0
 
-[cpu]
+[cpu:arch=x86_64]
 # Energy Performance Bias EPB (applies to Intel-based systems only)
 # energy_perf_bias: performance - 0, normal - 6, powersave - 15
 # cpupower set -b 0, if system supports Intel's performance bias setting
@@ -93,7 +92,13 @@ kernel-default 15-SP2 5.3.18-24.24.1
 [rpm:os=15:arch=ppc64le]
 kernel-default 4.12.14-150.14.2
 
-[grub]
+[rpm:os=15-SP3:arch=x86_64]
+glibc 2.31-150300.46.1
+
+[rpm:os=15-SP4:arch=x86_64]
+glibc 2.31-150300.46.1
+
+[grub:arch=x86_64]
 # /etc/default/grub GRUB_CMDLINE_LINUX_DEFAULT
 # saptune only checks the values. Changing the grub configuration is not
 # supported by saptune

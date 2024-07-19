@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017-2022 SUSE LLC.
+.\" * Copyright (c) 2017-2024 SUSE LLC.
 .\" * All rights reserved
 .\" * Authors: Soeren Schmidt, Angela Briel
 .\" *
@@ -14,64 +14,73 @@
 .\" * GNU General Public License for more details.
 .\" */
 .\"
-.TH saptune "8" "March 2022" "" "System Optimisation For SAP"
+.TH saptune "8" "June 2024" "" "System optimization For SAP"
 .SH NAME
-saptune \- Comprehensive system optimisation management for SAP solutions (\fBVersion 3\fP)
+saptune \- Comprehensive system optimization management for SAP solutions (\fBVersion 3\fP)
 
 ATTENTION: If you still use version \fB1\fP of saptune it's now time to migrate to saptune version \fB3\fP, so please refer to man page saptune-migrate(7).
 
 .SH SYNOPSIS
-\fBsaptune daemon\fP
-[ start | status | stop ] \fBATTENTION: deprecated\fP
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBdaemon\fP
+( start | stop | status [--non-compliance-check] ) \fBATTENTION: deprecated\fP
 
-\fBsaptune service\fP
-[ start | status | stop | restart | takeover | enable | disable | enablestart | disablestop ]
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBservice\fP
+( start | stop | restart | takeover | enable | disable | enablestart | disablestop | status [--non-compliance-check] )
 
-\fBsaptune note\fP
-[ list | revertall | enabled | applied ]
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBnote\fP
+( list | verify | revertall | enabled | applied )
 
-\fBsaptune note\fP
-[ apply | simulate | customise | create | edit | revert | show | delete ] NoteID
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBnote\fP
+( apply | simulate | customise | create | edit | revert | show | delete ) NOTEID
 
-\fBsaptune note\fP
-verify [--colorscheme=<color scheme>] [--show-non-compliant] [NoteID]
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBnote\fP
+verify [--colorscheme SCHEME] [--show-non-compliant] [NOTEID|applied]
 
-\fBsaptune note\fP
-rename NoteID newNoteID
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBnote\fP
+rename NOTEID NEWNOTEID
 
-\fBsaptune solution\fP
-[ list | verify | enabled | applied ]
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBsolution\fP
+( list | verify | enabled | applied )
 
-\fBsaptune solution\fP
-[ apply | simulate | verify | customise | create | edit | revert | show | delete ] SolutionName
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBsolution\fP
+( apply | simulate | customise | create | edit | revert | show | delete ) SOLUTIONNAME
 
-\fBsaptune solution\fP
-rename SolutionName newSolutionName
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBsolution\fP
+change [--force] SOLUTIONNAME
 
-\fBsaptune staging\fP
-[ status | enable | disable | is-enabled | list | diff | analysis | release ]
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBsolution\fP
+verify [--colorscheme SCHEME] [--show-non-compliant] [SOLUTIONNAME]
 
-\fBsaptune staging\fP
-[ analysis | diff ] [ NoteID... | SolutionID... | all ]
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBsolution\fP
+rename SOLUTIONNAME NEWSOLUTIONNAME
 
-\fBsaptune staging\fP
-release [--force|--dry-run] [ NoteID... | SolutionID... | all ]
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBstaging\fP
+( status | enable | disable | is-enabled | list )
 
-\fBsaptune revert\fP
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBstaging\fP
+( analysis | diff ) [ ( NOTEID | SOLUTIONNAME )... | all ]
+
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBstaging\fP
+release [--force|--dry-run] [ ( NOTEID | SOLUTIONNAME )... | all ]
+
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBverify\fP
+applied
+
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBrevert\fP
 all
 
-\fBsaptune check\fP
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBcheck\fP
 
-\fBsaptune status\fP
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBstatus [--non-compliance-check]\fP
 
-\fBsaptune version\fP
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBversion\fP
 
-\fBsaptune help\fP
+\fBsaptune\fP [--format FORMAT] [--force-color] \fBhelp\fP
 
 .SH DESCRIPTION
-saptune is designed to automate the configuration recommendations from SAP and SUSE to run an SAP application on SLES for SAP. These configuration recommendations normally referred to as SAP Notes. So some dedicated SAP Notes are the base for the work of saptune. Additional some best practice guides are added as Note definitions to optimise the system for some really special cases.
+saptune is designed to automate the configuration recommendations from SAP and SUSE to run an SAP application on SLES for SAP. These configuration recommendations are normally referred to as SAP Notes. So some dedicated SAP Notes are the base for the work of saptune. Additional some best practice guides are added as Note definitions to optimize the system for some really special cases.
 
-saptune can apply settings for a single Note definition or can set all settings for a predefined solution, which is a collection of several SAP Notes. Additional it can revert all these settings back to the previous system settings.
+saptune can apply settings for a single Note definition or can set all settings for a predefined solution, which is a collection of several SAP Notes. Additionally it can revert all these settings back to the previous system settings.
 
 It can verify, if the current system configuration is in sync with a specific Note definition or a defined solution and displays the differences.
 Additionally, it can simulate the setting of a single SAP Note definition or a defined solution and will display the changes which will be done to the system.
@@ -80,7 +89,14 @@ saptune does not only set kernel values (like sysctl does), but also values like
 .PP
 /proc/sys/, /proc/sys/vm/, /proc/sys/kernel, /proc/sys/fs, /sys/block/*/queue/scheduler and /sys/block/*/queue/nr_requests, /sys/devices/system/cpu/*/cpufreq/scaling_governor, /sys/devices/system/cpu/*/cpuidle/state*/latency, /sys/devices/system/cpu/*/cpuidle/state*/disable, /dev/shm, /etc/security/limits.d/, /etc/systemd/logind.conf.d/ and some others.
 
-saptune does no longer use tuned(8) to restart after a system reboot. It is using it's own systemd service named "saptune.service".
+By default saptune is printing all results to stdout, Errors and Warnings are printed to stderr. By using \fB--format FORMAT\fP this behaviour can be changed.
+.br
+Supported formats are:
+.TP
+.B json
+Print all results in a machine readable json output format defined by the schemata delivered in \fI/usr/share/saptune/schemas/1.0\fP.
+
+saptune does no longer use tuned(8) to restart after a system reboot. It is using its own systemd service named "saptune.service".
 
 We decided to have only ONE solution applied, but multiple Notes. Each Note is applied exactly once.
 
@@ -100,7 +116,7 @@ As saptune no longer uses tuned, this action is internally linked to 'saptune se
 .SS
 .TP
 .B start
-Start saptune service and apply a set of optimisations to the system, if solutions or notes were selected during a previous call of saptune. If the service is enabled, the tuning will be automatically activated upon system boot.
+Start saptune service and apply a set of optimizations to the system, if solutions or notes were selected during a previous call of saptune. If the service is enabled, the tuning will be automatically activated upon system boot.
 .br
 It redirects to '\fIsystemctl start saptune.service\fP'
 .br
@@ -122,15 +138,15 @@ configured saptune major version (from \fI/etc/sysconfig/saptune\fP)
 .IP \[bu]
 enabled Solution
 .br
-The entry 'enabled Solution' shows the Solution, which was manually applied by '\fIsaptune solution apply <solution name>\fP' and it's related Notes.
+The entry 'enabled Solution' shows the Solution, which was manually applied by '\fIsaptune solution apply <solution name>\fP' and its related Notes.
 .IP \[bu]
 applied Solution
 .br
-The entry 'applied Solution' shows the Solution, which is currently applied and it's related and applied Notes.
+The entry 'applied Solution' shows the Solution, which is currently applied and its related and applied Notes.
 .IP \[bu]
 additional enabled Notes, sorted lexicographically
 .br
-The entry 'additional enabled Notes' shows all Notes, which were additional manually applied by '\fIsaptune note apply <note name>\fP'. They are \fBone\fP part of the list of notes in the entry 'applied Notes' and 'enabled Notes'.
+The entry 'additional enabled Notes' shows all Notes, which were additionally applied manually by '\fIsaptune note apply <note name>\fP'. They are \fBone\fP part of the list of notes in the entry 'applied Notes' and 'enabled Notes'.
 .IP \[bu]
 all selected Notes in applied order
 .br
@@ -140,7 +156,11 @@ all currently applied Notes in applied order
 .br
 The list of 'applied Notes' includes the \fBmanually\fP applied Notes. Additional it includes all the Notes related to the 'configured Solution' too. These Notes get applied when using '\fIsaptune solution apply\fP'. The solutions and their related notes can be listed by '\fIsaptune solution list\fP'.
 
-And additional 'applied Notes' shows you, if your system is '\fBactively\fP' tuned at the moment. If the list is empty, your system is \fBnot\fP tuned. If the list is \fBnot\fP empty, your system \fBis\fP tuned.
+And additional 'applied Notes' shows if the system is '\fBactively\fP' tuned at the moment. If the list is empty, the system is \fBnot\fP tuned. If the list is \fBnot\fP empty, the system \fBis\fP tuned.
+.IP \[bu]
+A list of orphaned Overrides
+.br
+These are override files existing in \fI/etc/saptune/override\fP, but with no related Note definition file found in the working area \fI/var/lib/saptune/working/\fP or in the custom/vendor directory \fI/etc/saptune/extra\fP.
 .IP \[bu]
 state of staging
 .IP \[bu]
@@ -153,14 +173,26 @@ status of sapconf.service (enabled/disabled, active/inactive/failed/...the other
 status of tuned (enabled/disabled, active/inactive/failed/...the other possible unit states..., profile)
 .IP \[bu]
 the overall systemd 'system' status, read from \fI'systemctl is-system-running'\fP (running, degraded, ....)
+.IP \[bu]
+the tuning state of the system, gathered by 'saptune note verify'.
+.br
+"unknown (checking disabled)", if the flage '--non-compliance-check' is used.
+.br
+"not tuned", if \fBno\fP Solution or Note is applied.
+.br
+"not-present", if 'verify' hit an error.
+.br
+"not compliant", if one or more parameter values differ from the related SAP Note. For detailed information please use \fI'saptune note verify'\fP.
+.br
+"compliant", if all parameter values comply with the values from the related SAP Notes.
 
 This information is not logged, but only printed to stdout.
 
-If saptune.service is \fBnot\fP 'active' the exit code is 1, if the system is '\fBnot tuned\fP' - which means no Note or Solution is enabled - the exit code is 3, otherwise the exit code is 0.
+If saptune.service is \fBnot\fP 'active' the exit code is 1. If the system is '\fBnot tuned\fP' - which means no Note or Solution is enabled - the exit code is 3. If the system is tuned, but the tuning is \fBnot compliant\fP the exit code is 4. Otherwise the exit code is 0.
 .SS
 .TP
 .B stop
-Stop saptune service and revert all optimisations that were previously applied by saptune. If the service is disabled, the tuning will no longer automatically activate upon boot.
+Stop saptune service and revert all optimizations that were previously applied by saptune. If the service is disabled, the tuning will no longer automatically activate upon boot.
 .br
 It redirects to '\fIsystemctl stop saptune.service\fP'
 .br
@@ -169,13 +201,16 @@ Success is reported on stdout, errors including systemd error messages are print
 If the action was successfully the exit code is 0, otherwise 1.
 .TP
 .B restart
-Revert all optimisations that were previously applied by saptune. And after that apply a set of optimisations to the system, if solutions or notes were selected during a previous call of saptune.
+Revert all optimizations that were previously applied by saptune. And after that apply a set of optimizations to the system, if solutions or notes were selected during a previous call of saptune.
 .br
 It redirects to '\fIsystemctl restart saptune.service\fP'
 .br
 Success is reported on stdout, errors including systemd error messages are printed on stderr. The action gets logged.
 
 If the action was successfully the exit code is 0, otherwise 1.
+
+If '\fIIGNORE_RELOAD\fP' is set to '\fByes\fP' in the saptune configuration file the action '\fIrestart\fP' will do \fBnothing\fP. The reason will be logged.
+See the 'NOTE' section at the end of the man page for more information.
 .TP
 .B enable
 Enables the saptune service. To activate the tuning, the saptune service needs to be started. But as the service is now enabled, the tuning will automatically activated upon system boot.
@@ -189,7 +224,7 @@ It will fail in case sapconf.service is running or has exited or save state file
 If the action was successfully the exit code is 0, otherwise 1.
 .TP
 .B disable
-Disable the saptune service. To revert all optimisations that were previously applied by saptune, the saptune service needs to be stopped. But as the service is now disabled, the tuning will no longer automatically activated upon system boot.
+Disable the saptune service. To revert all optimizations that were previously applied by saptune, the saptune service needs to be stopped. But as the service is now disabled, the tuning will no longer automatically activated upon system boot.
 .br
 It redirects to '\fIsystemctl disable saptune.service\fP'
 .br
@@ -198,7 +233,7 @@ Success is reported on stdout, errors including systemd error messages are print
 If the action was successfully the exit code is 0, otherwise 1.
 .TP
 .B enablestart
-Enables and start the saptune service and apply a set of optimisations to the system, if solutions or notes were selected during a previous call of saptune. As the service is now enabled, the tuning will automatically activated upon system boot.
+Enables and start the saptune service and apply a set of optimizations to the system, if solutions or notes were selected during a previous call of saptune. As the service is now enabled, the tuning will automatically activated upon system boot.
 .br
 Calls '\fIsystemctl enable saptune.service\fP' and '\fIsystemctl start saptune.service\fP' in this order.
 .br
@@ -207,7 +242,7 @@ Success is reported on stdout, errors including systemd error messages are print
 If the action was successfully the exit code is 0, otherwise 1.
 .TP
 .B disablestop
-Disable and stop the saptune service and revert all optimisations that were previously applied by saptune. As the service is now disabled, the tuning will no longer automatically activated upon system boot.
+Disable and stop the saptune service and revert all optimizations that were previously applied by saptune. As the service is now disabled, the tuning will no longer automatically activated upon system boot.
 .br
 Calls '\fIsystemctl disable saptune.service\fP' and '\fIsystemctl stop saptune.service\fP' in this order.
 .br
@@ -229,7 +264,7 @@ Note denotes either a SAP Note, a vendor specific tuning definition or SUSE reco
 .SS
 .TP
 .B apply
-Apply optimisation settings specified in the Note. The Note will be automatically activated upon system boot if the daemon is enabled.
+Apply optimization settings specified in the Note. The Note will be automatically activated upon system boot if the saptune service is enabled.
 
 If a Note definition contains a '\fB[reminder]\fP' section, this section will be printed after the note has applied successfully. It will be highlighted with red color.
 
@@ -252,13 +287,13 @@ Currently implemented notes are marked with '\fB+\fP', if manually enabled, '\fB
 If an \fBoverride\fP file exists for a NoteID, the note is marked with '\fBO\fP' and a customer or vendor specific note is marked with '\fBC\fP'..
 .TP
 .B enabled
-Print all current enabled notes as a list separated by blanks.
+Print all currently enabled notes as a list separated by blanks without trailing line feed.
 .TP
 .B applied
-Print all current applied notes as a list separated by blanks.
+Print all currently applied notes as a list separated by blanks without trailing line feed.
 .TP
 .B verify
-If a Note ID is specified, saptune verifies the current running system against the recommendations specified in the Note. If Note ID is not specified, saptune verifies all system parameters against all implemented Notes. As a result you will see a table containing the following columns
+If a Note ID is specified, saptune verifies the currently running system against the recommendations specified in the Note. If Note ID is \fBnot\fP specified or the string \fIapplied\fP is specified, saptune verifies all system parameters against all applied Notes. As a result you will see a table containing the following columns
 
 SAPNote, Version | Parameter | Expected | Override | Actual | Compliant
 
@@ -310,7 +345,7 @@ By using the command line argument '\fB--show-non-compliant\fP' it is possible t
 
 It is possible to use a \fBcolor scheme\fP for the verify output table.
 .br
-The \fBcolor scheme\fP can be given as a command line argument '\fB--colorscheme=<color scheme>\fP' or as variable '\fBCOLOR_SCHEME=<color scheme>\fP' in the saptune configuration file \fI/etc/sysconfig/saptune\fP.
+The \fBcolor scheme\fP can be given as a command line argument '\fB--colorscheme SCHEME\fP' or as variable '\fBCOLOR_SCHEME SCHEME\fP' in the saptune configuration file \fI/etc/sysconfig/saptune\fP.
 .br
 Possible \fBcolor schemes\fP are:
 .RS 7
@@ -337,7 +372,7 @@ The default, if no \fBcolor scheme\fP is given, is \fBfull-red-noncmpl\fP. If an
 The 'final lines' with the overall result of the verify operation are colored green (compliant) or red (not compliant) independent from the chosen \fBcolor scheme\fP
 .SS
 .TP
-.B simulate
+.B simulate - ATTENTION: deprecated
 Show all changes that will be applied to the system if the specified Note is applied.
 As a result you will see a table containing the following columns
 
@@ -399,10 +434,10 @@ The editor is defined by the \fBEDITOR\fP environment variable. If not set edito
 You need to choose an unique NoteID for this operation. Use '\fIsaptune note list\fP' to find the already used NoteIDs.
 .TP
 .B revert
-Revert optimisation settings carried out by the Note, and the Note will no longer be activated automatically upon system boot.
+Revert optimization settings carried out by the Note, and the Note will no longer be activated automatically upon system boot.
 .TP
 .B revertall
-Revert optimisation settings carried out by all applied notes, and the notes will no longer be activated automatically upon system boot.
+Revert optimization settings carried out by all applied notes, and the notes will no longer be activated automatically upon system boot.
 .TP
 .B show
 Print content of Note definition file to stdout
@@ -452,6 +487,7 @@ HANA:Solution for running an SAP HANA database.
 MAXDB:Solution for running an SAP MaxDB database.
 NETWEAVER:Solution for running SAP NetWeaver application servers.
 NETWEAVER+HANA:Solution for running both SAP application servers and SAP HANA on the same host.
+NETWEAVER+MAXDB:Solution for running both SAP application servers and SAP MaxDB on the same host.
 S4HANA-APPSERVER:Solution for running SAP S/4HANA application servers
 S4HANA-APP+DB:Solution for running both SAP S/4HANA application servers and SAP HANA on the same host
 S4HANA-DBSERVER:Solution for running the SAP HANA database of an SAP S/4HANA installation
@@ -468,7 +504,7 @@ e.g. V4711.sol
 .SS
 .TP
 .B apply
-Apply optimisation settings recommended by the solution. These settings will be automatically activated upon system boot if the daemon is enabled.
+Apply optimization settings recommended by the solution. These settings will be automatically activated upon system boot if the saptune service is enabled.
 .TP
 .B list
 List all solution names that saptune is capable of implementing.
@@ -480,18 +516,18 @@ If an \fBoverride\fP file exists for a solution, the solution is marked with '\f
 If a note belonging to an enabled solution is reverted manually, the note is highlighted with red color (instead of green) and is crossed out.
 .TP
 .B enabled
-Print the current enabled solution.
+Print the currently enabled solution.
 .TP
 .B applied
-Print the current applied solution.
+Print the currently applied solution.
 .br
 If one or more notes of the solution are \fBreverted\fP, which is indicated by a '-' in the output of 'saptune note list', the string '\fB(partial)\fP is added to the solution name.
 .TP
-.B simulate
+.B simulate - ATTENTION: deprecated
 Show all notes that are associated with the specified solution, and all changes that will be applied once the solution is activated.
 .TP
 .B verify
-If a solution name is specified, saptune verifies the current running system against the recommended settings of this solution. If the solution name is not specified, saptune verifies all system parameters against all implemented solutions.
+If a solution name is specified, saptune verifies the running system against the recommended settings of this solution. If the solution name is not specified, saptune verifies all system parameters against all implemented solutions.
 .TP
 .B edit
 This allows to edit the note list of the customer or vendor specific solution definitions in \fI/etc/saptune/extra\fP.
@@ -523,7 +559,17 @@ The editor is defined by the \fBEDITOR\fP environment variable. If not set edito
 You need to choose an unique solution name for this operation. Use '\fIsaptune solution list\fP' to find the already used solution names.
 .TP
 .B revert
-Revert optimisation settings recommended by the solution, and these settings will no longer be activated automatically upon system boot.
+Revert optimization settings recommended by the solution, and these settings will no longer be activated automatically upon system boot.
+.TP
+.B change
+Switch to a new solution even that another solution was already applied.
+.br This is basically a revert of the old solution and an apply of the new solution. A confirmation is needed to finish the revert action of the old solution. The confirmation can be suppressed by '--force'
+.br
+ATTENTION:
+.br
+because of the revert of the old solution during the execution of the action 'change' the system will be not sufficient tuned for SAP workloads for a short period of time until the new solution is applied successfully. This may harm a running SAP system. So use this action carefully.
+.br
+And please be in mind: Because of the 'revert' and 'apply' the order of notes and therefore the active tuning may change, especially if additional notes were applied beside the old applied solution.
 .TP
 .B show
 Print content of solution definition file to stdout
@@ -609,7 +655,7 @@ The solution definition is shown as a whole object. It is only possible to relea
 .br
 Lastly a hint is printed to remind the user that he has to release staged objects before he can use them and that it is possible to view the changes.
 .TP
-.B diff [NoteID|SolutionID]
+.B diff [ ( NOTEID | SOLUTIONNAME )... | all ]
 Shows the differences between the Note (or all Notes) or the Solution definition in the staging area and the working area.
 .br
 For each Note in the staging area the output contains the values of all parameter which differ. This includes new or removed parameters as well as changes in the reminder section.
@@ -618,12 +664,12 @@ For the Solution, all changed solutions are displayed with their differences.
 .br
 Lastly a hint is printed to remind the user that he has to release staged objects before he can use them.
 .TP
-.B analysis NoteID...|SolutionID...|all
+.B analysis [ ( NOTEID | SOLUTIONNAME )... | all ]
 Does an analysis of the requested Notes, the Solution definitions or everything in the staging area to warn the user about possible issues or additional steps to perform.
 .br
 Lastly a hint is printed to remind the user that he has to release staged objects before he can use them as well that he should check out the differences.
 .TP
-.B release NoteID...|SolutionID...|all
+.B release [ ( NOTEID | SOLUTIONNAME )... | all ]
 Releases the requested Notes, the Solution definitions or everything in the stages area.
 .br
 This means the Notes or the Solution definitions get moved from the staging area to the working area. In case of a deleted Note/Solution, it will be removed from the working area.
@@ -633,10 +679,17 @@ First the command will show an analysis of the objects going to be released to m
 
 Because the release is irreversible, the user has to confirm the action.
 
+.SH VERIFY ACTIONS
+.TP
+.B verify applied
+Verifies all system parameters against all applied Notes.
+.br
+Same as a \fIsaptune note verify\fP
+
 .SH REVERT ACTIONS
 .TP
 .B revert all
-Revert all optimisation settings recommended by the SAP solution and/or the Notes, and these settings will no longer be activated automatically upon system boot.
+Revert all optimization settings recommended by the SAP solution and/or the Notes, and these settings will no longer be activated automatically upon system boot.
 
 .SH CHECK ACTIONS
 .TP
@@ -707,6 +760,14 @@ Syntax of the solution definition file names:
 .br
 e.g. V4711.sol
 
+.SH ATTENTION
+Trento support:
+If you plan to use Trento and its capability of checking the correctness of the configuration of your SAP environment please adapt the following solution name schema for your custom solutions.
+.br
+<saptune_shipped_solutionname>\fB_\fP<your_preferred_badge>.sol
+.br
+e.g. NETWEAVER_MyOwnSolution.sol
+
 Syntax of the file:
 The content of the custom specific solution files should be written in a INI file style with sections headed by '[section_name]' keywords.
 .br
@@ -721,7 +782,14 @@ filename is \fBNEWSOL1.sol\fP with content
 
 [version]
 .br
-# SAP-NOTE=NEWSOL1 CATEGORY=SOLUTION VERSION=1 DATE=15.12.2020 NAME="My custom specific solution definitions"
+VERSION=1
+.br
+DATE=15.12.2020
+.br
+DESCRIPTION=My custom specific solution definitions
+.br
+REFERENCES=
+.br
 [ArchX86]
 .br
 1980196 CUSTOMNOTE1 CUSTOMNOTE2
@@ -731,7 +799,29 @@ filename is \fBNEWSOL1.sol\fP with content
 1980196 CUSTOMNOTE1 CUSTOMNOTE2
 .PP
 
+.SH CHANGES
+.TP
+.B changelog
+The changelog file of the saptune rpm package contains detailed information, what was changed between the various package versions. The command
+
+rpm -q --changes saptune | more
+
+will show the content of the file
+.TP
+.B version 3
+With the update to saptune version 3 saptune does no longer use tuned(8) to restart after a system reboot. It is using its own systemd service named "saptune.service".
+.br
+So we now \fBdeprecated\fP all "DAEMON ACTIONS" like '\fIsaptune daemon start\fP'. These commands will still work as they are internally linked to the related "SERVICE ACTIONS" like '\fIsaptune service takeover\fP'. Please refer to the related section descriptions at the top of this man page.
+.TP
+.B version 3.1
+With the update to saptune version 3.1 we \fBdeprecated\fP the actions '\fIsaptune note simulate\fP' and '\fIsaptune solution simulate\fP'.
+
 .SH FILES
+.PP
+\fI/usr/share/saptune/schemas/1.0\fP
+.RS 4
+schemata defining the json output format available since saptune version 3.1
+.RE
 .PP
 \fI/usr/share/saptune/notes\fP
 .RS 4
@@ -819,8 +909,22 @@ Please do not change or remove files in this directory. The knowledge about the 
 
 .SH NOTE
 Using saptune within a pipe, the color information will be removed from the output.
+.br
+It is possible to change this behavior by using the command line option \fB--force-color\fP
 .SH NOTE
 When the values from the saptune Note definitions are applied to the system, no further monitoring of the system parameters are done. So changes of saptune relevant parameters by using the 'sysctl' command or by editing configuration files will not be observed. If the values set by saptune should be reverted, these unrecognized changed settings will be overwritten by the previous saved system settings from saptune.
+.SH NOTE
+To prevent unintended reload/restart of saptune during package installation/update of saptune or normal work, which will result in a short time period, where the system is not tuned for SAP workloads, it's possible to set the parameter \fBIGNORE_RELOAD\fP in the central saptune configuration file \fI/etc/sysconfig/saptune\fP.
+.br
+\fBIGNORE_RELOAD\fP is used to control the '\fBsystemctl reload saptune.service\fP' behavior.
+.br
+Default is \fBIGNORE_RELOAD="no"\fP, which means that the 'reload' is working as expected.
+.br
+If set to '\fByes\fP' a '\fBsystemctl reload saptune.service\fP' and a '\fBsaptune service restart\fP' will do \fBnothing\fP. The reason will be logged.
+.br
+Additional this parameter setting will prevent '\fBsystemctl restart saptune.service\fP' (which is a 'ExecStop' followed by 'ExecStart') called from macros used during the package installation/update of the saptune package from restarting the tuning.
+.br
+ATTENTION: Outside the saptune package installation '\fBsystemctl restart saptune.service\fP' can \fBnot\fP be blocked.
 
 .SH ATTENTION
 Higher or lower system values set by the system, the SAP installer or by the administrator using sysctl command or sysctl configuration files will be now \fBoverwritten\fP by saptune, if they are part of the applied Note definitions.

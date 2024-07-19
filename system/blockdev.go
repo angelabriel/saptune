@@ -34,9 +34,10 @@ var isVD = regexp.MustCompile(`^x?vd\w+$`)
 // devices like /dev/nvme0n1 are the NVME storage namespaces: the devices you
 // use for actual storage, which will behave essentially as disks.
 // The NVMe naming standard describes:
-//    nvme0: first registered device's device controller
-//    nvme0n1: first registered device's first namespace
-//    nvme0n1p1: first registered device's first namespace's first partition
+//
+//	nvme0: first registered device's device controller
+//	nvme0n1: first registered device's first namespace
+//	nvme0n1p1: first registered device's first namespace's first partition
 var isNvme = regexp.MustCompile(`^nvme\d+n\d+$`)
 
 // BlockDeviceIsDisk checks, if a block device is a disk
@@ -46,7 +47,7 @@ func BlockDeviceIsDisk(dev string) bool {
 	fname := fmt.Sprintf("/sys/block/%s/device/type", dev)
 	dtype, err := ioutil.ReadFile(fname)
 	if err != nil || strings.TrimSpace(string(dtype)) != "0" {
-		if strings.Join(isVD.FindStringSubmatch(dev), "") == "" && strings.Join(isNvme.FindStringSubmatch(dev), "") == "" {
+		if isVD.FindStringSubmatch(dev) == nil && isNvme.FindStringSubmatch(dev) == nil {
 			// unsupported device
 			return false
 		}

@@ -62,10 +62,11 @@ func main() {
 	system.LogInit(logFile, logSwitch)
 	// now system.ErrorExit can write to log and os.Stderr. No longer extra
 	// care is needed.
-	system.InfoLog("saptune (%s) started with '%s'", actions.RPMVersion, strings.Join(os.Args, " "))
+	system.InfoLog("saptune (%s) started on '%s' with '%s'", actions.RPMVersion, strings.Join(os.Args, " "))
 
 	if arg1 == "lock" {
 		if arg2 := system.CliArg(2); arg2 == "remove" {
+			system.JnotSupportedYet()
 			system.ReleaseSaptuneLock()
 			system.InfoLog("command line triggered remove of lock file '/run/.saptune.lock'\n")
 			system.ErrorExit("", 0)
@@ -122,6 +123,7 @@ func main() {
 		system.ErrorExit("Error during NoteSanityCheck - '%v'\n", err)
 	}
 	checkForTuned()
+	actions.CheckOrphanedOverrides()
 	actions.SelectAction(os.Stdout, tuneApp, SaptuneVersion)
 	system.ErrorExit("", 0)
 }
@@ -157,6 +159,7 @@ func checkForTuned() {
 // running as root
 func callSaptuneCheckScript(arg string) {
 	if arg == "check" {
+		system.JnotSupportedYet()
 		// call external scrip saptune_check
 		cmd := exec.Command(saptcheck)
 		cmd.Stdin = os.Stdin
@@ -214,7 +217,7 @@ func checkWorkingArea() {
 // returns the saptune version and changes some log switches
 func checkSaptuneConfigFile(writer io.Writer, saptuneConf string, lswitch map[string]string) string {
 	missingKey := []string{}
-	keyList := []string{app.TuneForSolutionsKey, app.TuneForNotesKey, app.NoteApplyOrderKey, "SAPTUNE_VERSION", "STAGING", "COLOR_SCHEME"}
+	keyList := []string{app.TuneForSolutionsKey, app.TuneForNotesKey, app.NoteApplyOrderKey, "SAPTUNE_VERSION", "STAGING", "COLOR_SCHEME", "SKIP_SYSCTL_FILES", "IGNORE_RELOAD"}
 	sconf, err := txtparser.ParseSysconfigFile(saptuneConf, false)
 	if err != nil {
 		fmt.Fprintf(writer, "Error: Unable to read file '%s': %v\n", saptuneConf, err)
@@ -231,6 +234,7 @@ func checkSaptuneConfigFile(writer io.Writer, saptuneConf string, lswitch map[st
 		fmt.Fprintf(writer, "Error: File '%s' is broken. Missing variables '%s'\n", saptuneConf, strings.Join(missingKey, ", "))
 		system.ErrorExit("", 128)
 	}
+	txtparser.GetSysctlExcludes(sconf.GetString("SKIP_SYSCTL_FILES", ""))
 	stageVal := sconf.GetString("STAGING", "")
 	if stageVal != "true" && stageVal != "false" {
 		fmt.Fprintf(writer, "Error: Variable 'STAGING' from file '%s' contains a wrong value '%s'. Needs to be 'true' or 'false'\n", saptuneConf, stageVal)
@@ -239,11 +243,12 @@ func checkSaptuneConfigFile(writer io.Writer, saptuneConf string, lswitch map[st
 
 	// set values read from the config file
 	saptuneVers := sconf.GetString("SAPTUNE_VERSION", "")
-	// Switch Debug on ("1") or off ("0" - default)
+	// Switch Debug on ("on") or off ("off" - default)
 	// Switch verbose mode on ("on" - default) or off ("off")
+	// Switch error mode on ("on" - default) or off ("off")
 	// check, if DEBUG, ERROR or VERBOSE is set in /etc/sysconfig/saptune
 	if lswitch["debug"] == "" {
-		lswitch["debug"] = sconf.GetString("DEBUG", "0")
+		lswitch["debug"] = sconf.GetString("DEBUG", "off")
 	}
 	if lswitch["verbose"] == "" {
 		lswitch["verbose"] = sconf.GetString("VERBOSE", "on")

@@ -9,7 +9,7 @@ import (
 )
 
 var schemaDir = "file:///usr/share/saptune/schemas/1.0/"
-var supportedRAC = map[string]bool{"daemon start": false, "daemon status": true, "daemon stop": false, "service apply": false, "service start": false, "service status": true, "service stop": false, "service restart": false, "service revert": false, "service reload": false, "service takeover": false, "service enable": false, "service disable": false, "service enablestart": false, "service disablestop": false, "note list": true, "note revertall": false, "note enabled": true, "note applied": true, "note apply": false, "note simulate": false, "note customise": false, "note create": false, "note edit": false, "note revert": false, "note show": false, "note delete": false, "note verify": true, "note rename": false, "solution list": true, "solution verify": true, "solution enabled": true, "solution applied": true, "solution apply": false, "solution simulate": false, "solution customise": false, "solution create": false, "solution edit": false, "solution revert": false, "solution show": false, "solution delete": false, "solution rename": false, "staging status": false, "staging enable": false, "staging disable": false, "staging is-enabled": false, "staging list": false, "staging diff": false, "staging analysis": false, "staging release": false, "revert all": false, "lock remove": false, "check": false, "status": true, "version": true, "help": false}
+var supportedRAC = map[string]bool{"daemon start": false, "daemon status": true, "daemon stop": false, "service apply": false, "service start": false, "service status": true, "service stop": false, "service restart": false, "service revert": false, "service reload": false, "service takeover": false, "service enable": false, "service disable": false, "service enablestart": false, "service disablestop": false, "note list": true, "note revertall": false, "note enabled": true, "note applied": true, "note apply": false, "note simulate": false, "note customise": false, "note create": false, "note edit": false, "note revert": false, "note show": false, "note delete": false, "note verify": true, "note rename": false, "solution list": true, "solution verify": true, "solution enabled": true, "solution applied": true, "solution apply": false, "solution change": false, "solution simulate": false, "solution customise": false, "solution create": false, "solution edit": false, "solution revert": false, "solution show": false, "solution delete": false, "solution rename": false, "staging status": false, "staging enable": false, "staging disable": false, "staging is-enabled": false, "staging list": false, "staging diff": false, "staging analysis": false, "staging release": false, "revert all": false, "lock remove": false, "check": false, "status": true, "version": true, "help": false}
 
 // jentry is the json entry to display
 var jentry JEntry
@@ -77,15 +77,11 @@ type configuredSol struct {
 	ConfiguredSol []string `json:"Solution enabled"`
 }
 
-//type configuredSol struct {
-//ConfiguredSol JObj `json:"enabled Solution"`
-//}
-
 // JAppliedSol is for 'Solution applied' in
 // 'saptune status' and 'saptune solution applied'
 type JAppliedSol struct {
-	SolName string `json:"Solution ID"`
-	Partial bool   `json:"applied partially"`
+	SolName string `json:"Solution ID,omitempty"`
+	Partial *bool  `json:"applied partially,omitempty"`
 }
 
 // appliedSol is for 'saptune solution applied'
@@ -154,11 +150,11 @@ type JPNotesRemind struct {
 // if we need to differ between 'verify' and 'simulate' this
 // can be done in PrintNoteFields' or in jcollect.
 type JPNotes struct {
-	Verifications []JPNotesLine   `json:"verifications,omitempty"`
+	Verifications []JPNotesLine   `json:"verifications"`
 	Simulations   []JPNotesLine   `json:"simulations,omitempty"`
-	Attentions    []JPNotesRemind `json:"attentions,omitempty"`
-	NotesOrder    []string        `json:"Notes enabled,omitempty"`
-	SysCompliance *bool           `json:"system compliance,omitempty"`
+	Attentions    []JPNotesRemind `json:"attentions"`
+	NotesOrder    []string        `json:"Notes enabled"`
+	SysCompliance *bool           `json:"system compliance"`
 }
 
 // JSol - Solution name and related Note list
@@ -171,6 +167,7 @@ type JSol struct {
 type JStatus struct {
 	Services        JStatusServs   `json:"services"`
 	SystemdSysState string         `json:"systemd system state"`
+	TuningState     string         `json:"tuning state"`
 	VirtEnv         string         `json:"virtualization"`
 	SaptuneVersion  string         `json:"configured version"`
 	RPMVersion      string         `json:"package version"`
@@ -181,6 +178,7 @@ type JStatus struct {
 	ConfiguredNotes []string       `json:"Notes enabled additionally"`
 	EnabledNotes    []string       `json:"Notes enabled"`
 	AppliedNotes    []string       `json:"Notes applied"`
+	OrphanedOver    []string       `json:"orphaned Overrides"`
 	Staging         JStatusStaging `json:"staging"`
 	Msg             string         `json:"remember message"`
 }
@@ -314,7 +312,11 @@ func Jcollect(data interface{}) {
 	case JAppliedSol:
 		// "saptune solution applied"
 		var appSol appliedSol
-		appSol.AppliedSol = append(appSol.AppliedSol, res)
+		if res.SolName != "" {
+			appSol.AppliedSol = append(appSol.AppliedSol, res)
+		} else {
+			appSol.AppliedSol = make([]JAppliedSol, 0)
+		}
 		jentry.CmdResult = appSol
 	case JSolList, JNoteList, JStatus, JPNotes:
 		//"solution list", "note list", "status", "daemon status", "service status", "note verify", "solution verify", "note simulate", "solution simulate":
@@ -335,6 +337,15 @@ func realmAndCmd() string {
 	if CliArg(2) != "" {
 		rac = rac + " " + CliArg(2)
 	}
+	if rac == "" {
+		// check for alias
+		if IsFlagSet("version") {
+			rac = "version"
+		}
+		if IsFlagSet("help") {
+			rac = "help"
+		}
+	}
 	return rac
 }
 
@@ -346,4 +357,22 @@ func racIsSupported(rac string) bool {
 		return true
 	}
 	return supportedRAC[rac]
+}
+
+// JNoteListEntryInit initialises a JNoteListEntry variable
+// used in NoteActionList
+func JNoteListEntryInit() JNoteListEntry {
+	newListEntry := JNoteListEntry{
+		NoteID:       "",
+		NoteDesc:     "",
+		NoteRef:      make([]string, 0),
+		NoteVers:     "",
+		NoteRdate:    "",
+		ManEnabled:   false,
+		SolEnabled:   false,
+		ManReverted:  false,
+		NoteOverride: false,
+		CustomNote:   false,
+	}
+	return newListEntry
 }

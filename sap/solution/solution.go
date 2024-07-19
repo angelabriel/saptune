@@ -145,7 +145,7 @@ func GetOtherSolution(solsDir, noteFiles, extraFiles string) map[string]map[stri
 			// as the function most of the time is called
 			// before the logging is initialized use
 			// Fprintf instead to give customers a hint.
-			fmt.Fprintf(os.Stderr, "Warning: extra solution '%s' will not override built-in solution implementation\n",param.Key)
+			fmt.Fprintf(os.Stderr, "Warning: extra solution '%s' will not override built-in solution implementation\n", param.Key)
 			continue
 		}
 		sol[param.Key] = strings.Split(param.Value, "\t")
@@ -164,6 +164,9 @@ func checkSolutionNotes(param txtparser.INIEntry, fileName, noteFiles, extraFile
 	// that the working area does not include the needed note for
 	// the solution, but the package store (and/or staging area) does.
 	for _, noteID := range strings.Split(param.Value, "\t") {
+		if param.Section == "reminder" || param.Section == "version" {
+			continue
+		}
 		// first check in the working area
 		if _, err := os.Stat(fmt.Sprintf("%s%s", noteFiles, noteID)); err != nil {
 			// noteID NOT found in working area

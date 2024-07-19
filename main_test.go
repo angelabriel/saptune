@@ -93,14 +93,14 @@ func TestCallSaptuneCheckScript(t *testing.T) {
 	if errExOut != txt2chk {
 		t.Errorf("wrong text returned by ErrorExit: '%v' instead of '%v'\n", errExOut, txt2chk)
 	}
-	
+
 	src := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/saptune_check")
 	dest := "/usr/sbin/saptune_check"
 	err := system.CopyFile(src, dest)
 	if err != nil {
 		t.Error(err)
 	}
-	 err = os.Chmod(dest, 0755)
+	err = os.Chmod(dest, 0755)
 	if err != nil {
 		t.Error(err)
 	}
@@ -144,8 +144,8 @@ func TestCheckSaptuneConfigFile(t *testing.T) {
 	if saptuneVers != "5" {
 		t.Errorf("wrong value for 'SAPTUNE_VERSION' - '%+v' instead of ''\n", saptuneVers)
 	}
-	if lSwitch["debug"] != "1" {
-		t.Errorf("wrong value for 'DEBUG' - '%+v' instead of '1'\n", lSwitch["debug"])
+	if lSwitch["debug"] != "on" {
+		t.Errorf("wrong value for 'DEBUG' - '%+v' instead of 'on'\n", lSwitch["debug"])
 	}
 	if lSwitch["verbose"] != "on" {
 		t.Errorf("wrong value for 'VERBOSE' - '%+v' instead of 'on'\n", lSwitch["debug"])

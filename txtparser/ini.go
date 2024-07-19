@@ -33,6 +33,7 @@ var loginCnt = 0
 var blckCnt = 0
 
 var blockDev = make([]string, 0, 10)
+var excludeDirs = make([]string, 0)
 
 // counter to control the [sysctl] section
 var sysctlCnt = 0
@@ -171,6 +172,19 @@ func ParseINI(input string) *INIFile {
 			// skip all lines from a non-valid section
 			continue
 		}
+		if strings.HasPrefix(line, "#") {
+			// Skip comments. Need to be done before
+			// 'break apart the line into key, operator, value'
+			// to support comments like # something (default = 60)
+			// without side effects
+			if currentSection == "reminder" {
+				reminder = reminder + line + "\n"
+			}
+			continue
+		}
+		// remove trailing comments from line
+		line = system.StripComment(line, `\s#[^#]|"\s#[^#]`)
+
 		if line[0] == '[' {
 			// Save previous section, if valid
 			if currentSection != "" && !skipSection {
@@ -195,7 +209,7 @@ func ParseINI(input string) *INIFile {
 			// collect system wide sysctl settings
 			if sectionFields[0] == "sysctl" && sysctlCnt == 0 {
 				sysctlCnt = sysctlCnt + 1
-				system.CollectGlobalSysctls()
+				system.CollectGlobalSysctls(excludeDirs)
 			}
 			// moved block device collection so that the info can be
 			// used inside the 'tag' checks
@@ -221,19 +235,7 @@ func ParseINI(input string) *INIFile {
 			}
 			continue
 		}
-		if strings.HasPrefix(line, "#") {
-			// Skip comments. Need to be done before
-			// 'break apart the line into key, operator, value'
-			// to support comments like # something (default = 60)
-			// without side effects
-			if currentSection == "reminder" {
-				reminder = reminder + line + "\n"
-			}
-			continue
-		}
 
-		// remove trailing comments from line
-		line = system.StripComment(line, `\s#[^#]|"\s#[^#]`)
 		// Break apart a line into key, operator, value.
 		kov := splitLineIntoKOV(currentSection, line)
 		if kov == nil {
@@ -456,4 +458,10 @@ func writeReminderSectionData(rem string) ([]INIEntry, map[string]INIEntry, stri
 	curEntriesArray = append(curEntriesArray, entry)
 	curEntriesMap[entry.Key] = entry
 	return curEntriesArray, curEntriesMap, curSection
+}
+
+// GetSysctlExcludes gets the content of the /etc/sysconfig/saptune
+// variable 'SKIP_SYSCTL_FILES' and provides it as slice
+func GetSysctlExcludes(skipFiles string) {
+	excludeDirs = strings.Split(skipFiles, ",")
 }

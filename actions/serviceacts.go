@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/SUSE/saptune/app"
 	"github.com/SUSE/saptune/system"
+	"github.com/SUSE/saptune/txtparser"
 	"io"
 	"os"
 	"strings"
@@ -13,9 +14,13 @@ import (
 // ignore flag for takeover
 var ignoreFlag = "/run/.saptune.ignore"
 
+// list of orphaned override file for 'saptune status'
+var orphanedOverrides []string
+
 // ServiceAction handles service actions like start, stop, status, enable, disable
 // it controls the systemd saptune.service
 func ServiceAction(writer io.Writer, actionName, saptuneVersion string, tApp *app.App) {
+	preventReload()
 	switch actionName {
 	case "apply":
 		// This action name is only used by saptune service, hence it is not advertised to end user.
@@ -37,7 +42,11 @@ func ServiceAction(writer io.Writer, actionName, saptuneVersion string, tApp *ap
 		ServiceActionRevert(tApp)
 	case "reload":
 		// This action name is only used by saptune service, hence it is not advertised to end user.
-		system.NoticeLog("saptune is now restartig the service...")
+		system.NoticeLog("saptune is now restarting the service...")
+		if ignoreServiceReload() {
+			system.NoticeLog("'IGNORE_RELOAD' is set in saptune configuration file, so no permission to reload")
+			system.ErrorExit("", 0)
+		}
 		ServiceActionRevert(tApp)
 		ServiceActionApply(tApp)
 	case "start":
@@ -209,10 +218,13 @@ func ServiceActionStatus(writer io.Writer, tuneApp *app.App, saptuneVersion stri
 	printTunedStatus(writer, &jstatServs)
 
 	// check for system(d) state
-	infoTrigger["chkHint"] = printSystemStatus(writer, &jstatus)
+	infoTrigger["chkHint"] = printSystemdStatus(writer, &jstatus)
 
 	// check for virtualization environment
 	printVirtStatus(writer, &jstatus)
+
+	// check tuning result
+	infoTrigger["notCompliant"] = chkTuningResult(writer, tuneApp, &jstatus)
 
 	infoMsg := bytes.Buffer{}
 	if system.GetFlagVal("format") == "json" {
@@ -225,12 +237,15 @@ func ServiceActionStatus(writer io.Writer, tuneApp *app.App, saptuneVersion stri
 	system.Jcollect(jstatus)
 
 	// order of exit codes important for yast2 module!
-	// first 'stopped', then 'notTuned', then 'ok'
+	// first 'stopped', then 'notTuned', then 'notCompliant', then 'ok'
 	if infoTrigger["saptuneStopped"] {
 		system.ErrorExit("", exitSaptuneStopped)
 	}
 	if infoTrigger["notTuned"] {
 		system.ErrorExit("", exitNotTuned)
+	}
+	if infoTrigger["notCompliant"] {
+		system.ErrorExit("", exitNotCompliant)
 	}
 }
 
@@ -273,6 +288,10 @@ func ServiceActionStop(disableService bool) {
 func ServiceActionRestart(tuneApp *app.App) {
 	var err error
 	system.NoticeLog("Restarting 'saptune.service', this may take some time...")
+	if ignoreServiceReload() {
+		system.NoticeLog("'IGNORE_RELOAD' is set in saptune configuration file, so no permission to restart")
+		system.ErrorExit("", 0)
+	}
 	// release Lock, to prevent deadlock with systemd service 'saptune.service'
 	system.ReleaseSaptuneLock()
 	// restart 'saptune.service'
@@ -530,6 +549,7 @@ func printTunedStatus(writer io.Writer, jstat *system.JStatusServs) {
 }
 
 // printNoteAndSols prints all enabled/active notes and solutions
+// and the orphaned overrides
 func printNoteAndSols(writer io.Writer, tuneApp *app.App, jstat *system.JStatus) bool {
 	notTuned := true
 	partial := false
@@ -575,6 +595,11 @@ func printNoteAndSols(writer io.Writer, tuneApp *app.App, jstat *system.JStatus)
 	appliedNotes := tuneApp.AppliedNotes()
 	fmt.Fprintf(writer, "%s", appliedNotes)
 	fmt.Fprintf(writer, "\n")
+	fmt.Fprintf(writer, "orphaned Overrides:       ")
+	if len(orphanedOverrides) != 0 {
+		fmt.Fprintf(writer, "%s", strings.Join(orphanedOverrides, " "))
+	}
+	fmt.Fprintf(writer, "\n")
 	// initialise
 	jstat.ConfSolNotes = []system.JSol{}
 	jstat.AppliedNotes = []string{}
@@ -586,7 +611,7 @@ func printNoteAndSols(writer io.Writer, tuneApp *app.App, jstat *system.JStatus)
 	if appliedSol != "" {
 		appSol := system.JAppliedSol{
 			SolName: appliedSol,
-			Partial: partial,
+			Partial: &partial,
 		}
 		jstat.AppliedSol = append(jstat.AppliedSol, appSol)
 		appSolNotes := system.JSol{
@@ -605,6 +630,7 @@ func printNoteAndSols(writer io.Writer, tuneApp *app.App, jstat *system.JStatus)
 	}
 	jstat.ConfiguredNotes = tuneApp.TuneForNotes
 	jstat.EnabledNotes = tuneApp.NoteApplyOrder
+	jstat.OrphanedOver = orphanedOverrides
 	return notTuned
 }
 
@@ -677,16 +703,46 @@ func printSaptuneStatus(writer io.Writer, jstat *system.JStatusServs) (bool, boo
 	return saptuneStopped, remember, stenabled
 }
 
-// printSystemStatus prints the state of the systemd
-func printSystemStatus(writer io.Writer, jstat *system.JStatus) bool {
+// printSystemdStatus prints the state of the systemd
+func printSystemdStatus(writer io.Writer, jstat *system.JStatus) bool {
 	chkHint := false
 	state, err := system.GetSystemState()
-	fmt.Fprintf(writer, "system state:             %s\n", state)
+	fmt.Fprintf(writer, "systemd system state:     %s\n", state)
 	jstat.SystemdSysState = state
 	if err != nil {
 		chkHint = true
 	}
 	return chkHint
+}
+
+// chkTuningResult verifies the tuning state of the system
+func chkTuningResult(writer io.Writer, tuneApp *app.App, jstat *system.JStatus) bool {
+	notCompliant := false
+	tuningResult := "not-present"
+	appliedNotes := tuneApp.AppliedNotes()
+	if system.IsFlagSet("non-compliance-check") {
+		tuningResult = "unknown (checking disabled)"
+	} else if appliedNotes == "" {
+		tuningResult = "not tuned"
+	} else {
+		oldStdout, oldSdterr := system.SwitchOffOut()
+		unsatisfiedNotes, _, err := tuneApp.VerifyAll()
+		system.SwitchOnOut(oldStdout, oldSdterr)
+		if err != nil {
+			system.WarningLog("Failed to verify the tuning state of the current system: %v", err)
+		} else {
+			systemCompiance := len(unsatisfiedNotes) == 0
+			if !systemCompiance {
+				tuningResult = "not compliant"
+				notCompliant = true
+			} else {
+				tuningResult = "compliant"
+			}
+		}
+	}
+	fmt.Fprintf(writer, "tuning:                   %s\n", tuningResult)
+	jstat.TuningState = tuningResult
+	return notCompliant
 }
 
 // printVirtStatus prints the virtualization environment
@@ -714,11 +770,14 @@ func printInfoBlock(writer io.Writer, infoTrigger map[string]bool) {
 	if infoTrigger["stenabled"] && infoTrigger["scenabled"] {
 		fmt.Fprintf(writer, "WARNING! saptune.service and sapconf.service are BOTH enabled!\nOnly one tool may tune the system.\n")
 	}
+	if infoTrigger["notCompliant"] {
+		fmt.Fprintf(writer, "Regarding the tuning state of the system please use 'saptune note verify' for detailed information.\n")
+	}
 	if infoTrigger["chkHint"] {
-		fmt.Fprintf(writer, "The system state is NOT ok.\n")
+		fmt.Fprintf(writer, "The systemd system state is NOT ok.\n")
 	}
 	if (infoTrigger["stenabled"] && infoTrigger["scenabled"]) || infoTrigger["chkHint"] {
-		fmt.Fprintf(writer, "Please call '/usr/sbin/saptune_check' to get guidance to resolve the issues!\n")
+		fmt.Fprintf(writer, "Please call 'saptune check' to get guidance to resolve the issues!\n")
 	}
 
 	fmt.Fprintln(writer, "")
@@ -745,5 +804,55 @@ func DaemonAction(writer io.Writer, actionName, saptuneVersion string, tuneApp *
 		ServiceActionStop(true)
 	default:
 		PrintHelpAndExit(writer, 1)
+	}
+}
+
+// ignoreServiceReload returns true, if 'IGNORE_RELOAD' is set to 'yes' in
+// the saptune configuration file. Otherwise it returns false
+func ignoreServiceReload() bool {
+	ret := false
+	sconf, err := txtparser.ParseSysconfigFile(saptuneSysconfig, true)
+	if err != nil {
+		system.ErrorExit("Unable to read file '/etc/sysconfig/saptune': '%v'\n", err, 2)
+	}
+	if sconf.GetString("IGNORE_RELOAD", "no") == "yes" {
+		ret = true
+	}
+	return ret
+}
+
+// preventReload implements a workaround to prevent service reload/restart
+// during preun/postun from a previous saptune package, which gets triggered
+// during package update of saptune
+// if triggered by other package updates (like uuidd because of the dependencies
+// in the systemd service file) can not be identified at the moment.
+// see related sapconf bug bsc#1207899
+func preventReload() {
+	_, err := os.Stat("/run/saptune_during_pkg_inst")
+	if err == nil {
+		system.NoticeLog("we are called during a package update of saptune")
+		if ignoreServiceReload() {
+			system.NoticeLog("And 'IGNORE_RELOAD' is set in saptune configuration file, so nothing to do")
+			system.ErrorExit("", 0)
+		}
+	}
+}
+
+// CheckOrphanedOverrides checks, if there are override files left, where the
+// note definition file in the working area or the custom note is already
+// deleted.
+// create a list of orphaned override files for 'saptune status'
+func CheckOrphanedOverrides() {
+	dirCont, err := os.ReadDir(OverrideTuningSheets)
+	if err != nil {
+		system.ErrorExit("Problems reading override directory '%s' (%v). Please check your saptune installation\n", OverrideTuningSheets, err)
+	}
+	for _, entry := range dirCont {
+		ovFile := entry.Name()
+		_, _, err := chkFileName(ovFile, NoteTuningSheets, ExtraTuningSheets)
+		if os.IsNotExist(err) {
+			system.WarningLog("Found an orphaned override file '%s' in '%s'!\n Could not find a note definition file named '%s' in the working area '%s' nor '%s.conf' in the custom location '%s'. Please check and remove the override file, if it is a left over\n", ovFile, OverrideTuningSheets, ovFile, NoteTuningSheets, ovFile, ExtraTuningSheets)
+			orphanedOverrides = append(orphanedOverrides, ovFile)
+		}
 	}
 }

@@ -29,6 +29,21 @@ func TestReadConfigFile(t *testing.T) {
 	}
 }
 
+func TestFileIsEmpty(t *testing.T) {
+	empty := FileIsEmpty(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/extra/wrongFileNamesyntax.conf"))
+	if !empty {
+		t.Errorf("file should be reported as empty, but returns 'true'")
+	}
+	empty = FileIsEmpty("/file_does_not_exist")
+	if !empty {
+		t.Errorf("file should be reported as empty (not existing), but returns 'true'")
+	}
+	empty = FileIsEmpty(path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/product_name"))
+	if empty {
+		t.Errorf("file should be reported as non empty, but returns 'false'")
+	}
+}
+
 func TestCopyFile(t *testing.T) {
 	//src := "/app/testdata/tstfile"
 	src := path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/testdata/tstfile")
@@ -216,7 +231,7 @@ func TestBackupValue(t *testing.T) {
 }
 
 func TestAddGap(t *testing.T) {
-	os.Args = []string{"saptune", "--format=json"}
+	os.Args = []string{"saptune", "--format", "json"}
 	RereadArgs()
 	buffer := bytes.Buffer{}
 	AddGap(&buffer)
@@ -232,7 +247,7 @@ func TestAddGap(t *testing.T) {
 	if txt2 != "\n" {
 		t.Errorf("got: %s, expected: '\n'\n", txt2)
 	}
-	os.Args = []string{"saptune", "status", "--format="}
+	os.Args = []string{"saptune", "status", "--format"}
 	RereadArgs()
 	buffer3 := bytes.Buffer{}
 	AddGap(&buffer3)

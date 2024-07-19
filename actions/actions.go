@@ -10,13 +10,14 @@ import (
 	"strings"
 )
 
-//define constants and variables for the whole package
+// define constants and variables for the whole package
 const (
 	SaptuneService     = "saptune.service"
 	SapconfService     = "sapconf.service"
 	TunedService       = "tuned.service"
 	exitSaptuneStopped = 1
 	exitNotTuned       = 3
+	exitNotCompliant   = 4
 )
 
 // PackageArea is the package area with all notes and solutions shipped by
@@ -59,9 +60,9 @@ var solutionSelector = system.GetSolutionSelector()
 var saptuneSysconfig = "/etc/sysconfig/saptune"
 
 // set colors for the table and list output
-//var setYellowText = "\033[38;5;220m"
-//var setCyanText = "\033[36m"
-//var setUnderlinedText = "\033[4m"
+// var setYellowText = "\033[38;5;220m"
+// var setCyanText = "\033[36m"
+// var setUnderlinedText = "\033[4m"
 var setGreenText = "\033[32m"
 var setRedText = "\033[31m"
 var setYellowText = "\033[33m"
@@ -99,9 +100,19 @@ func SelectAction(writer io.Writer, stApp *app.App, saptuneVers string) {
 		StagingAction(system.CliArg(2), system.CliArgs(3), stApp)
 	case "status":
 		ServiceAction(writer, "status", saptuneVers, stApp)
+	case "verify":
+		VerifyAction(writer, system.CliArg(2), stApp)
 	default:
 		PrintHelpAndExit(writer, 1)
 	}
+}
+
+// Verify all applied Notes
+func VerifyAction(writer io.Writer, actionName string, tuneApp *app.App) {
+	if actionName != "applied" {
+		PrintHelpAndExit(writer, 1)
+	}
+	VerifyAllParameters(writer, tuneApp)
 }
 
 // RevertAction Revert all notes and solutions
@@ -139,12 +150,18 @@ func rememberMessage(writer io.Writer) {
 
 // VerifyAllParameters Verify that all system parameters do not deviate from any of the enabled solutions/notes.
 func VerifyAllParameters(writer io.Writer, tuneApp *app.App) {
-	result := system.JPNotes{}
+	result := system.JPNotes{
+		Verifications: []system.JPNotesLine{},
+		Attentions:    []system.JPNotesRemind{},
+		NotesOrder:    []string{},
+		SysCompliance: nil,
+	}
 	if len(tuneApp.NoteApplyOrder) == 0 {
 		fmt.Fprintf(writer, "No notes or solutions enabled, nothing to verify.\n")
 	} else {
 		unsatisfiedNotes, comparisons, err := tuneApp.VerifyAll()
 		if err != nil {
+			system.Jcollect(result)
 			system.ErrorExit("Failed to inspect the current system: %v", err)
 		}
 		PrintNoteFields(writer, "NONE", comparisons, true, &result)
@@ -152,13 +169,43 @@ func VerifyAllParameters(writer io.Writer, tuneApp *app.App) {
 		result.NotesOrder = tuneApp.NoteApplyOrder
 		sysComp := len(unsatisfiedNotes) == 0
 		result.SysCompliance = &sysComp
-		system.Jcollect(result)
 		if len(unsatisfiedNotes) == 0 {
 			fmt.Fprintf(writer, "%s%sThe running system is currently well-tuned according to all of the enabled notes.%s%s\n", setGreenText, setBoldText, resetBoldText, resetTextColor)
 		} else {
+			system.Jcollect(result)
 			system.ErrorExit("The parameters listed above have deviated from SAP/SUSE recommendations.", "colorPrint", setRedText, setBoldText, resetBoldText, resetTextColor)
 		}
 	}
+	system.Jcollect(result)
+}
+
+// chkFileName returns the corresponding filename of a given definition file
+// (note or solution)
+// additional it returns a boolean value which is pointing out that
+// the definition is a custom definition (extraDef = true) or an internal one
+func chkFileName(defName, workingDir, extraDir string) (string, bool, error) {
+	extraDef := false
+	defType := "Note"
+	if workingDir == SolutionSheets {
+		defType = "Solution"
+	}
+	fileName := fmt.Sprintf("%s%s", workingDir, defName)
+	_, err := os.Stat(fileName)
+	if os.IsNotExist(err) {
+		// Note/solution is NOT an internal Note/solution,
+		// but may be a custom Note/solution
+		chkName := defName
+		if defType == "Note" {
+			chkName = defName + ".conf"
+		}
+		fName := fmt.Sprintf("%s%s", extraDir, chkName)
+		_, err = os.Stat(fName)
+		if err == nil {
+			extraDef = true
+			fileName = fName
+		}
+	}
+	return fileName, extraDef, err
 }
 
 // getFileName returns the corresponding filename of a given definition file
@@ -166,31 +213,13 @@ func VerifyAllParameters(writer io.Writer, tuneApp *app.App) {
 // additional it returns a boolean value which is pointing out that
 // the definition is a custom definition (extraDef = true) or an internal one
 func getFileName(defName, workingDir, extraDir string) (string, bool) {
-	extraDef := false
 	defType := "Note"
 	if workingDir == SolutionSheets {
 		defType = "Solution"
 	}
-	fileName := fmt.Sprintf("%s%s", workingDir, defName)
-	if _, err := os.Stat(fileName); os.IsNotExist(err) {
-		// Note/solution is NOT an internal Note/solution,
-		// but may be a custom Note/solution
-		extraDef = true
-		chkName := defName
-		if defType == "Note" {
-			chkName = defName + ".conf"
-		}
-		_, files := system.ListDir(extraDir, "")
-		for _, f := range files {
-			if f == chkName {
-				fileName = fmt.Sprintf("%s%s", extraDir, f)
-			}
-		}
-		if _, err := os.Stat(fileName); os.IsNotExist(err) {
-			system.ErrorExit("%s %s not found in %s or %s.", defType, defName, workingDir, extraDir)
-		} else if err != nil {
-			system.ErrorExit("Failed to read file '%s' - %v", fileName, err)
-		}
+	fileName, extraDef, err := chkFileName(defName, workingDir, extraDir)
+	if os.IsNotExist(err) {
+		system.ErrorExit("%s %s not found in %s or %s.", defType, defName, workingDir, extraDir)
 	} else if err != nil {
 		system.ErrorExit("Failed to read file '%s' - %v", fileName, err)
 	}
@@ -242,7 +271,6 @@ func renameDefFile(fileName, newFileName string) {
 }
 
 // deleteDefFile will delete a definition file (Note or Solution)
-//func deleteDefFile(fileName, ovFileName string, overrideDef, extraDef bool) {
 func deleteDefFile(fileName string) {
 	if err := os.Remove(fileName); err != nil {
 		system.ErrorExit("Failed to remove file '%s' - %v", fileName, err)
@@ -254,7 +282,8 @@ func deleteDefFile(fileName string) {
 // switchOffColor turns off color and highlighting, if Stdout is not a terminal
 func switchOffColor() {
 	// switch off color and highlighting, if Stdout is not a terminal
-	if !system.OutIsTerm(os.Stdout) {
+	// command line option --force-color will override the 'switch off'
+	if !system.OutIsTerm(os.Stdout) && !system.IsFlagSet("force-color") {
 		setGreenText = ""
 		setRedText = ""
 		setYellowText = ""
@@ -273,32 +302,41 @@ func PrintHelpAndExit(writer io.Writer, exitStatus int) {
 	}
 	fmt.Fprintln(writer, `saptune: Comprehensive system optimisation management for SAP solutions.
 Daemon control:
-  saptune daemon [ start | status | stop ]  ATTENTION: deprecated
-  saptune service [ start | status | stop | restart | takeover | enable | disable | enablestart | disablestop ]
+  saptune [--format FORMAT] [--force-color] daemon ( start | stop | status [--non-compliance-check] ) ATTENTION: deprecated
+  saptune [--format FORMAT] [--force-color] service ( start | stop | restart | takeover | enable | disable | enablestart | disablestop | status [--non-compliance-check] )
 Tune system according to SAP and SUSE notes:
-  saptune note [ list | revertall | enabled | applied ]
-  saptune note [ apply | simulate | customise | create | edit | revert | show | delete ] NoteID
-  saptune note verify [--colorscheme=<color scheme>] [--show-non-compliant] [NoteID]
-  saptune note rename NoteID newNoteID
+  saptune [--format FORMAT] [--force-color] note ( list | verify | revertall | enabled | applied )
+  saptune [--format FORMAT] [--force-color] note ( apply | simulate | customise | create | edit | revert | show | delete ) NOTEID
+  saptune [--format FORMAT] [--force-color] note verify [--colorscheme SCHEME] [--show-non-compliant] [NOTEID|applied]
+  saptune [--format FORMAT] [--force-color] note rename NOTEID NEWNOTEID
 Tune system for all notes applicable to your SAP solution:
-  saptune solution [ list | verify | enabled | applied ]
-  saptune solution [ apply | simulate | verify | customise | create | edit | revert | show | delete ] SolutionName
-  saptune solution rename SolutionName newSolutionName
+  saptune [--format FORMAT] [--force-color] solution ( list | verify | enabled | applied )
+  saptune [--format FORMAT] [--force-color] solution ( apply | simulate | customise | create | edit | revert | show | delete ) SOLUTIONNAME
+  saptune [--format FORMAT] [--force-color] solution change [--force] SOLUTIONNAME
+  saptune [--format FORMAT] [--force-color] solution verify [--colorscheme SCHEME] [--show-non-compliant] [SOLUTIONNAME]
+  saptune [--format FORMAT] [--force-color] solution rename SOLUTIONNAME NEWSOLUTIONNAME
 Staging control:
-   saptune staging [ status | enable | disable | is-enabled | list | diff | analysis | release ]
-   saptune staging [ analysis | diff ] [ NoteID... | SolutionID... | all ]
-   saptune staging release [--force|--dry-run] [ NoteID... | SolutionID... | all ]
+   saptune [--format FORMAT] [--force-color] staging ( status | enable | disable | is-enabled | list )
+   saptune [--format FORMAT] [--force-color] staging ( analysis | diff ) [ ( NOTEID | SOLUTIONNAME )... | all ]
+   saptune [--format FORMAT] [--force-color] staging release [--force|--dry-run] [ ( NOTEID | SOLUTIONNAME )... | all ]
+Verify all applied Notes:
+  saptune [--format FORMAT] [--force-color] verify applied
 Revert all parameters tuned by the SAP notes or solutions:
-  saptune revert all
+  saptune [--format FORMAT] [--force-color] revert all
 Remove the pending lock file from a former saptune call
-  saptune lock remove
+  saptune [--format FORMAT] [--force-color] lock remove
 Call external script '/usr/sbin/saptune_check'
-  saptune check
+  saptune [--format FORMAT] [--force-color] check
 Print current saptune status:
-  saptune status
+  saptune [--format FORMAT] [--force-color] status [--non-compliance-check]
 Print current saptune version:
-  saptune version
+  saptune [--format FORMAT] [--force-color] version
 Print this message:
-  saptune help`)
+  saptune [--format FORMAT] [--force-color] help
+
+Deprecation list:
+  all 'saptune daemon' actions
+  'saptune note simulate'
+  'saptune solution simulate'`)
 	system.ErrorExit("", exitStatus)
 }

@@ -2,10 +2,7 @@ package actions
 
 import (
 	"bytes"
-	//"fmt"
 	"github.com/SUSE/saptune/system"
-	//"os"
-	//"path"
 	"testing"
 )
 
@@ -312,104 +309,3 @@ and then please double check your input and /etc/sysconfig/saptune
 
 	tearDown(t)
 }
-
-/* Needs some more care to make the tests reliable
-func TestSolutionActionsCreate(t *testing.T) {
-	// test setup
-	setUp(t)
-
-	// prepare custom solution and override
-	//setUpSol(t)
-
-/*
-	errExitMatchText := `ERROR: Failed to test the current system against the specified note: solution name "" is not recognised by saptune.
-Run "saptune solution list" for a complete list of supported solutions,
-and then please double check your input and /etc/sysconfig/saptune
-`
-	var createErrorText = `All tuning options for the SAP solution have been applied successfully.
-
-Remember: if you wish to automatically activate the solution's tuning options after a reboot, you must enable and start saptune.service by running:
-    saptune service enablestart
-`
-*/
-/*
-	testErrorText := `ERROR: Problems while editing solution definition file '/etc/saptune/extra/sol1.sol' - open /usr/share/saptune/SolutionTemplate.conf: no such file or directory
-`
-	//createErrorMatchText := PrintHelpAndExitMatchText
-
-	tstRetErrorExit = -1
-	oldOSExit := system.OSExit
-	defer func() { system.OSExit = oldOSExit }()
-	system.OSExit = tstosExit
-	oldErrorExitOut := system.ErrorExitOut
-	defer func() { system.ErrorExitOut = oldErrorExitOut }()
-	system.ErrorExitOut = tstErrorExitOut
-
-	oldEditor := os.Getenv("EDITOR")
-	defer func() { os.Setenv("EDITOR", oldEditor) }()
-	os.Setenv("EDITOR", "/usr/bin/echo")
-
-	createBuf := bytes.Buffer{}
-	errExitbuffer := bytes.Buffer{}
-	tstwriter = &errExitbuffer
-
-	// test with missing template file
-	sName := "sol1"
-	createErrorText := ""
-	SolutionActionCreate(&createBuf, sName)
-	txt := createBuf.String()
-	checkOut(t, txt, createErrorText)
-	if tstRetErrorExit != 1 {
-		t.Errorf("error exit should be '1' and NOT '%v'\n", tstRetErrorExit)
-	}
-	errExOut := errExitbuffer.String()
-	checkOut(t, errExOut, testErrorText)
-
-	createBuf.Reset()
-	errExitbuffer.Reset()
-	tstRetErrorExit = -1
-	
-	solTemplate = path.Join(os.Getenv("GOPATH"), "/src/github.com/SUSE/saptune/ospackage/usr/share/saptune/SolutionTemplate.conf")
-	// test with available template file
-	oldExtraTuningSheets := ExtraTuningSheets
-	defer func() { ExtraTuningSheets = oldExtraTuningSheets }()
-	ExtraTuningSheets = ExtraFilesInGOPATH
-	testErrorText = `ERROR: Problems while editing solution definition file '/home/ci_tst/gopath/src/github.com/SUSE/saptune/testdata/extra/sol1.sol' - open /usr/share/saptune/SolutionTemplate.conf: no such file or directory
-`
-	createErrorText = ""
-	sName = "sol1"
-	fname := fmt.Sprintf("%s%s.conf", ExtraTuningSheets, sName)
-
-	SolutionActionCreate(&createBuf, sName)
-	txt = createBuf.String()
-	checkOut(t, txt, createErrorText)
-	if tstRetErrorExit != 1 {
-		t.Errorf("error exit should be '1' and NOT '%v'\n", tstRetErrorExit)
-	}
-	errExOut = errExitbuffer.String()
-	checkOut(t, errExOut, testErrorText)
-	if _, err := os.Stat(fname); err == nil {
-		t.Errorf("found a created file '%s' even that no input was provided to the editor", fname)
-	}
-	os.Remove(fname)
-
-	// test with empty solution name
-	createBuf.Reset()
-	errExitbuffer.Reset()
-	tstRetErrorExit = -1
-	SolutionActionCreate(&createBuf, "")
-	txt = createBuf.String()
-	checkOut(t, txt, createErrorText)
-	if tstRetErrorExit != 1 {
-		t.Errorf("error exit should be '1' and NOT '%v'\n", tstRetErrorExit)
-	}
-	errExOut = errExitbuffer.String()
-	checkOut(t, errExOut, testErrorText)
-	if _, err := os.Stat(fname); err == nil {
-		t.Errorf("found a created file '%s' even that no input was provided to the editor", fname)
-	}
-	os.Remove(fname)
-
-	tearDown(t)
-}
-*/

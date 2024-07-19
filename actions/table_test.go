@@ -18,45 +18,68 @@ func TestSetWidthOfColums(t *testing.T) {
 	w4 := 5
 	v1, v2, v3, v4 := setWidthOfColums(compare, w1, w2, w3, w4)
 	if v1 != w1 {
-		t.Fatal(v1, w1)
+		t.Error(v1, w1)
 	}
 	if v2 != 16 {
-		t.Fatal(v2, w2)
+		t.Error(v2, w2)
 	}
 	if v3 != w3 || v4 != w4 {
-		t.Fatal(v3, w3, v4, w4)
+		t.Error(v3, w3, v4, w4)
 	}
 	compare = note.FieldComparison{ReflectFieldName: "OverrideParams", ReflectMapKey: "IO_SCHEDULER_sr0", ActualValueJS: "cfq", ExpectedValueJS: "cfq"}
 	v1, v2, v3, v4 = setWidthOfColums(compare, w1, w2, w3, w4)
 	if v1 != 3 {
-		t.Fatal(v1, w1)
+		t.Error(v1, w1)
 	}
 	if v2 != w2 || v3 != w3 || v4 != w4 {
-		t.Fatal(v2, w2, v3, w3, v4, w4)
+		t.Error(v2, w2, v3, w3, v4, w4)
 	}
 	compare = note.FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "governor", ActualValueJS: "all-none", ExpectedValueJS: "all-performance"}
 	v1, v2, v3, v4 = setWidthOfColums(compare, w1, w2, w3, w4)
 	if v1 != w1 {
-		t.Fatal(v1, w1)
+		t.Error(v1, w1)
 	}
 	if v2 != 8 {
-		t.Fatal(v2, w2)
+		t.Error(v2, w2)
 	}
 	if v3 != 15 {
-		t.Fatal(v3, w3)
+		t.Error(v3, w3)
 	}
 	if v4 != 8 {
-		t.Fatal(v4, w4)
+		t.Error(v4, w4)
 	}
 	compare = note.FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "", ActualValueJS: "all-none", ExpectedValueJS: "all-performance"}
 	v1, v2, v3, v4 = setWidthOfColums(compare, w1, w2, w3, w4)
 	if v1 != w1 || v2 != w2 || v3 != w3 || v4 != w4 {
-		t.Fatal(v1, w1, v2, w2, v3, w3, v4, w4)
+		t.Error(v1, w1, v2, w2, v3, w3, v4, w4)
+	}
+	compare = note.FieldComparison{ReflectFieldName: "SysctlParams", ReflectMapKey: "net.ipv4.ip_local_reserved_ports", ActualValueJS: "", ExpectedValueJS: "1089-1090,1095,1099,1200-1599,2000-2002,3200-3399,3500,3600-3699,3900-4001"}
+	v1, v2, v3, v4 = setWidthOfColums(compare, w1, w2, w3, w4)
+	if v1 != w1 {
+		t.Error(v1, w1)
+	}
+	if v2 != 32 {
+		t.Error(v2, w2)
+	}
+	if v3 != 30 {
+		t.Error(v3, w3)
+	}
+	if v4 != w4 {
+		t.Error(v4, w4)
+	}
+	compare = note.FieldComparison{ReflectFieldName: "OverrideParams", ReflectMapKey: "net.ipv4.ip_local_reserved_ports", ActualValueJS: "1089-1090,1095,1099,1200-1599,2000-2002,3200-3399,3500,3600-3699,3900-4001", ExpectedValueJS: "1089-1090,1095,1099,1200-1599,2000-2002,3200-3399,3500,3600-3699,3900-4001"}
+	v1, v2, v3, v4 = setWidthOfColums(compare, w1, w2, w3, w4)
+	if v1 != 30 {
+		t.Error(v1, w1)
+	}
+	if v2 != w2 || v3 != w3 || v4 != w4 {
+		t.Error(v2, w2, v3, w3, v4, w4)
 	}
 }
 
 func TestPrintNoteFields(t *testing.T) {
-	os.Args = []string{"saptune", "note", "list", "--colorscheme=black", "--format=json", "--force", "--dryrun", "--help", "--version"}
+	//os.Args = []string{"saptune", "--format", "json", "note", "list", "--colorscheme", "black", "--force", "--dryrun", "--help", "--version"}
+	os.Args = []string{"saptune", "note", "list", "--colorscheme", "black", "--force", "--dryrun", "--help", "--version"}
 	system.RereadArgs()
 
 	footnote1 := " [1] setting is not supported by the system"
@@ -76,7 +99,7 @@ func TestPrintNoteFields(t *testing.T) {
    941735, 1        | IO_SCHEDULER_vda           | noop                 |           | all:none             |  -  [1] [5]
    941735, 1        | ShmFileSystemSizeMB        | 1714                 |           | 488                  | no 
    941735, 1        | force_latency              | 70                   |           | all:none             | no  [1] [4]
-   941735, 1        | grub:intel_idle.max_cstate | 1                    |           | NA                   | no  [2] [3] [6]
+   941735, 1        | grub:intel_idle.max_cstate | 1                    |           | NA                   |  -  [2] [3] [6]
    941735, 1        | kernel.shmmax              | 18446744073709551615 |           | 18446744073709551615 | yes
    941735, 1        | kernel.shmmni              |                      |           | NA                   |  -  [16] [7]
 
@@ -101,7 +124,6 @@ func TestPrintNoteFields(t *testing.T) {
    941735, 1        | IO_SCHEDULER_sdd           |                      |           | bfq                  | no  [7] [10]
    941735, 1        | ShmFileSystemSizeMB        | 1714                 |           | 488                  | no 
    941735, 1        | force_latency              | 70                   |           | all:none             | no  [1] [4]
-   941735, 1        | grub:intel_idle.max_cstate | 1                    |           | NA                   | no  [2] [3] [6]
 
  ` + footnote1 + `
   [2] setting is not available on the system
@@ -148,7 +170,7 @@ func TestPrintNoteFields(t *testing.T) {
    941735, 1        | IO_SCHEDULER_vda           | noop                 |           | all:none             |  -  [1] [5]
    941735, 1        | ShmFileSystemSizeMB        | 1714                 |           | 488                  | no 
    941735, 1        | force_latency              | 70                   |           | all:none             | no  [1] [4]
-   941735, 1        | grub:intel_idle.max_cstate | 1                    |           | NA                   | no  [2] [3] [6]
+   941735, 1        | grub:intel_idle.max_cstate | 1                    |           | NA                   |  -  [2] [3] [6]
    941735, 1        | kernel.shmmax              | 18446744073709551615 |           | 18446744073709551615 | yes
    941735, 1        | kernel.shmmni              |                      |           | NA                   |  -  [16] [7]
 
@@ -248,7 +270,8 @@ func TestPrintNoteFields(t *testing.T) {
 	})
 
 	t.Run("verify with header and show-non-compliant", func(t *testing.T) {
-		os.Args = []string{"saptune", "note", "list", "--colorscheme=black", "--show-non-compliant", "--format=json", "--force", "--dryrun", "--help", "--version"}
+		//os.Args = []string{"saptune", "--format", "json", "note", "list", "--colorscheme", "black", "--show-non-compliant", "--force", "--dryrun", "--help", "--version"}
+		os.Args = []string{"saptune", "note", "list", "--colorscheme", "black", "--show-non-compliant", "--force", "--dryrun", "--help", "--version"}
 		system.RereadArgs()
 
 		buffer := bytes.Buffer{}
@@ -270,7 +293,7 @@ func TestGetColorScheme(t *testing.T) {
 }
 
 func TestColorPrint(t *testing.T) {
-	format :=`   %-16s | %-26s | %-15s | %-11s | %-14s | %2s
+	format := `   %-16s | %-26s | %-15s | %-11s | %-14s | %2s
 `
 	colorScheme := "full-green-zebra"
 	compliant := "yes"
