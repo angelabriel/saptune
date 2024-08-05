@@ -7,6 +7,7 @@ import (
 	"github.com/SUSE/saptune/system"
 	"os"
 	"testing"
+	"time"
 )
 
 var sApp *app.App
@@ -117,6 +118,8 @@ func TestServiceActions(t *testing.T) {
 			t.Errorf("'%s' not enabled", testService)
 		}
 	})
+	time.Sleep(5 * time.Second)
+
 	// Test ServiceActionStop
 	t.Run("ServiceActionStopandDisable", func(t *testing.T) {
 		ServiceActionStop(true)
@@ -129,6 +132,7 @@ func TestServiceActions(t *testing.T) {
 			t.Errorf("'%s' not stopped", testService)
 		}
 	})
+	time.Sleep(5 * time.Second)
 
 	// Test ServiceActionStart
 	t.Run("ServiceActionStart", func(t *testing.T) {
@@ -138,6 +142,8 @@ func TestServiceActions(t *testing.T) {
 			t.Errorf("'%s' not started", testService)
 		}
 	})
+	time.Sleep(5 * time.Second)
+
 	// Test ServiceActionStop
 	t.Run("ServiceActionStop", func(t *testing.T) {
 		ServiceActionStop(false)
@@ -146,6 +152,8 @@ func TestServiceActions(t *testing.T) {
 			t.Errorf("'%s' not stopped", testService)
 		}
 	})
+	time.Sleep(5 * time.Second)
+
 	// Test ServiceActionEnable
 	t.Run("ServiceActionEnable", func(t *testing.T) {
 		oldOSExit := system.OSExit
@@ -172,6 +180,8 @@ func TestServiceActions(t *testing.T) {
 			t.Errorf("'%s' not enabled", testService)
 		}
 	})
+	time.Sleep(5 * time.Second)
+
 	// Test ServiceActionDisable
 	t.Run("ServiceActionDisable", func(t *testing.T) {
 		oldOSExit := system.OSExit
@@ -198,6 +208,8 @@ func TestServiceActions(t *testing.T) {
 			t.Errorf("'%s' not disabled", testService)
 		}
 	})
+	time.Sleep(5 * time.Second)
+
 	// Test ServiceActionApply
 	t.Run("ServiceActionApply", func(t *testing.T) {
 		oldOSExit := system.OSExit
@@ -219,6 +231,8 @@ func TestServiceActions(t *testing.T) {
 			t.Logf("wrong text returned by ErrorExit: '%v' instead of ''\n", errExOut)
 		}
 	})
+	time.Sleep(5 * time.Second)
+
 	// Test ServiceActionRevert
 	t.Run("ServiceActionRevert", func(t *testing.T) {
 		oldOSExit := system.OSExit
@@ -240,6 +254,7 @@ func TestServiceActions(t *testing.T) {
 			t.Logf("wrong text returned by ErrorExit: '%v' instead of ''\n", errExOut)
 		}
 	})
+	time.Sleep(5 * time.Second)
 
 	// Test ServiceActionStatus
 	t.Run("ServiceActionStatus", func(t *testing.T) {
@@ -247,6 +262,7 @@ func TestServiceActions(t *testing.T) {
 			t.Logf("seams 'tuned-adm profile balanced' does not work: '%v'\n", err)
 		}
 		ServiceActionStart(false, sApp)
+		time.Sleep(5 * time.Second)
 
 		oldOSExit := system.OSExit
 		defer func() { system.OSExit = oldOSExit }()
