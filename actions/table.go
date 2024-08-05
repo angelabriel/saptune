@@ -14,6 +14,9 @@ import (
 // define max column width
 var fmtmax = 30
 
+// number of lines printed for 'verify'
+var lineCnt = 0
+
 // PrintNoteFields Print mismatching fields in the note comparison result.
 func PrintNoteFields(writer io.Writer, header string, noteComparisons map[string]map[string]note.FieldComparison, printComparison bool, result *system.JPNotes) {
 	// initialise
@@ -23,7 +26,6 @@ func PrintNoteFields(writer io.Writer, header string, noteComparisons map[string
 	noteField := ""
 	reminder := make(map[string]string)
 	override := ""
-	hasDiff := false
 	pExp := ""
 	noteLine := system.JPNotesLine{}
 	noteList := []system.JPNotesLine{}
@@ -53,7 +55,7 @@ func PrintNoteFields(writer io.Writer, header string, noteComparisons map[string
 			continue
 		}
 		// set compliant information according to the comparison result
-		hasDiff, compliant = setCompliant(comparison, hasDiff)
+		compliant = setCompliant(comparison)
 
 		// check inform map for special settings
 		inform := getInformSettings(noteID, noteComparisons, comparison)
@@ -96,7 +98,7 @@ func PrintNoteFields(writer io.Writer, header string, noteComparisons map[string
 
 	// print footer
 	reminderList := []system.JPNotesRemind{}
-	printTableFooter(writer, header, footnote, reminder, hasDiff, &reminderList)
+	printTableFooter(writer, header, footnote, reminder, &reminderList)
 	if result != nil {
 		if printComparison {
 			// verify
@@ -270,12 +272,9 @@ func printTableHeader(writer io.Writer, format string, col0, col1, col2, col3, c
 
 // printTableFooter prints the footer of the table
 // footnotes and reminder section
-func printTableFooter(writer io.Writer, header string, footnote []string, reminder map[string]string, hasDiff bool, noteReminder *[]system.JPNotesRemind) {
-	if header != "NONE" && !hasDiff {
-		fmt.Fprintf(writer, "\n   (no change)\n")
-	}
+func printTableFooter(writer io.Writer, header string, footnote []string, reminder map[string]string, noteReminder *[]system.JPNotesRemind) {
 	for _, fn := range footnote {
-		if fn != "" {
+		if fn != "" && lineCnt > 0 {
 			fmt.Fprintf(writer, "\n %s", fn)
 		}
 	}
@@ -306,10 +305,9 @@ func getNoteAndVersion(kField, nID, nField string, nComparisons map[string]map[s
 }
 
 // setCompliant sets compliant information according to the comparison result
-func setCompliant(comparison note.FieldComparison, hasd bool) (bool, string) {
+func setCompliant(comparison note.FieldComparison) string {
 	comp := ""
 	if !comparison.MatchExpectation {
-		hasd = true
 		comp = "no "
 	} else {
 		comp = "yes"
@@ -317,7 +315,7 @@ func setCompliant(comparison note.FieldComparison, hasd bool) (bool, string) {
 	if comparison.ActualValue.(string) == "all:none" {
 		comp = " - "
 	}
-	return hasd, comp
+	return comp
 }
 
 // getInformSettings checks inform map for special settings
@@ -478,6 +476,7 @@ func colorFormating(colCmpl, colNonCmpl, txt, compliant string) string {
 // if override exists, expected == override, so compare of width of expected and
 // actual column is sufficient
 func printTableRow(writer io.Writer, rowElements map[string]string) {
+	lineCnt = lineCnt + 1
 	wrappedActual := system.WrapTxt(rowElements["actual"], fmtmax)
 	wrappedExpected := system.WrapTxt(rowElements["expected"], fmtmax)
 	wrappedOverride := system.WrapTxt(rowElements["override"], fmtmax)
