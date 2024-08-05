@@ -1,7 +1,7 @@
 
-[![Build Status](https://github.com/SUSE/saptune/actions/workflows/saptune-ut.yml/badge.svg)](https://github.com/SUSE/saptune/actions/workflows/saptune-ut.yml/badge.svg)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/5375e2ca293dd0e8b322/test_coverage)](https://codeclimate.com/github/SUSE/saptune/test_coverage)
-[![Maintainability](https://api.codeclimate.com/v1/badges/5375e2ca293dd0e8b322/maintainability)](https://codeclimate.com/github/SUSE/saptune/maintainability)
+[![Build Status](https://github.com/angelabriel/saptune/actions/workflows/saptune-ut.yml/badge.svg?branch=saptune_test)](https://github.com/angelabriel/saptune/actions/workflows/saptune-ut.yml/badge.svg?branch=saptune_test)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/c159575e62a6de1a2ac3/test_coverage)](https://codeclimate.com/github/angelabriel/saptune/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/c159575e62a6de1a2ac3/maintainability)](https://codeclimate.com/github/angelabriel/saptune/maintainability)
 
 
 # saptune
