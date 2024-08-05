@@ -243,7 +243,7 @@ func TestServiceActions(t *testing.T) {
 
 	// Test ServiceActionStatus
 	t.Run("ServiceActionStatus", func(t *testing.T) {
-		if err := TunedAdmProfile("balanced"); err != nil {
+		if err := system.TunedAdmProfile("balanced"); err != nil {
 			t.Logf("seams 'tuned-adm profile balanced' does not work: '%v'\n", err)
 		}
 		ServiceActionStart(false, sApp)
