@@ -62,6 +62,15 @@ governor=performance
 #
 force_latency=70
 
+[cpu:csp=aws]
+energy_perf_bias=performance
+governor=performance
+force_latency=70
+
+[cpu:csp=google]
+energy_perf_bias=performance
+governor=performance
+force_latency=70
 
 [sysctl]
 # /proc/sys/kernel/numa_balancing
