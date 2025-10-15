@@ -65,9 +65,7 @@ force_latency=70
 [cpu:csp=aws]
 energy_perf_bias=performance
 governor=performance
-# translate the c-state=1 to 2 microseconds
-# next is C1E (latency: 10), so fl=10 works to address C1 (latency: 2)
-force_latency=10
+force_latency=70
 
 [cpu:csp=google]
 energy_perf_bias=performance
