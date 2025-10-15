@@ -70,6 +70,18 @@ governor=performance
 #
 force_latency=70
 
+[cpu:csp=aws]
+energy_perf_bias=performance
+governor=performance
+# translate the c-state=1 to 2 microseconds
+# next is C1E (latency: 10), so fl=10 works to address C1 (latency: 2)
+force_latency=10
+
+[cpu:csp=google]
+energy_perf_bias=performance
+governor=performance
+force_latency=70
+
 [sysctl]
 # /proc/sys/kernel/numa_balancing
 # Enables/disables automatic page fault based NUMA memory balancing.
@@ -129,6 +141,14 @@ transparent_hugepage=madvise
 [grub:arch=x86_64:virt=bare-metal]
 # Configure C-States for lower latency in Linux (applies to Intel-based systems
 # only) - see energy_perf_bias and governor in section [cpu]
+intel_idle.max_cstate=1
+processor.max_cstate=1
+
+[grub:csp=aws]
+intel_idle.max_cstate=1
+processor.max_cstate=1
+
+[grub:csp=google]
 intel_idle.max_cstate=1
 processor.max_cstate=1
 
