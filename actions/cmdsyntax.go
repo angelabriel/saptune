@@ -1,5 +1,13 @@
 package actions
 
+// TcmdLineSyntax returns the command line syntax matched to the release
+func TcmdLineSyntax(rel string) string {
+	if rel == "16" {
+		return cmdLineSyntax16()
+	}
+	return cmdLineSyntax()
+}
+
 func cmdLineSyntax() string {
 	return `saptune: Comprehensive system optimisation management for SAP solutions.
 Daemon control:
