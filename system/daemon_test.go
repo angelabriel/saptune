@@ -143,6 +143,11 @@ func TestSystemctl(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	err = SystemctlDaemonReload()
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestIsSapconfActive(t *testing.T) {

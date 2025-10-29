@@ -2,7 +2,7 @@
 
 echo "zypper in ..."
 #zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go1.10 go rpcbind cpupower uuidd polkit tuned sysstat
-zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go procps
+zypper -n --gpg-auto-import-keys ref && zypper -n --gpg-auto-import-keys in go procps expect
 
 systemctl --no-pager status
 # try to resolve systemd status 'degraded'
