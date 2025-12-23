@@ -225,8 +225,8 @@ func CompareNoteFields(actualNote, expectedNote Note) (allMatch bool, comparison
 					// normal parameters
 					// if this should change in the future use
 					// !strings.Contains(key.String(), "grub")
-					// instead of !isInternalGrub(key.String())
-					if actualValue.(string) != "all:none" && !isInternalGrub(key.String()) && !(system.IsXFSOption.MatchString(key.String()) && actualValue.(string) == "NA") && actualValue.(string) != "PNA" && key.String() != "VSZ_TMPFS_PERCENT" {
+					// instead of !system.IsInternalGrub(key.String())
+					if actualValue.(string) != "all:none" && !system.IsInternalGrub(key.String()) && !(system.IsXFSOption.MatchString(key.String()) && actualValue.(string) == "NA") && actualValue.(string) != "PNA" && key.String() != "VSZ_TMPFS_PERCENT" {
 						allMatch = false
 					}
 				}
@@ -244,20 +244,6 @@ func CompareNoteFields(actualNote, expectedNote Note) (allMatch bool, comparison
 		allMatch = chkGrubCompliance(comparisons, allMatch)
 	}
 	return
-}
-
-// isInternalGrub - checks, if a grub setting found in the note definition
-// is a saptune integrated grub parameter or a customer specific parameter
-func isInternalGrub(val string) bool {
-	// define saptune integrated grub parameter
-	internalGrub := []string{"grub:numa_balancing", "grub:transparent_hugepage", "grub:intel_idle.max_cstate", "grub:processor.max_cstate"}
-
-	for _, item := range internalGrub {
-		if item == val {
-			return true
-		}
-	}
-	return false
 }
 
 // chkGrubCompliance grub special - check compliance of alternative settings

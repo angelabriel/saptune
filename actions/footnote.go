@@ -137,7 +137,7 @@ func setRpmGrub(comparison note.FieldComparison, compliant, comment string, foot
 		comment = comment + " [3]"
 		footnote[2] = footnote3
 	}
-	if strings.Contains(mapKey, "grub") {
+	if strings.Contains(mapKey, "grub") && system.IsInternalGrub(mapKey) {
 		compliant = compliant + " [6]"
 		if comparison.ActualValue.(string) == "NA" {
 			compliant = strings.Replace(compliant, "no ", " - ", 1)
