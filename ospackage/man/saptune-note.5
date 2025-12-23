@@ -77,6 +77,19 @@ Example:
 [sysctl:os=15-SP1:arch=ppc64le]
 .RE
 .TP
+.BI kernel= <kernel_release>
+to define a special \fIkernel release\fP of the running kernel:
+.br
+Valid values for \fBkernel=\fP are regular expressions (RE2) that match the output from \fBuname -r\fP
+
+.RS 4
+Example:
+.br
+[grub:os=15-SP7:kernel=^6.4.0-150700.5(1|3.[36])-default$]
+.br
+[grub:kernel=^6.4.0-150600.23.(42|47|50|53|60|78)-default$]
+.RE
+.TP
 .BI pmu_name= <CPU platform>
 to select a special \fICPU platform\fP:
 .br
