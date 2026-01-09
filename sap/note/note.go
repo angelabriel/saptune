@@ -282,10 +282,17 @@ func chkGrubCompliance(comparisons map[string]FieldComparison, allMatch bool) bo
 // cmpMapValue compares map values
 func cmpMapValue(fieldName string, key reflect.Value, actVal, expVal interface{}) FieldComparison {
 	op := ""
+	orgExpVal := ""
 	if key.String() == "force_latency" && actVal.(string) != "all:none" {
+		orgExpVal = expVal.(string)
+		expVal = system.TranslateCtoL(expVal)
 		op = "<="
 	}
 	actualValueJS, expectedValueJS, match := CompareJSValue(actVal, expVal, op)
+	if key.String() == "force_latency" && actVal.(string) != "all:none" {
+		expectedValueJS = orgExpVal
+		expVal = orgExpVal
+	}
 	if strings.Split(key.String(), ":")[0] == "rpm" {
 		match = system.CmpRpmVers(actVal.(string), expVal.(string))
 	}

@@ -400,6 +400,12 @@ The command '\fBcpupower -c all frequency-set -g <value>\fP' or '\fBcpupower -c 
 .BI force_latency= STRING
 force latency - configure C-States for lower latency (applies to Intel-based systems only)
 .br
+Input is a valid C-State name supported by the system, see \fI/sys/devices/system/cpu/cpu0/cpuidle/state*/name\fP for valid values.
+.br
+This C-State name is internally mapped into an interger value representing the related latency value, see \fI/sys/devices/system/cpu/cpu0/cpuidle/state*/latency\fP
+.br
+OR
+.br
 Input is a string, which is internally treated as a decimal (not a hexadecimal) integer number representing a maximum response time in microseconds.
 .br
 It is used to establish a latency upper limit by limiting the use of C-States (CPU idle or CPU latency states) to only those with an exit latency smaller than the value set here. That means only those states that require less than the requested number of microseconds to wake up are enabled, all the other C-States are disabled.

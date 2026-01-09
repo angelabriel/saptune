@@ -50,7 +50,9 @@ func OptCPUVal(key, actval, cfgval string) string {
 	val := "0"
 	switch key {
 	case "force_latency":
-		rval = sval
+		// c state names are upper case strings,
+		// latency values are pure numbers
+		rval = strings.ToUpper(cfgval)
 	case "energy_perf_bias":
 		//performance - 0, normal - 6, powersave - 15
 		switch sval {
