@@ -32,13 +32,13 @@ func ParseCmdline(fileName, option string) string {
 // IsInternalGrub - checks, if a grub setting found in the note definition
 // is a saptune integrated grub parameter or a customer specific parameter
 func IsInternalGrub(val string) bool {
-        // define saptune integrated grub parameter
-        internalGrub := []string{"grub:numa_balancing", "grub:transparent_hugepage", "grub:intel_idle.max_cstate", "grub:processor.max_cstate"}
+	// define saptune integrated grub parameter
+	internalGrub := []string{"grub:numa_balancing", "grub:transparent_hugepage", "grub:intel_idle.max_cstate", "grub:processor.max_cstate"}
 
-        for _, item := range internalGrub {
-                if item == val {
-                        return true
-                }
-        }
-        return false
+	for _, item := range internalGrub {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }
