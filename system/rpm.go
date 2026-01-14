@@ -18,6 +18,9 @@ func GetRpmVers(rpm string) string {
 	notInstalled := fmt.Sprintf("package %s is not installed", rpm)
 	rpmVers := ""
 	cmdName := "/bin/rpm"
+	if strings.HasPrefix(rpm, "?") {
+		rpm = strings.TrimPrefix(rpm, "?")
+	}
 	cmdArgs := []string{"-q", "--qf", "%{VERSION}-%{RELEASE}\n", rpm}
 
 	cmdOut, err := exec.Command(cmdName, cmdArgs...).CombinedOutput()

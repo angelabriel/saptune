@@ -87,7 +87,7 @@ func prepareFootnote(comparison note.FieldComparison, compliant, comment, inform
 	// set footnote for unsupported scheduler [5]
 	compliant, comment, footnote = setUnSched(comparison.ReflectMapKey, compliant, comment, inform, footnote)
 	// set footnote for untouched parameter [7]
-	compliant, comment, footnote = setUntouched(comparison.ExpectedValue.(string), compliant, comment, footnote)
+	compliant, comment, footnote = setUntouched(comparison, compliant, comment, footnote)
 	// set footnote for secure boot [8]
 	compliant, comment, footnote = setSecBoot(comparison.ReflectMapKey, compliant, comment, footnote)
 	// set footnote for limited parameter value [9]
@@ -149,8 +149,8 @@ func setRpmGrub(comparison note.FieldComparison, compliant, comment string, foot
 }
 
 // setUntouched sets footnote for untouched parameter
-func setUntouched(expVal, compliant, comment string, footnote []string) (string, string, []string) {
-	if expVal == "" {
+func setUntouched(comparison note.FieldComparison, compliant, comment string, footnote []string) (string, string, []string) {
+	if comparison.ExpectedValue.(string) == "" && !strings.Contains(comparison.ReflectMapKey, "rpm") {
 		compliant = compliant + " [7]"
 		comment = comment + " [7]"
 		footnote[6] = footnote7

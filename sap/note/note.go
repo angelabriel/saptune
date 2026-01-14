@@ -207,6 +207,10 @@ func CompareNoteFields(actualNote, expectedNote Note) (allMatch bool, comparison
 				actualValue := actualMap.MapIndex(key).Interface()
 				expectedValue := expectedMap.MapIndex(key).Interface()
 				ckey := fmt.Sprintf("%s[%s]", fieldName, key.String())
+				if strings.Contains(key.String(), "rpm:?") && actualValue == "" {
+					// skip a not installed, optional rpm package
+					continue
+				}
 				comparisons[ckey] = cmpMapValue(fieldName, key, actualValue, expectedValue)
 				if !comparisons[ckey].MatchExpectation && comparisons[ckey].ReflectFieldName == "SysctlParams" {
 					valApplyList = append(valApplyList, comparisons[ckey].ReflectMapKey)
