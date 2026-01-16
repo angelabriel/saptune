@@ -601,9 +601,7 @@ func fetchLatency(value string) (int, error) {
 	if isCStateName(value) {
 		return cslatTable[value], nil
 	}
-	ErrorLog("Wrong C state name used in Note definition - '%+v'", value)
-	ErrorLog("Not found on the system. Valid names are: %+v", strings.Join(cstateNames(), ","))
-	return -1, fmt.Errorf("invalid c state")
+	return -1, fmt.Errorf("Error: invalid c state")
 }
 
 // isLatencyVal returns true, if the given value looks like a latency value
@@ -612,6 +610,17 @@ func isLatencyVal(value string) bool {
 	if latency.MatchString(value) {
 		return true
 	}
+	return false
+}
+
+// IsValidFL returns true, if the given value is a valid C state name or a
+// latency value, else false
+func IsValidFL(value string) bool {
+	if isLatencyVal(value) || isCStateName(value) {
+		return true
+	}
+	ErrorLog("Wrong C state name used in Note definition - '%+v'", value)
+	ErrorLog("Not found on the system. Valid names are: %+v", strings.Join(cstateNames(), ","))
 	return false
 }
 
