@@ -95,3 +95,7 @@ force_latency=70
 # 0 to disable, 1 to enable
 kernel.numa_balancing=0
 
+[grub:arch=x86_64]
+# Enable Transactional Synchronization Extensions
+# (TSX, applies to Intel-based systems only)
+tsx=auto
