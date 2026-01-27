@@ -2,8 +2,8 @@
 # Description:   You want to apply SAP recommended operating system settings on SLES or SLES for SAP applications.
 
 [version]
-VERSION=45
-DATE=15.01.2026
+VERSION=47
+DATE=27.01.2026
 DESCRIPTION=Linux: Preparing SLES for SAP environments
 REFERENCES=https://me.sap.com/notes/1275776
 
