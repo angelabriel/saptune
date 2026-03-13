@@ -45,7 +45,7 @@
 | github.com/SUSE/saptune/app/state.go | 78.1 | :cloud: |
 | github.com/SUSE/saptune/sap/note/ini.go | 77.1 | :cloud: |
 | github.com/SUSE/saptune/system/lock.go | 74.4 | :cloud: |
-| github.com/SUSE/saptune/sap/solution/solution.go | 73.4 | :cloud: |
+| github.com/SUSE/saptune/sap/solution/solution.go | 74.2 | :cloud: |
 | github.com/SUSE/saptune/sap/note/sectFS.go | 73.1 | :cloud: |
 | github.com/SUSE/saptune/actions/noteacts.go | 72.5 | :cloud: |
 | github.com/SUSE/saptune/actions/actions.go | 72.4 | :cloud: |
