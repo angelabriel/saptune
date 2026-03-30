@@ -55,6 +55,7 @@ Deprecation list:
   'saptune solution simulate'
   'Solution SAP-ASE.sol and related Notes 1680803, 1805750'
   'Note 1771258 and PAM limits handling'
+  'Note 941735'
 `
 }
 
@@ -99,5 +100,6 @@ Print this message:
   saptune [--format FORMAT] [--force-color] [--fun] help
 
 Deprecation list:
+  'Note 941735'
 `
 }
