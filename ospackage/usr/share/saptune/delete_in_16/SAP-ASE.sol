@@ -1,6 +1,6 @@
 [ArchX86]
-deprecated
+delete
 
 [ArchPPC64LE]
-deprecated
+delete
 
