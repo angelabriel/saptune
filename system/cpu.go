@@ -540,7 +540,7 @@ func SetForceLatency(value, savedStates string, revert bool) error {
 	return err
 }
 
-// FlTblEntry returns the represenation of the force_latency value to be
+// FlTblEntry returns the representation of the force_latency value to be
 // shown in the verify table
 // print the latency number and the related C state name
 // order of string output depends on the type of the expected value (eval)
