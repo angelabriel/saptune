@@ -91,22 +91,26 @@ func OptBlkVal(key, cfgval string, cur *param.BlockDeviceQueue, bOK map[string][
 			cur.BlockDeviceSchedulers = opt.(param.BlockDeviceSchedulers)
 		}
 	case system.IsNrreq.MatchString(key):
+		oval := ""
 		ival, _ := strconv.Atoi(sval)
 		nrtags, elev, bdev := system.GetNrTags(key)
 		nxtElev := cur.BlockDeviceSchedulers.SchedulerChoice[bdev]
 		if (elev == "none" || nxtElev == "none") && ival > nrtags {
 			info = "wrongVal"
 		}
-		opt, _ := cur.BlockDeviceNrRequests.Optimise(ival)
+		if len(bdev) > 0 {
+			oval = bdev + " " + sval
+		}
+		opt, _ := cur.BlockDeviceNrRequests.Optimise(oval)
 		cur.BlockDeviceNrRequests = opt.(param.BlockDeviceNrRequests)
 	case system.IsRahead.MatchString(key):
-		ival, _ := strconv.Atoi(sval)
-		opt, _ := cur.BlockDeviceReadAheadKB.Optimise(ival)
+		oval := strings.TrimPrefix(key, "READ_AHEAD_KB_") + " " + sval
+		opt, _ := cur.BlockDeviceReadAheadKB.Optimise(oval)
 		cur.BlockDeviceReadAheadKB = opt.(param.BlockDeviceReadAheadKB)
 	case system.IsMsect.MatchString(key):
-		var ival int
-		ival, sval, info = chkMaxHWsector(key, sval)
-		opt, _ := cur.BlockDeviceMaxSectorsKB.Optimise(ival)
+		_, sval, info = chkMaxHWsector(key, sval)
+		oval := strings.TrimPrefix(key, "MAX_SECTORS_KB_") + " " + sval
+		opt, _ := cur.BlockDeviceMaxSectorsKB.Optimise(oval)
 		cur.BlockDeviceMaxSectorsKB = opt.(param.BlockDeviceMaxSectorsKB)
 	}
 	return sval, info
