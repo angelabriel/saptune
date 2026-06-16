@@ -85,3 +85,9 @@ vm.dirty_bytes=629145600
 #
 vm.dirty_background_bytes=314572800
 
+# Linux Security Module (LSM) "yama"
+# /proc/sys/kernel/yama/ptrace_scope restricts the "ptrace" system call.
+# The default setting in SLE16 is "1", which restricts debugging tools like
+# ptrace, strace, gdb etc.
+# The classic ptrace permissions are represented by a value of "0".
+kernel.yama.ptrace_scope = 0
