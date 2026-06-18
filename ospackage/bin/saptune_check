@@ -201,7 +201,7 @@ function _json_key_must_exist() {
     # Returncode:   -
     #
     # Checks if the second parameter exists.
-    # The function normaly will be called by `add2json` with
+    # The function normally will be called by `add2json` with
     # its arguments (`add2json REG_TYPE [KEY [VALUE]]`).
     # Terminates with exit code 5 if not, otherwise returns.
     #
@@ -219,7 +219,7 @@ function _json_value_must_exist() {
     # Returncode:   -
     #
     # Checks if the third parameter exists.
-    # The function normaly will be called by `add2json` with
+    # The function normally will be called by `add2json` with
     # its arguments (`add2json REG_TYPE [KEY [VALUE]]`).
     # Terminates with exit code 5 if not, otherwise returns.
     #
