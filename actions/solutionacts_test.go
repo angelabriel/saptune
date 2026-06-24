@@ -3,6 +3,7 @@ package actions
 import (
 	"bytes"
 	"github.com/SUSE/saptune/system"
+	"os"
 	"testing"
 )
 
@@ -32,6 +33,8 @@ All solutions (* denotes enabled solution, ! denotes a conflict reported in log 
 	NETW               - 941735 1771258 1980196 1984787 2534844
  C	NEWSOL1            - SOL1NOTE1 NEWSOL1NOTE SOL1NOTE2
  C	NEWSOL2            - SOL2NOTE1 NEWSOL2NOTE SOL2NOTE2
+	sol1               - simpleNote
+	sol2               - extraNote
 
 Remember: if you wish to automatically activate the solution's tuning options after a reboot, you must enable and start saptune.service by running:
     saptune service enablestart
@@ -83,9 +86,12 @@ Hints or values not yet handled by saptune. So please read carefully, check and 
 Remember: if you wish to automatically activate the solution's tuning options after a reboot, you must enable and start saptune.service by running:
     saptune service enablestart
 `
+
+		in := bytes.Buffer{}
+		in.Write([]byte("y\n"))
 		buffer := bytes.Buffer{}
 		sName := "sol1"
-		SolutionActionApply(&buffer, sName, tApp)
+		SolutionActionApply(&in, &buffer, sName, tApp)
 		txt := buffer.String()
 		checkOut(t, txt, applyMatchText)
 		SolutionActionList(&buffer, tApp)
@@ -144,6 +150,36 @@ Hints or values not yet handled by saptune. So please read carefully, check and 
 		SolutionActionRevert(&buffer, sName, tApp)
 		txt := buffer.String()
 		checkOut(t, txt, revertMatchText)
+
+		tearDownShipped(t)
+		tearDownSol(t)
+	})
+
+	// Test SolutionActionApplySuccessfulSecondSol
+	t.Run("SolutionActionApplySuccessfulSecondSol", func(t *testing.T) {
+		var applyErrorText = `All tuning options for the SAP solution have been applied successfully.
+
+Remember: if you wish to automatically activate the solution's tuning options after a reboot, you must enable and start saptune.service by running:
+    saptune service enablestart
+`
+		in := bytes.Buffer{}
+		in.Write([]byte("y\n"))
+		buffer := bytes.Buffer{}
+		sName1 := "sol1"
+		SolutionActionApply(&in, &buffer, sName1, tApp)
+		os.Args = []string{"saptune", "solution", "apply", "--force", "sol2"}
+		system.RereadArgs()
+		sol2buffer := bytes.Buffer{}
+		sName2 := "sol2"
+		SolutionActionApply(&in, &sol2buffer, sName2, tApp)
+		txt := sol2buffer.String()
+		checkOut(t, txt, applyErrorText)
+		// cleanup, revert the second solution, so that only sol1 is
+		// applied
+		SolutionActionRevert(&sol2buffer, sName2, tApp)
+		// reset --force flag
+		os.Args = []string{"saptune", "solution", "apply", "sol2"}
+		system.RereadArgs()
 	})
 
 	// Test SolutionActionShow
@@ -193,7 +229,7 @@ func TestSolutionActionsErrors(t *testing.T) {
 
 	// Test SolutionActionApplySecondSol
 	t.Run("SolutionActionApplySecondSol", func(t *testing.T) {
-		var applyErrorText = `All tuning options for the SAP solution have been applied successfully.
+		var applyErrorText = `Do you really want to exchange the applied solution (sol1) with the new solution 'sol2'? [y/n]: All tuning options for the SAP solution have been applied successfully.
 
 Remember: if you wish to automatically activate the solution's tuning options after a reboot, you must enable and start saptune.service by running:
     saptune service enablestart
@@ -210,16 +246,97 @@ Remember: if you wish to automatically activate the solution's tuning options af
 		errExitbuffer := bytes.Buffer{}
 		tstwriter = &errExitbuffer
 
+		in := bytes.Buffer{}
+		in.Write([]byte("y\n"))
 		buffer := bytes.Buffer{}
 		sName1 := "sol1"
-		SolutionActionApply(&buffer, sName1, tApp)
+		SolutionActionApply(&in, &buffer, sName1, tApp)
 		sol2buffer := bytes.Buffer{}
 		sName2 := "sol2"
-		SolutionActionApply(&sol2buffer, sName2, tApp)
+		SolutionActionApply(&in, &sol2buffer, sName2, tApp)
 		txt := sol2buffer.String()
 		checkOut(t, txt, applyErrorText)
 		if tstRetErrorExit != 1 {
 			t.Errorf("error exit should be '1' and NOT '%v'\n", tstRetErrorExit)
+		}
+		errExOut := errExitbuffer.String()
+		checkOut(t, errExOut, testErrorText)
+		// cleanup, revert the second solution, so that only sol1 is
+		// applied
+		SolutionActionRevert(&sol2buffer, sName2, tApp)
+	})
+
+	// Test SolutionActionApplySecondSolErr
+	t.Run("SolutionActionApplySecondSolErr", func(t *testing.T) {
+		var applyErrorText = `Do you really want to exchange the applied solution (sol1) with the new solution 'sol2'? [y/n]: All tuning options for the SAP solution have been applied successfully.
+
+Remember: if you wish to automatically activate the solution's tuning options after a reboot, you must enable and start saptune.service by running:
+    saptune service enablestart
+`
+		var testErrorText = `ERROR: There is already one solution applied. Applying another solution is NOT supported.
+ERROR: Solution action 'change' aborted by user interaction
+`
+		oldOSExit := system.OSExit
+		defer func() { system.OSExit = oldOSExit }()
+		system.OSExit = tstosExit
+		oldErrorExitOut := system.ErrorExitOut
+		defer func() { system.ErrorExitOut = oldErrorExitOut }()
+		system.ErrorExitOut = tstErrorExitOut
+
+		errExitbuffer := bytes.Buffer{}
+		tstwriter = &errExitbuffer
+
+		in := bytes.Buffer{}
+		in.Write([]byte("n\n"))
+		buffer := bytes.Buffer{}
+		sName1 := "sol1"
+		SolutionActionApply(&in, &buffer, sName1, tApp)
+		sol2buffer := bytes.Buffer{}
+		sName2 := "sol2"
+		SolutionActionApply(&in, &sol2buffer, sName2, tApp)
+		txt := sol2buffer.String()
+		checkOut(t, txt, applyErrorText)
+		if tstRetErrorExit != 0 {
+			t.Errorf("error exit should be '0' and NOT '%v'\n", tstRetErrorExit)
+		}
+		errExOut := errExitbuffer.String()
+		checkOut(t, errExOut, testErrorText)
+		// cleanup, revert the second solution, so that only sol1 is
+		// applied
+		SolutionActionRevert(&sol2buffer, sName2, tApp)
+	})
+
+	// Test SolutionActionApplySecondSolSameSol
+	t.Run("SolutionActionApplySecondSolSameSol", func(t *testing.T) {
+		var applyErrorText = `Do you really want to exchange the applied solution (sol1) with the new solution 'sol1'? [y/n]: All tuning options for the SAP solution have been applied successfully.
+
+Remember: if you wish to automatically activate the solution's tuning options after a reboot, you must enable and start saptune.service by running:
+    saptune service enablestart
+`
+		var testErrorText = `ERROR: There is already one solution applied. Applying another solution is NOT supported.
+`
+		oldOSExit := system.OSExit
+		defer func() { system.OSExit = oldOSExit }()
+		system.OSExit = tstosExit
+		oldErrorExitOut := system.ErrorExitOut
+		defer func() { system.ErrorExitOut = oldErrorExitOut }()
+		system.ErrorExitOut = tstErrorExitOut
+
+		errExitbuffer := bytes.Buffer{}
+		tstwriter = &errExitbuffer
+
+		in := bytes.Buffer{}
+		in.Write([]byte("y\n"))
+		buffer := bytes.Buffer{}
+		sName1 := "sol1"
+		SolutionActionApply(&in, &buffer, sName1, tApp)
+		sol2buffer := bytes.Buffer{}
+		sName2 := "sol1"
+		SolutionActionApply(&in, &sol2buffer, sName2, tApp)
+		txt := sol2buffer.String()
+		checkOut(t, txt, applyErrorText)
+		if tstRetErrorExit != 0 {
+			t.Errorf("error exit should be '0' and NOT '%v'\n", tstRetErrorExit)
 		}
 		errExOut := errExitbuffer.String()
 		checkOut(t, errExOut, testErrorText)
@@ -267,7 +384,9 @@ and then please double check your input
 		defer func() { system.ErrorExitOut = oldErrorExitOut }()
 		system.ErrorExitOut = tstErrorExitOut
 
-		errExitMatchText := `ERROR: There is already one solution applied. Applying another solution is NOT supported.
+		errExitMatchText := `ERROR: the new Solution "" does not exist.
+Run "saptune solution list" for a complete list of supported solutions.
+and then please double check your input
 ERROR: Failed to tune for solution : solution name "" is not recognised by saptune.
 Run "saptune solution list" for a complete list of supported solutions,
 and then please double check your input
@@ -280,7 +399,9 @@ Remember: if you wish to automatically activate the solution's tuning options af
 		buffer := bytes.Buffer{}
 		errExitbuffer := bytes.Buffer{}
 		tstwriter = &errExitbuffer
-		SolutionActionApply(&buffer, "", tApp)
+		in := bytes.Buffer{}
+		in.Write([]byte("n\n"))
+		SolutionActionApply(&in, &buffer, "", tApp)
 		txt := buffer.String()
 		checkOut(t, txt, applyErrorMatchText)
 		if tstRetErrorExit != 1 {
