@@ -186,10 +186,8 @@ func TestRefresh(t *testing.T) {
 	sol2 := Solution{"941735", "1771258", "1980196", "1984787", "2205917", "2382421", "2534844"}
 	sol3 := Solution{"941735", "1771258", "1984787"}
 	sol4 := Solution{"941735", "1771258", "1980196", "1984787", "2534844"}
-	sol5 := Solution{"simpleNote"}
-	sol6 := Solution{"extraNote"}
-	amdSols := map[string]Solution{"BWA": sol1, "HANA": sol2, "MAXDB": sol3, "NETW": sol4, "sol1": sol5, "sol2": sol6}
-	ppcSols := map[string]Solution{"BWA": sol1, "HANA": sol2, "MAXDB": sol3, "NETW": sol4, "sol1": sol5, "sol2": sol6}
+	amdSols := map[string]Solution{"BWA": sol1, "HANA": sol2, "MAXDB": sol3, "NETW": sol4}
+	ppcSols := map[string]Solution{"BWA": sol1, "HANA": sol2, "MAXDB": sol3, "NETW": sol4}
 	allSols := map[string]map[string]Solution{"amd64": amdSols, "ppc64le": ppcSols}
 
 	Refresh()

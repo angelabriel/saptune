@@ -28,8 +28,6 @@ All solutions (* denotes enabled solution, ! denotes a conflict reported in log 
 	HANA               - 941735 1771258 1980196 1984787 2205917 2382421 2534844
 	MAXDB              - 941735 1771258 1984787
 	NETW               - 941735 1771258 1980196 1984787 2534844
-	sol1               - simpleNote
-	sol2               - extraNote
 
 Remember: if you wish to automatically activate the solution's tuning options after a reboot, you must enable and start saptune.service by running:
     saptune service enablestart
