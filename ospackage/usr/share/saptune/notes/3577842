@@ -97,3 +97,7 @@ kernel.numa_balancing=0
 
 [rpm]
 kernel-default 6.12.0-160000.33.1
+
+[reminder]
+# IBM EnergyScale for POWER Processor-Based Systems (applies to IBM Power systems only) - not handled by saptune!
+# SAP HANA does not support use of Intel Cluster-On-Die (COD) technology (Intel platform only)
