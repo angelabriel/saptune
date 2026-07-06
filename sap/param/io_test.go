@@ -104,6 +104,16 @@ func TestIOElevators(t *testing.T) {
 }
 
 func TestNrRequests(t *testing.T) {
+	opdev := ""
+	if _, err := os.Stat("/sys/block/sda"); err == nil {
+		opdev = "sda"
+	} else if _, err := os.Stat("/sys/block/vda"); err == nil {
+		opdev = "vda"
+	}
+	if opdev == "" {
+		t.Logf("empty opdev - no sda nor vda availlable")
+	}
+
 	inspected, err := BlockDeviceNrRequests{}.Inspect()
 	if err != nil {
 		t.Error(err, inspected)
@@ -123,7 +133,8 @@ func TestNrRequests(t *testing.T) {
 		oldvals.NrRequests[name] = nrrequest
 	}
 	t.Logf("oldvals - '%+v'\n", oldvals)
-	optimised, err := inspected.Optimise(32)
+	optVal := opdev + " 32"
+	optimised, err := inspected.Optimise(optVal)
 	if err != nil {
 		t.Error(err)
 	}
@@ -161,13 +172,13 @@ func TestNrRequests(t *testing.T) {
 		t.Log("inspection result turns out empty")
 	}
 	for name, nrrequest := range applied.(BlockDeviceNrRequests).NrRequests {
-		if name == "" || nrrequest != 32 {
+		if name == "" || (name == opdev && nrrequest != 32) {
 			t.Error(applied)
 		}
 	}
 
 	// trigger errors
-	optimised, err = applied.Optimise(104632)
+	optimised, err = applied.Optimise("sda 104632")
 	if err != nil {
 		t.Error(err)
 	}
@@ -180,7 +191,7 @@ func TestNrRequests(t *testing.T) {
 	if err != nil {
 		t.Error(err, schedInspected)
 	}
-	optVal := "sda  none"
+	optVal = "sda  none"
 	schedOptimised, err := schedInspected.Optimise(optVal)
 	if err != nil {
 		t.Error(err)
@@ -194,7 +205,7 @@ func TestNrRequests(t *testing.T) {
 	if err != nil {
 		t.Error(err, applied)
 	}
-	optimised, err = applied.Optimise(1098776544632)
+	optimised, err = applied.Optimise("sda 1098776544632")
 	if err != nil {
 		t.Error(err)
 	}
@@ -223,6 +234,15 @@ func TestNrRequests(t *testing.T) {
 }
 
 func TestReadAheadKB(t *testing.T) {
+	opdev := ""
+	if _, err := os.Stat("/sys/block/sda"); err == nil {
+		opdev = "sda"
+	} else if _, err := os.Stat("/sys/block/vda"); err == nil {
+		opdev = "vda"
+	}
+	if opdev == "" {
+		t.Logf("empty opdev - no sda nor vda availlable")
+	}
 	inspected, err := BlockDeviceReadAheadKB{}.Inspect()
 	if err != nil {
 		t.Error(err, inspected)
@@ -242,7 +262,8 @@ func TestReadAheadKB(t *testing.T) {
 		oldvals.ReadAheadKB[name] = readaheadkb
 	}
 	t.Logf("oldvals - '%+v'\n", oldvals)
-	optimised, err := inspected.Optimise(132)
+	optVal := opdev + " 132"
+	optimised, err := inspected.Optimise(optVal)
 	if err != nil {
 		t.Error(err)
 	}
@@ -280,13 +301,13 @@ func TestReadAheadKB(t *testing.T) {
 		t.Log("inspection result turns out empty")
 	}
 	for name, readaheadkb := range applied.(BlockDeviceReadAheadKB).ReadAheadKB {
-		if name == "" || readaheadkb != 132 {
+		if name == "" || (name == opdev && readaheadkb != 132) {
 			t.Error(applied)
 		}
 	}
 
 	// trigger errors
-	optimised, err = applied.Optimise(2147483647)
+	optimised, err = applied.Optimise("sda 2147483647")
 	if err != nil {
 		t.Error(err)
 	}
@@ -315,6 +336,15 @@ func TestReadAheadKB(t *testing.T) {
 }
 
 func TestMaxSectorsKB(t *testing.T) {
+	opdev := ""
+	if _, err := os.Stat("/sys/block/sda"); err == nil {
+		opdev = "sda"
+	} else if _, err := os.Stat("/sys/block/vda"); err == nil {
+		opdev = "vda"
+	}
+	if opdev == "" {
+		t.Logf("empty opdev - no sda nor vda availlable")
+	}
 	inspected, err := BlockDeviceMaxSectorsKB{}.Inspect()
 	if err != nil {
 		t.Error(err, inspected)
@@ -334,7 +364,8 @@ func TestMaxSectorsKB(t *testing.T) {
 		oldvals.MaxSectorsKB[name] = maxsectorkb
 	}
 	t.Logf("oldvals - '%+v'\n", oldvals)
-	optimised, err := inspected.Optimise(132)
+	optVal := opdev + " 132"
+	optimised, err := inspected.Optimise(optVal)
 	if err != nil {
 		t.Error(err)
 	}
@@ -372,7 +403,7 @@ func TestMaxSectorsKB(t *testing.T) {
 		t.Log("inspection result turns out empty")
 	}
 	for name, maxsectorkb := range applied.(BlockDeviceMaxSectorsKB).MaxSectorsKB {
-		if name == "" || maxsectorkb != 132 {
+		if name == "" || (name == opdev && maxsectorkb != 132) {
 			t.Error(applied)
 		}
 	}
