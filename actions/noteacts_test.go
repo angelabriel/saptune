@@ -236,7 +236,7 @@ Hints or values not yet handled by saptune. So please read carefully, check and 
 
 current order of enabled notes is: simpleNote
 
-[32m[1mThe running system is currently well-tuned according to all of the enabled notes.[22m[0m
+[32m[1mThe running system is currently well-tuned according to all of the applied notes.[22m[0m
 `
 		buffer := bytes.Buffer{}
 		nID := "applied"

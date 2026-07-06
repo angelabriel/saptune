@@ -16,6 +16,7 @@ func TestSetWidthOfColums(t *testing.T) {
 	w2 := 3
 	w3 := 4
 	w4 := 5
+	tblwdth := 32
 	v1, v2, v3, v4 := setWidthOfColums(compare, w1, w2, w3, w4)
 	if v1 != w1 {
 		t.Error(v1, w1)
@@ -58,10 +59,10 @@ func TestSetWidthOfColums(t *testing.T) {
 	if v1 != w1 {
 		t.Error(v1, w1)
 	}
-	if v2 != 32 {
+	if v2 != tblwdth {
 		t.Error(v2, w2)
 	}
-	if v3 != 30 {
+	if v3 != tblwdth {
 		t.Error(v3, w3)
 	}
 	if v4 != w4 {
@@ -69,7 +70,7 @@ func TestSetWidthOfColums(t *testing.T) {
 	}
 	compare = note.FieldComparison{ReflectFieldName: "OverrideParams", ReflectMapKey: "net.ipv4.ip_local_reserved_ports", ActualValueJS: "1089-1090,1095,1099,1200-1599,2000-2002,3200-3399,3500,3600-3699,3900-4001", ExpectedValueJS: "1089-1090,1095,1099,1200-1599,2000-2002,3200-3399,3500,3600-3699,3900-4001"}
 	v1, v2, v3, v4 = setWidthOfColums(compare, w1, w2, w3, w4)
-	if v1 != 30 {
+	if v1 != tblwdth {
 		t.Error(v1, w1)
 	}
 	if v2 != w2 || v3 != w3 || v4 != w4 {
