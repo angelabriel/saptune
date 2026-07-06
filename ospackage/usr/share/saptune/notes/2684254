@@ -2,8 +2,8 @@
 # Description:    HANA DB settings
 
 [version]
-VERSION=27
-DATE=26.11.2025
+VERSION=29
+DATE=30.06.2026
 DESCRIPTION=SAP HANA DB: Recommended OS settings for SLES 15 / SLES for SAP Applications 15
 REFERENCES=https://me.sap.com/notes/2684254
 
@@ -163,6 +163,5 @@ processor.max_cstate=1
 xfs_options= -nobarrier, -barrier
 
 [reminder]
-# IBM EnergyScale for POWER8 Processor-Based Systems (applies to IBM Power systems only) - not handled by saptune!
-# IBM EnergyScale for POWER9 Processor-Based Systems (applies to IBM Power systems only) - not handled by saptune!
+# IBM EnergyScale for POWER Processor-Based Systems (applies to IBM Power systems only) - not handled by saptune!
 # SAP HANA does not support use of Intel Cluster-On-Die (COD) technology (Intel platform only)
