@@ -20,7 +20,7 @@ var solTemplate = "/usr/share/saptune/SolutionTemplate.conf"
 func SolutionAction(writer io.Writer, actionName, solName, newSolName string, tuneApp *app.App) {
 	switch actionName {
 	case "apply":
-		SolutionActionApply(writer, solName, tuneApp)
+		SolutionActionApply(os.Stdin, writer, solName, tuneApp)
 	case "list":
 		SolutionActionList(writer, tuneApp)
 	case "verify":
@@ -58,16 +58,11 @@ func SolutionAction(writer io.Writer, actionName, solName, newSolName string, tu
 
 // SolutionActionApply applies parameter settings defined by the solution
 // to the system
-func SolutionActionApply(writer io.Writer, solName string, tuneApp *app.App) {
+func SolutionActionApply(reader io.Reader, writer io.Writer, solName string, tuneApp *app.App) {
 	if solName == "" {
 		PrintHelpAndExit(writer, 1)
 	}
-	if len(tuneApp.TuneForSolutions) > 0 {
-		// already one solution applied.
-		// do not apply another solution. Does not make sense
-		system.ErrorExit("There is already one solution applied. Applying another solution is NOT supported.", 1)
-	}
-	applySolution(writer, solName, tuneApp)
+	changeSolution(reader, writer, solName, tuneApp)
 }
 
 // SolutionActionList lists all available solution definitions
@@ -249,6 +244,13 @@ func SolutionActionChange(reader io.Reader, writer io.Writer, solName string, tu
 	if solName == "" {
 		PrintHelpAndExit(writer, 1)
 	}
+	changeSolution(reader, writer, solName, tuneApp)
+}
+
+// changeSolution handles the interactive and the revert part of a solution
+// change.
+// used in SolutionActionChange and SolutionActionApply
+func changeSolution(reader io.Reader, writer io.Writer, solName string, tuneApp *app.App) {
 	// check if the new solution really exists
 	if !solution.IsAvailableSolution(solName, solutionSelector) {
 		system.ErrorExit(`the new Solution "%s" does not exist.
@@ -258,11 +260,19 @@ and then please double check your input`, solName)
 
 	if len(tuneApp.TuneForSolutions) > 0 {
 		// already one solution applied.
+		if !system.OutIsTerm(os.Stdout) && !system.IsFlagSet("force") {
+			// in case of console redirection do not apply another
+			// solution as we can not ask for confirmation
+			system.ErrorExit("There is already one solution applied. Applying another solution is NOT supported.", 1)
+		}
+		system.NoticeLog("There is already one solution applied. Going forward to 'change'")
+
 		oldSol := tuneApp.TuneForSolutions[0]
 		if oldSol == solName {
 			system.NoticeLog("Solution '%s' already applied, nothing to do.", solName)
 			system.ErrorExit("", 0)
 		}
+
 		system.NoticeLog("Exchange applied solution '%s' with new solution '%s'", oldSol, solName)
 		if !system.IsFlagSet("force") {
 			txtConfirm := fmt.Sprintf("Do you really want to exchange the applied solution (%s) with the new solution '%s'?", oldSol, solName)
