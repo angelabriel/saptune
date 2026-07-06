@@ -539,7 +539,7 @@ func SetForceLatency(value, savedStates string, revert bool) error {
 	return err
 }
 
-// FlTblEntry returns the represenation of the force_latency value to be
+// FlTblEntry returns the representation of the force_latency value to be
 // shown in the verify table
 // print the latency number and the related C state name
 // order of string output depends on the type of the expected value (eval)
@@ -618,8 +618,12 @@ func IsValidFL(value string) bool {
 	if isLatencyVal(value) || isCStateName(value) {
 		return true
 	}
-	ErrorLog("Wrong C state name used in Note definition - '%+v'", value)
-	ErrorLog("Not found on the system. Valid names are: %+v", strings.Join(cstateNames(), ","))
+	if supportsForceLatencySettings("") {
+		// only report error, if system supports latency settings
+		// otherwise it may confuse the admin
+		ErrorLog("Wrong C state name used in Note definition - '%+v'", value)
+		ErrorLog("Not found on the system. Valid names are: %+v", strings.Join(cstateNames(), ","))
+	}
 	return false
 }
 

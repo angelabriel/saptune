@@ -38,7 +38,7 @@ IO_SCHEDULER=noop, none
 
 [rpm]
 patterns-base-selinux 20241218-160000.2.2
-patterns-cockpit 16.0-160000.2.2
+?patterns-cockpit 16.0-160000.2.2
 patterns-base-enhanced_base 20241218-160000.2.2
 patterns-sap-minimal_sap 16.0-160000.2.2
 
@@ -55,7 +55,7 @@ tcsh 6.24.15-160000.2.2
 util-linux-systemd 2.41.1-160000.2.2
 uuidd 2.41.1-160000.2.2
 polkit 123-160000.2.2
-?openldap-sap-compat
+?libldap2-sap-compat
 
 [sysctl]
 # vm.dirty_bytes (indirect vm.dirty_ratio)
@@ -85,3 +85,9 @@ vm.dirty_bytes=629145600
 #
 vm.dirty_background_bytes=314572800
 
+# Linux Security Module (LSM) "yama"
+# /proc/sys/kernel/yama/ptrace_scope restricts the "ptrace" system call.
+# The default setting in SLE16 is "1", which restricts debugging tools like
+# ptrace, strace, gdb etc.
+# The classic ptrace permissions are represented by a value of "0".
+kernel.yama.ptrace_scope = 0

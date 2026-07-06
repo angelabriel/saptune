@@ -117,9 +117,11 @@ func (ior BlockDeviceNrRequests) Inspect() (Parameter, error) {
 
 // Optimise gets the expected nr_requests value from the configuration
 func (ior BlockDeviceNrRequests) Optimise(newNrRequestValue interface{}) (Parameter, error) {
-	newIOR := BlockDeviceNrRequests{NrRequests: make(map[string]int)}
-	for k := range ior.NrRequests {
-		newIOR.NrRequests[k] = newNrRequestValue.(int)
+	newIOR := ior
+	fields := strings.Fields(newNrRequestValue.(string))
+	if len(fields) > 1 {
+		newNrreq, _ := strconv.Atoi(fields[1])
+		newIOR.NrRequests[fields[0]] = newNrreq
 	}
 	return newIOR, nil
 }
@@ -187,9 +189,11 @@ func (rakb BlockDeviceReadAheadKB) Inspect() (Parameter, error) {
 
 // Optimise gets the expected read_ahead_kb value from the configuration
 func (rakb BlockDeviceReadAheadKB) Optimise(newReadAheadKBValue interface{}) (Parameter, error) {
-	newRAKB := BlockDeviceReadAheadKB{ReadAheadKB: make(map[string]int)}
-	for k := range rakb.ReadAheadKB {
-		newRAKB.ReadAheadKB[k] = newReadAheadKBValue.(int)
+	newRAKB := rakb
+	fields := strings.Fields(newReadAheadKBValue.(string))
+	if len(fields) > 1 {
+		newKBVal, _ := strconv.Atoi(fields[1])
+		newRAKB.ReadAheadKB[fields[0]] = newKBVal
 	}
 	return newRAKB, nil
 }
@@ -257,9 +261,11 @@ func (mskb BlockDeviceMaxSectorsKB) Inspect() (Parameter, error) {
 
 // Optimise gets the expected max_sectors_kb value from the configuration
 func (mskb BlockDeviceMaxSectorsKB) Optimise(newMaxSectorsKBValue interface{}) (Parameter, error) {
-	newMSKB := BlockDeviceMaxSectorsKB{MaxSectorsKB: make(map[string]int)}
-	for k := range mskb.MaxSectorsKB {
-		newMSKB.MaxSectorsKB[k] = newMaxSectorsKBValue.(int)
+	newMSKB := mskb
+	fields := strings.Fields(newMaxSectorsKBValue.(string))
+	if len(fields) > 1 {
+		newKBVal, _ := strconv.Atoi(fields[1])
+		newMSKB.MaxSectorsKB[fields[0]] = newKBVal
 	}
 	return newMSKB, nil
 }

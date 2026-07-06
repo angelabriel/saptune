@@ -92,7 +92,7 @@ func chkOsTags(tagField string, secFields []string) bool {
 			system.InfoLog("unsupported os version '%s' in section definition '%v'. Skipping whole section with all lines till next valid section definition", osw[1], secFields)
 			ret = false
 		}
-		// check runing os version
+		// check running os version
 		if !system.IsSLE(osw[1]) {
 			system.InfoLog("os version '%s' in section definition '%v' does not match running os version '%s'. Skipping whole section with all lines till next valid section definition", tagField, secFields, system.GetOsVers())
 			ret = false

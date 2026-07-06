@@ -148,7 +148,7 @@ Tune system according to SAP and SUSE notes:
 Tune system for all notes applicable to your SAP solution:
   saptune [--format FORMAT] [--force-color] [--fun] solution ( list | verify | enabled | applied )
   saptune [--format FORMAT] [--force-color] [--fun] solution ( apply | simulate | customise | create | edit | revert | show | delete ) SOLUTIONNAME
-  saptune [--format FORMAT] [--force-color] [--fun] solution change [--force] SOLUTIONNAME
+  saptune [--format FORMAT] [--force-color] [--fun] solution ( apply | change ) [--force] SOLUTIONNAME
   saptune [--format FORMAT] [--force-color] [--fun] solution verify [--colorscheme SCHEME] [--show-non-compliant] [SOLUTIONNAME]
   saptune [--format FORMAT] [--force-color] [--fun] solution rename SOLUTIONNAME NEWSOLUTIONNAME
 Staging control:
@@ -181,6 +181,7 @@ Deprecation list:
   'saptune solution simulate'
   'Solution SAP-ASE.sol and related Notes 1680803, 1805750'
   'Note 1771258 and PAM limits handling'
+  'Note 941735'
 ` + errExitMatchText
 
 	system.RereadArgs()

@@ -341,6 +341,7 @@ func chkCmdOpts(cmdLinePos map[string]int) bool {
 
 	flagToCheck := []string{
 		// saptune solution change [--force] SOLUTIONNAME
+		// saptune solution apply [--force] SOLUTIONNAME
 		// saptune staging release [--force|--dry-run] [NOTE...|SOLUTION...|all]
 		"chkForceFlag",
 		// saptune staging release [--force|--dry-run] [NOTE...|SOLUTION...|all]
@@ -396,7 +397,7 @@ func checkFlag(cmdLinePos map[string]int, flagValue string) bool {
 	switch flagValue {
 	case "chkForceFlag":
 		// Checks the syntax of 'saptune solution change' and 'saptune staging release' regarding the 'force' flag
-		notInRealm := syntaxCheckNotRealm([][]string{{"solution", "change"}, {"staging", "release"}})
+		notInRealm := syntaxCheckNotRealm([][]string{{"solution", "change"}, {"solution", "apply"}, {"staging", "release"}})
 		isWrongPosition := stArgs[cmdLinePos["cmdOpt"]] != "--force"
 		result = runChecks("chkForceFlag", "force", "force", notInRealm, isWrongPosition)
 

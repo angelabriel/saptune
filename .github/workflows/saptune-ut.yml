@@ -30,7 +30,7 @@ jobs:
       commit_sha: ${{ steps.commit_sha.outputs.GIT_COMMIT_SHA }}
     if: ${{ needs.Check_secrets.outputs.run_cc == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set ENV (push)
         run: |
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ always() }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Pull the Container Image
         run: docker pull registry.opensuse.org/home/angelabriel/st-ci-base/containers/st-ci-base:latest
@@ -70,19 +70,19 @@ jobs:
         run: docker exec -t saptune-ci /bin/sh -c "cd /app; ./run_saptune_ci_tst.sh;"
         continue-on-error: true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverprofile
           path: c.out
         if: ${{ env.CC_TEST_REPORTER_ID != '' }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverfunctions
           path: cov.out
         if: ${{ env.CC_TEST_REPORTER_ID != '' }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverhtml
           path: cov.html
@@ -97,24 +97,24 @@ jobs:
     needs: [Setup_Git_Env, Saptune_unit_test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: coverprofile
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: coverfunctions
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: coverhtml
 
       - name: create coverage list/table
         run: .github/scripts/cover.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: covtable
           path: coverage_table.md
@@ -122,7 +122,7 @@ jobs:
       - name: create badge
         run: .github/scripts/badge.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: badge
           path: badge_cov.svg
@@ -131,7 +131,7 @@ jobs:
     needs: [Setup_Git_Env, Saptune_unit_test, Coverage_report_and_badge]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: checkout branch cover
         run: |
@@ -149,11 +149,11 @@ jobs:
           echo "feature branch ${{ github.event.pull_request.head.ref }}"
           echo "PR nummer ${{ github.event.pull_request.number }}"
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: badge
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: covtable
 
