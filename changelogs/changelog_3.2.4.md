@@ -1,0 +1,15 @@
+# Changelog - 3.2.4
+
+This version is the recommended minimum for SLES 16.0.
+
+- SAP Notes for SLES 16 are updated to official release state:
+    - 3577842 - SAP HANA DB: Recommended OS settings for SLES 16 / SLES for SAP applications 16
+    - 3565382 - SUSE Linux Enterprise Server 16: Installation Note
+
+- SAP Note 1275776 updated to Version 57 (no tuning changes).
+
+- SAP Note order in all Solutions has been aligned.
+
+- `saptune check` (`saptune_check`) does not report a masked `sapconf.service` as error and gives better advice in such scenarios.
+
+- Fixed handling of `blk*` tags. Sections have not been processed correctly.
