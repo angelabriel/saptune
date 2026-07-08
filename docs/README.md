@@ -32,6 +32,6 @@
 - [saptune 3.1.5 again - Care for some PIE?](blogs/pages/saptune%203.1.5%20again%20-%20Care%20for%20some%20PIE%3F.html)
 - [saptune 3.2 has been released](blogs/pages/saptune%203.2%20has%20been%20released.html)
 - [saptune 3.2.1 - cloudy, cloudy](blogs/pages/saptune%203.2.1%20-%20cloudy,%20cloudy.html)
-- saptune/saptune 3.2.2 - THP HotFix.adoc
-- saptune/saptune 3.2.3 - Enhancements, Fixes and Updates.adoc
+- [saptune/saptune 3.2.2 - THP HotFix](blogs/pages/saptune%203.2.2%20-%20THP%20HotFix.html)
+- [saptune/saptune 3.2.3 - Enhancements, Fixes and Updates](blogs/pages/saptune%203.2.3%20-%20Enhancements,%20Fixes%20and%20Updates.html)
 

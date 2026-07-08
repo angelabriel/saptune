@@ -1,7 +1,140 @@
 {% extends "base.html.template" %}
 
 {% block content %}
-<p id="author">March 22, 2024 | By: Sören Schmidt</p>
+<p id="author">April 22, 2026 | By: Sören Schmidt</p>
+<p>
+Since yesterday the maintenance update <code>saptune</code> 3.2.3 is available for:
+<br>
+<ul>
+ 	<li>SUSE Linux Enterprise Server for SAP applications 12 SP5</li>
+ 	<li>SUSE Linux Enterprise Server for SAP applications 15 SP4</li>
+ 	<li>SUSE Linux Enterprise Server for SAP applications 15 SP5</li>
+ 	<li>SUSE Linux Enterprise Server for SAP applications 15 SP6</li>
+ 	<li>SUSE Linux Enterprise Server for SAP applications 15 SP7</li>
+ 	<li>SUSE Linux Enterprise Server for SAP applications 16.0</li>
+ 	<li>SUSE Linux Enterprise Server 16.0</li>
+</ul>
+</p>
+
+<p>
+<h2>Dependency Removal for <code>cloud-final.service</code> on Azure</h2>
+<p><b>THIS IS AN IMPORTANT CHANGE FOR CUSTOMERS RUNNING SAP WORKLOAD ON AZURE AND USE SAPTUNE FOR TUNING!</b></p>
+<div></div>
+<div>In the next few month an update for <code>cloud-init</code> will be released, which adds an 'After=multi-user.target' dependency to the <code>cloud-final.service</code>.
+This will cause an ordering cycle conflict and <code>saptune</code> will not be started to tune the system on boot.
+The <code>saptune</code> versions 3.1.5, 3.2.0, 3.2.1 and 3.2.2 are effected on Azure only.</div>
+<div>Please update to 3.2.3 before you move to the new cloud-init!</div>
+<div>The TID <a href="https://support.scc.suse.com/s/kb/Important-saptune-update-to-3-2-3-required-on-Azure-due-to-cloud-init-update"> https://support.scc.suse.com/s/kb/Important-saptune-update-to-3-2-3-required-on-Azure-due-to-cloud-init-update</a> explains the technical details as well as a workaround if you cannot update saptune in time.</div>
+</p>
+
+<p>
+<h2>Overdue SAP Note Changes</h2>
+<div>We added some missing tunings present in SAP Notes for a while which required additional coding, as:
+<ul>
+ 	<li>minimal <code>sssd</code> version if used (<a href="https://me.sap.com/notes/2578899/E">2578899 - SUSE Linux Enterprise Server 15: Installation Note</a>)</li>
+ 	<li>Enable Transactional Synchronization Extensions (<a href="https://me.sap.com/notes/2684254/E">2684254 - SAP HANA DB: Recommended OS settings for SLES 15 / SLES for SAP Applications 15</a>)</li>
+ 	<li>c-state requirement on AWS (<a href="https://me.sap.com/notes/1656250">1656250 - SAP on AWS: Support prerequisites</a>)</li>
+ 	<li>limit disabling defrag for THP (<a href="https://support.scc.suse.com/s/kb/SAP-HANA-swap-and-system-hangs-with-THP-on-multi-NUMA-node-systems">TID 000022286 - SAP HANA swap and system hangs with THP onmulti-NUMA node systems</a>)</li>
+</ul>
+The needed features will explained in detail below.
+</p>
+
+<p>
+<h2>Support for Optional Packages</h2>
+<div>If a package line in a <code>[rpm]</code> section is prefixed with a <code>?</code>, the requirement will only be checked if the package is installed.
+Lets see an example:
+<pre>[rpm]
+glibc 2.31-150300.46.1
+?sssd 2.9.3-150600.3.25.1</pre>
+</div>
+<div>The <code>glibc`</code> package must be present in at least version 2.31-150300.46.1, but the <code>sssd</code> package has to be at least version 2.9.3-150600.3.25.1. if installed at all.
+The man page <code>saptune-note(5)</code> explains it in more detail.</div>
+</p>
+
+<p>
+<h2>New <code>kernel</code> Tag</h2>
+<div>The TSX setting is bound to specific kernel versions, so we introduce a new tag <code>kernel=REGEX</code> available for every section. If used, the section applies only for kernel versions (<code>uname -r</code>) matching the regular expression.
+Here an example from the shipped SAP Note:
+<pre>[grub:os=15-SP6:arch=x86_64:kernel=^6\.4\.0-150600\.23\.(42|47|50|53|60)-default$]
+tsx=auto</pre>
+The man page <code>saptune-note(5)</code> explains it in more detail.
+</div>
+</p>
+
+<p>
+<h2>force_latency with State Names</h2>
+<div>The <code>force_latency</code> parameter supports now c-state names as well. Internally the c-state gets translated into its latency value for the current CPU. From that on, the parameter works as before: All states with a higher latency value get disabled. If the state does not exist, the tuning gets ignored.</div>
+<div>Here an example from the SAP Note:
+<pre>[cpu:csp=aws]
+force_latency=C1</pre>
+The man page <code>saptune-note(5)</code> explains it in more detail.
+</div>
+</p>
+
+<p>
+<h2>Warning about Duplicate Notes</h2>
+<div>With starting to support the HotFix idea in 3.2.2, naming collisions between shipped and Custom Notes might occur more often. A shipped HotFix Note can have the same name as an earlier created Custom Note.</div>
+<div>This is not a bad thing, but intended! TIDs can recommend to create a Custom Note for a workaround with the same name of the Note <code>saptune</code> will ship in the next version. The Custom Note will mitigate the problem immediately and if the <code>saptune</code> version containing the HotFix gets installed, the shipped Note will take precedence over the Custom Note. This allows to "replace" the custom Note with additional workarounds or conditions to apply them only when needed. The Custom Note can then removed later.</div>
+<div></div>
+<div>In case a Custom Note or Custom Solution has the same name as a shipped one, this will result:
+<ul>
+ 	<li>in a warning printed whenever <code>saptune</code> gets executed,</li>
+ 	<li>an entry in <code>/var/log/saptune/saptune.log</code>,</li>
+ 	<li>a <code>!</code> in the respective line in the output of <code>saptune note list</code> or <code>saptune solution list</code>, which is also colored if coloring has not been disabled and</li>
+ 	<li>the Custom Note will not have any effect anymore.</li>
+</ul>
+</div>
+</p>
+
+<p>
+<h2><code>HotFix000022286</code> Limitation!</h2>
+<div>A few weeks ago, we released 3.2.2 as A HotFix update to address a critical issue (<a href="https://www.suse.com/c/saptune-3-2-2-thp-hotfix/">saptune 3.2.2 – THP HotFix</a>). Now a kernel fix is available, so we limit the mitigation only to those kernels affected by the problem. If you have a Custom Note
+<code>HotFix000022286</code> the shipped version in 3.2.3 will take over (see also "Warning about Duplicate Notes" above).</div>
+</p>
+
+<p>
+<h2>Some Bug Fixing</h2>
+<div>Two bugs get fixed with 3.2.3 as well.
+The first has been hiding for quite some time, but a customer spotted it. On revert the entire state of units listed in the <code>[service]</code> section has been restored and not only the configured part. The second one we found ourselves. A <code>saptune verify applied</code> returned an incorrect text when Notes have been enabled,
+but not applied. That has been fixed.</div>
+</p>
+
+<p>
+<h2>Deprecated Notes</h2>
+<div>With 3.2.3 we deprecated SAP Note 941735 to remove it in 3.3. We talked to SAP and the Note is only needed in some very old setups. The <code>TMPFS</code> part of the Note caused problems now and then, but seems to have no real use anymore- If you run a scenario where the TMPFS setting is a must, please let us know.</div>
+<h2>Updated Notes</h2>
+<div>This is summary:
+<ul>
+ 	<li>SAP Note 2684254 updated to Version 27: check that TSX is set to auto on systems running dedicated kernel releases</li>
+ 	<li>SAP Note 1656250 updated to Version 71: disable C-states higher than C1</li>
+ 	<li>SAP Note 2578899 updated to Version 55: check for optional sssd package version</li>
+ 	<li>SAP Note 1275776 updated to Version 47: no tuning changes</li>
+</ul>
+</div>
+</p>
+
+<p>
+That’s it for 3.2.3!
+</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 {% endblock content %}
