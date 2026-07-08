@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>saptune 3.1.5 again - Care for some PIE?</title>
+        <style>
+            body {
+    font-family: poppins,Verdana,sans-serif;
+    background-color: white;
+    width: 60%;
+    margin-left: 10%;
+}
+ul { padding-left: 1em; }
+h1 {
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+a {font-weight: bold;}
+#author {
+    font-style: italic;
+    padding-top: 0;
+    margin-top: 0;
+    padding-bottom: 2em;
+    margin-bottom: 2em;
+    border-bottom: thin solid gray;
+}
+pre {
+    word-break: break-all;
+    color: #333333;
+    background-color: #f5f5f5;
+    border: 1px solid #cccccc;
+}
+code {
+    padding: 2px 4px;
+    font-size: 90%;
+    color: #c7254e;
+    background-color: #f9f2f4;
+    border-radius: 4px;
+  }
+  blockquote {
+    border-left: #cccccc solid 0.2em;
+    padding-left: 2em;
+    margin-left: 0;
+    font-size: 85%;
+  }
+  table {
+    font-size: 90%;
+    margin: 1em 0;
+    width: 100%;
+    background-color: transparent;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  table tbody tr:nth-child(2n) {
+    background-color: #efefef;
+  }
+  table td {
+    border: 1px solid #d5d5d5;
+    padding: .2em;
+  }
+  table th {
+    border: 1px solid #d5d5d5;
+    padding: .2em;
+  }
+
+        </style>
+    </head>
+    <body>
+        <h1>saptune 3.1.5 again - Care for some PIE?</h1>
+        <p id="author">April 10, 2025 | By: Sören Schmidt</p>
+
+        You may have noticed, that again 3.1.5 appeared in the repositories for SLES for SAP Applications 12 SP5 and 15 SP3-6.
+        <ul>
+        <li>12 SP5: 3.1.5-4.39.2</li>
+        <li>15 SP3: 3.1.5-150100.8.51.2</li>
+        <li>15 SP4: 3.1.5-150400.15.22.2</li>
+        <li>15 SP5: 3.1.5-150400.15.22.2</li>
+        <li>15 SP6: 3.1.5-150400.15.22.2</li>
+        </ul>
+        The packages only differ in the release part (after the dash), meaning that the package has been rebuild.
+        </br>
+        To increase security, the saptune binary has been recompiled with <code>-buildmode=pie</code> to be loaded into random locations within virtual memory each time it is executed.
+        </br>
+        Before I try to explain the background, let people do this for me who are better at it: <a href="https://en.wikipedia.org/wiki/Position-independent_code">Position-independent code</a>
+        </br>
+        Who would have thought that some PIE can be good for you?
+        </br>
+        That's all.
+        </br>
+        </br>
+        Have a nice day!
+
+<body>
+</html>

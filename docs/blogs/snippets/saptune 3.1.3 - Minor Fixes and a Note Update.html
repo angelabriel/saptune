@@ -1,0 +1,37 @@
+{% extends "base.html.template" %}
+
+{% block content %}
+<p id="author">August 13, 2024 | By: Sören Schmidt</p>
+If you check the repositories of SLES for SAP Applications 12 SP5 and 15 SP2-6 you find a `saptune` package 3.1.3.
+</br>
+What does this update contain?
+</br>
+<h2>Removal of SAP Note 1868829 from S4HANA-APPSERVER Solution</h2>
+
+Thanks to the customer who spotted this mistake, we missed for some time.
+</br>
+SAP Note "1868829 - Startup Issues Because Number of Active I/O Requests to Queue Exceeds aio-max-nr Limit" is actually a Note for SAP HANA and ended up in the S4HANA-APPSERVER Solution by accident.
+We have removed it from the Solution.
+</br>
+After an update to <code>saptune</code> 3.1.3 the Note will still be applied even if they is not listed anymore as part of the Solution, but after a restart of <code>saptune.service</code> the tuning will be refreshed.
+
+<h2>Updates to SAP Note 2578899</h2>
+
+The update also contains the latest changes to SAP Note "2578899 - SUSE Linux Enterprise Server 15: Installation Note", meaning starting the <code>sysctl-logger</code> service as well setting <code>kernel.pid_max</code>.
+
+<h2>Smaller columns - Better readability</h2>
+
+Again a hint from a customer.
+</br>
+On large machines (e.g. large number of CPUs) the table columns of a verify output could become unreadable wide due to the amount of data. Now a column gets wrapped after 32 characters. Hopefully a good compromise.
+</br>
+This one must have bugged people for quite some time, I assume. If you find such nuisances, please let us know!
+
+<h2>Bug in CPU detection</h2>
+
+On rare occasions CPU tuning features were discovered, where they should not. This has been fixed.
+</br>
+</br>
+Have a nice day!
+
+{% endblock content %}

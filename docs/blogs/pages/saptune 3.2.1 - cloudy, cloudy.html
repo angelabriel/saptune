@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>saptune 3.2.1 - cloudy, cloudy</title>
+        <style>
+            body { 
+    font-family: poppins,Verdana,sans-serif; 
+    background-color: white; 
+    width: 60%;
+    margin-left: 10%;
+}
+ul { padding-left: 1em; }
+h1 { 
+    padding-bottom: 0; 
+    margin-bottom: 0; 
+}
+a {font-weight: bold;}
+#author { 
+    font-style: italic; 
+    padding-top: 0; 
+    margin-top: 0; 
+    padding-bottom: 2em;
+    margin-bottom: 2em; 
+    border-bottom: thin solid gray; 
+}
+pre {
+    word-break: break-all;
+    color: #333333;
+    background-color: #f5f5f5;
+    border: 1px solid #cccccc;
+}
+code {
+    padding: 2px 4px;
+    font-size: 90%;
+    color: #c7254e;
+    background-color: #f9f2f4;
+    border-radius: 4px;
+  }
+  blockquote {
+    border-left: #cccccc solid 0.2em;
+    padding-left: 2em;
+    margin-left: 0;
+    font-size: 85%;
+  }
+  table {
+    font-size: 90%;
+    margin: 1em 0;
+    width: 100%;
+    background-color: transparent;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  table tbody tr:nth-child(2n) {
+    background-color: #efefef;
+  }
+  table td {
+    border: 1px solid #d5d5d5;
+    padding: .2em;
+  }
+  table th {
+    border: 1px solid #d5d5d5;
+    padding: .2em;
+  }
+
+        </style>
+    </head>
+    <body>
+        <h1>saptune 3.2.1 - cloudy, cloudy</h1>
+        <p id="author">November 10, 2025 | By: Sören Schmidt</p>
+
+        Last week the maintenance update <code>saptune</code> 3.2.1 has been released for:
+        <ul>
+            <li>SUSE Linux Enterprise Server for SAP Applications 15 SP4</li>
+            <li>SUSE Linux Enterprise Server for SAP Applications 15 SP5</li>
+            <li>SUSE Linux Enterprise Server for SAP Applications 15 SP6</li>
+            <li>SUSE Linux Enterprise Server for SAP Applications 15 SP7</li>
+        </ul>
+        In a few days:
+        <ul>
+            <li>SUSE Linux Enterprise Server for SAP Applications 12 SP5</li>
+            <li>SUSE Linux Enterprise Server for SAP Applications 15 SP3</li>
+        </ul>
+        also will follow.
+        </br></br>
+        The update brings primarily a fix and a SAP Note update for cloud environments:
+
+        <h2>Restore CPU performance settings on AWS and Google Cloud</h2>
+
+        With 3.2 we limited setting some CPU tunings (energy_perf_bias, governor, force_latency) to Intel bare-metal only overlooking that on AWS and GCP some instance types indeed allow CPU tuning.
+        3.2.1 is fixing this and set those tunings on AWS and GCP again.
+
+
+        <h2>Update SAP Note 2993054</h2>
+
+        The recommendation to set <code>net.ipv4.tcp_retries</code> on Application server HA clusters was added to SAP Note "2993054 - Recommended settings for SAP systems on Linux running in Azure virtual machines" in version 4.
+        After consulting with the Azure team at SAP <code>saptune</code> will set this recommendation in general as <code>saptune</code> does not yet detect HA clusters and their type.
+        </br></br>
+        That's it.
+        </br></br>
+        You might have noticed, that not all current SAP Note recommendations are part of 3.2.1 like the minimal <code>sssd</code> package, the TSX setting or the C-state recommendation for AWS.
+        These recommendations require additional coding (support for optional packages, a kernel version tag, state name support for <code>force_latency</code>) which will take a bit more time.
+        We did not want to delay 3.2.1 further, so expect the missing tunings with 3.2.2 around January/February 2026.
+
+<body>
+</html>

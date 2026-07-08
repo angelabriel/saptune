@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>saptune 3.2.2 - THP HotFix</title>
+        <style>
+            body { 
+    font-family: poppins,Verdana,sans-serif; 
+    background-color: white; 
+    width: 60%;
+    margin-left: 10%;
+}
+ul { padding-left: 1em; }
+h1 { 
+    padding-bottom: 0; 
+    margin-bottom: 0; 
+}
+a {font-weight: bold;}
+#author { 
+    font-style: italic; 
+    padding-top: 0; 
+    margin-top: 0; 
+    padding-bottom: 2em;
+    margin-bottom: 2em; 
+    border-bottom: thin solid gray; 
+}
+pre {
+    word-break: break-all;
+    color: #333333;
+    background-color: #f5f5f5;
+    border: 1px solid #cccccc;
+}
+code {
+    padding: 2px 4px;
+    font-size: 90%;
+    color: #c7254e;
+    background-color: #f9f2f4;
+    border-radius: 4px;
+  }
+  blockquote {
+    border-left: #cccccc solid 0.2em;
+    padding-left: 2em;
+    margin-left: 0;
+    font-size: 85%;
+  }
+  table {
+    font-size: 90%;
+    margin: 1em 0;
+    width: 100%;
+    background-color: transparent;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  table tbody tr:nth-child(2n) {
+    background-color: #efefef;
+  }
+  table td {
+    border: 1px solid #d5d5d5;
+    padding: .2em;
+  }
+  table th {
+    border: 1px solid #d5d5d5;
+    padding: .2em;
+  }
+
+        </style>
+    </head>
+    <body>
+        <h1>saptune 3.2.2 - THP HotFix</h1>
+        <p id="author">February 13, 2026 | By: Sören Schmidt</p>
+
+        Yesterday the maintenance update <code>saptune 3.2.2</code> has been released for:
+        <ul>
+            <li>SUSE Linux Enterprise Server for SAP applications 15 SP4</li>
+            <li>SUSE Linux Enterprise Server for SAP applications 15 SP5</li>
+            <li>SUSE Linux Enterprise Server for SAP applications 15 SP6</li>
+            <li>SUSE Linux Enterprise Server for SAP applications 15 SP7</li>
+        </ul>
+        It contains only a HotFix for the problem described in the TID https://support.scc.suse.com/s/kb/SAP-HANA-swap-and-system-hangs-with-THP-on-multi-NUMA-node-systems[SAP HANA swap and system hangs with THP on multi-NUMA node systems].
+        </br></br>
+        You will also find references to that TID in the SAP Notes:
+        <ul>
+            <li><a href="https://me.sap.com/notes/2684254/E">2684254 - SAP HANA DB: Recommended OS settings for SLES 15 / SLES for SAP Applications 15</a></li>
+            <li><a href="https://me.sap.com/notes/2131662/E">2131662 - Transparent Huge Pages (THP) on SAP HANA Servers</a></li>
+        </ul>
+        The 3.2.2 release contains an additional Note HotFix000022286 which is part of the Solutions <code>HANA</code>, <code>NETWEAVER+HANA</code>, <code>S4HANA-APP+DB</code> and <code>S4HANA-DBSERVER</code>.
+        </br></br>
+        It will set on SLES for SAP applications 15 SP5-7 Intel x86_64 systems the parameters <code>kernel.mm.transparent_hugepage.defrag</code> and <code>kernel.mm.transparent_hugepage.khugepaged.defrag</code> as described in the TID.
+
+
+        <h2>What is a HotFix?</h2>
+
+        A HotFix is a new way to react fast to critical bugs, that can harm SAP installations.</br>
+        It is meant to bridge the time with a temporary mitigation until the fix is available</br>.
+        If this is the case, the next <code>saptune</code> version will contain an update to the HotFix to be applied only when necessary.</br>
+        One year after the fix is available, we will remove the HotFix from <code>saptune</code>.
+        </br></br>
+        We hope to provide an comfortable way to address such issues.
+        </br></br>
+        A HotFix release will contain only configuration changes and no new code.
+
+
+        <h2>How To Apply this HotFix?</h2>
+
+        <h3>I have one of the Solutions <code>HANA</code>, <code>NETWEAVER+HANA</code>, <code>S4HANA-APP+DB</code> or <code>S4HANA-DBSERVER`</code>applied.</h3>
+
+        Update to <code>saptune</code> 3.2.2, reboot or just restart the <code>saptune</code> service. If you restart the service, keep in mind that there is no tuning for a short period of time! SAP HANA should be stopped. +
+        With HotFix000022286 being part of those Solutions, it gets applied automatically.
+        </br></br>
+        If you cannot afford interruption of SAP HANA, simply execute <code>saptune note apply HotFix000022286</code>.
+        </br></br>
+        Finally run <code>saptune verified applied</code> to check if HotFix000022286 is listed and the tuning is compliant.
+
+        <h3>I have no Solutions applied, just individual Notes including 2684254 setting THP.</h3>
+
+        Simply execute <code>saptune note apply HotFix000022286</code> and run a <code>saptune verified applied</code> to check if HotFix000022286 is listed and the tuning is compliant.
+
+        <h2>What happens next?</h2>
+
+        As soon as a kernel fix is available, the next <code>saptune</code> version will contain HotFix000022286 with a condition (tag) to be applied on prior kernels, so the temporary mitigation is only set if needed. The HotFix will be removed from `saptune` one year after the kernel fix is available, giving customers enough time to update their systems.
+
+<body>
+</html>

@@ -1,0 +1,17 @@
+{% extends "base.html.template" %}
+
+{% block content %}
+<p id="author">March 10, 2025 | By: Sören Schmidt</p>
+Today 3.1.5 has been released for SLES for SAP Applications 12 SP5 and 15 SP3-6. It contains some small fixes:
+<ul>
+  <li>On Azure <code>saptune</code> will now create a drop-in for <code>saptune.service</code> when first called to be started after <code>cloud-final.service</code>.
+    This is needed, because on Azure swap space will be created via <code>cloud-init</code> and some parameters tuned by <code>saptune</code> depend on the amount of swap space.</li>
+  <li>Fix a bug in the NVMe device detection.</li>
+  <li>Fix behavior if <code>limits.conf</code> is missing.</li>
+  <li>Fix value for grub <code>transparent_hugepage</code> entries in SAP Note 2684254.</li>
+</ul>
+That's all.
+</br></br>
+Have a nice day!
+
+{% endblock content %}

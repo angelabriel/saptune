@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>saptune 3.1.3 - Minor Fixes and a Note Update</title>
+        <style>
+            body {
+    font-family: poppins,Verdana,sans-serif;
+    background-color: white;
+    width: 60%;
+    margin-left: 10%;
+}
+ul { padding-left: 1em; }
+h1 {
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+a {font-weight: bold;}
+#author {
+    font-style: italic;
+    padding-top: 0;
+    margin-top: 0;
+    padding-bottom: 2em;
+    margin-bottom: 2em;
+    border-bottom: thin solid gray;
+}
+pre {
+    word-break: break-all;
+    color: #333333;
+    background-color: #f5f5f5;
+    border: 1px solid #cccccc;
+}
+code {
+    padding: 2px 4px;
+    font-size: 90%;
+    color: #c7254e;
+    background-color: #f9f2f4;
+    border-radius: 4px;
+  }
+  blockquote {
+    border-left: #cccccc solid 0.2em;
+    padding-left: 2em;
+    margin-left: 0;
+    font-size: 85%;
+  }
+  table {
+    font-size: 90%;
+    margin: 1em 0;
+    width: 100%;
+    background-color: transparent;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  table tbody tr:nth-child(2n) {
+    background-color: #efefef;
+  }
+  table td {
+    border: 1px solid #d5d5d5;
+    padding: .2em;
+  }
+  table th {
+    border: 1px solid #d5d5d5;
+    padding: .2em;
+  }
+
+        </style>
+    </head>
+    <body>
+        <h1>saptune 3.1.3 - Minor Fixes and a Note Update</h1>
+        <p id="author">August 13, 2024 | By: Sören Schmidt</p>
+        If you check the repositories of SLES for SAP Applications 12 SP5 and 15 SP2-6 you find a `saptune` package 3.1.3.
+        </br>
+        What does this update contain?
+        </br>
+        <h2>Removal of SAP Note 1868829 from S4HANA-APPSERVER Solution</h2>
+
+        Thanks to the customer who spotted this mistake, we missed for some time.
+        </br>
+        SAP Note "1868829 - Startup Issues Because Number of Active I/O Requests to Queue Exceeds aio-max-nr Limit" is actually a Note for SAP HANA and ended up in the S4HANA-APPSERVER Solution by accident.
+        We have removed it from the Solution.
+        </br>
+        After an update to <code>saptune</code> 3.1.3 the Note will still be applied even if they is not listed anymore as part of the Solution, but after a restart of <code>saptune.service</code> the tuning will be refreshed.
+
+        <h2>Updates to SAP Note 2578899</h2>
+
+        The update also contains the latest changes to SAP Note "2578899 - SUSE Linux Enterprise Server 15: Installation Note", meaning starting the <code>sysctl-logger</code> service as well setting <code>kernel.pid_max</code>.
+
+        <h2>Smaller columns - Better readability</h2>
+
+        Again a hint from a customer.
+        </br>
+        On large machines (e.g. large number of CPUs) the table columns of a verify output could become unreadable wide due to the amount of data. Now a column gets wrapped after 32 characters. Hopefully a good compromise.
+        </br>
+        This one must have bugged people for quite some time, I assume. If you find such nuisances, please let us know!
+
+        <h2>Bug in CPU detection</h2>
+
+        On rare occasions CPU tuning features were discovered, where they should not. This has been fixed.
+        </br>
+        </br>
+        Have a nice day!
+
+<body>
+</html>

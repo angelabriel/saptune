@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>saptune 3.1.4 - Just updated SAP Notes</title>
+        <style>
+            body { 
+    font-family: poppins,Verdana,sans-serif; 
+    background-color: white; 
+    width: 60%;
+    margin-left: 10%;
+}
+ul { padding-left: 1em; }
+h1 { 
+    padding-bottom: 0; 
+    margin-bottom: 0; 
+}
+a {font-weight: bold;}
+#author { 
+    font-style: italic; 
+    padding-top: 0; 
+    margin-top: 0; 
+    padding-bottom: 2em;
+    margin-bottom: 2em; 
+    border-bottom: thin solid gray; 
+}
+pre {
+    word-break: break-all;
+    color: #333333;
+    background-color: #f5f5f5;
+    border: 1px solid #cccccc;
+}
+code {
+    padding: 2px 4px;
+    font-size: 90%;
+    color: #c7254e;
+    background-color: #f9f2f4;
+    border-radius: 4px;
+  }
+  blockquote {
+    border-left: #cccccc solid 0.2em;
+    padding-left: 2em;
+    margin-left: 0;
+    font-size: 85%;
+  }
+  table {
+    font-size: 90%;
+    margin: 1em 0;
+    width: 100%;
+    background-color: transparent;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  table tbody tr:nth-child(2n) {
+    background-color: #efefef;
+  }
+  table td {
+    border: 1px solid #d5d5d5;
+    padding: .2em;
+  }
+  table th {
+    border: 1px solid #d5d5d5;
+    padding: .2em;
+  }
+
+        </style>
+    </head>
+    <body>
+        <h1>saptune 3.1.4 - Just updated SAP Notes</h1>
+        <p id="author">January 07, 2025 | By: Sören Schmidt</p>
+        <p>
+        Happy New Year!
+        </p>
+        <p>
+        A fresh new year and a fresh <code>saptune</code> update as well.
+        Today version 3.1.4 showed up in the repositories of SLES for SAP Applications 12 SP5 and 15 SP2-6, which contains only updated SAP Notes but no fixes.
+        </p>
+        <p>
+        We have updated each SAP Note to the latest version date and finally replaced the old launchpad links with <a href="https://me.sap.com/">https://me.sap.com/</a>
+        But even if we updated the Notes to the latest version, this does not necessarily means a change of tuning.
+        Notes gets updated for various reasons like fixing typos or rephrasing texts. We updated the version even nothing has changed in the tuning,
+        so you can see which latest version we have currently implemented.
+        </p>
+        <p>
+        In regards of tuning, the following has changed:
+        </p>
+        <ul>
+        <li>
+          <b>1680803 - Sybase - SAP Adaptive Server Enterprise</b></br>
+          With the lates documentation referenced the SAP Note, the only tuning left is setting <code>net.ipv4.tcp_keepalive_time</code>.
+          </br>
+        </li>
+        <li>
+          <b>2382421 - Optimizing the Network Configuration on HANA- and OS-Level</b></br>
+          Setting <code>net.core.somaxconn</code> is only relevant on SLES 15 releases before SP4.
+          </br>
+        </li>
+        <li>
+          <b>2578899 - SUSE Linux Enterprise Server 15: Installation Note</b></br>
+          We added the requirement to the presence of the packages <code>polkit</code> and <code>insserv-compat</code> as well as extended starting the <code>sysctl-logger.service</code> to the upcoming SLES 15 SP7
+          </br>
+        </li>
+        <li>
+         <b>2684254 - HANA DB settings</b></br>
+          The recommendation for trasparent huge pages has changed for SLES 15 SP5 and later.
+          Also the CPU tuning has been limited to x86_64.
+          </br>
+        </li>
+        <li>
+          <b>3024346 - Linux Kernel Settings for NetApp NFS</b></br>
+          Setting <code>sunrpc.tcp_max_slot_table_entries</code> has been added and a reminder about NFSv3 has been removed.
+          </br>
+        </li>
+        </ul>
+        <p>
+        And by the way. The <code>saptune</code> chapter in the SLES for SAP Application Guide has been reworked, to be more complete and detailed.
+        Maybe you find time to drop by and have a look.
+        </p>
+        <p>
+        Have a nice day!
+        </p>
+
+
+
+<body>
+</html>
