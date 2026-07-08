@@ -24,10 +24,8 @@
 - [Help! Saptune says, my system is degraded!](blogs/pages/Help!%20Saptune%20says,%20my%20system%20is%20degraded!.html)
 - [saptune 3.1 on the Horizon](blogs/pages/saptune%203.1%20on%20the%20Horizon.html)
 - [saptune 3.1 is out](blogs/pages/saptune%203.1%20is%20out.html)
-
 - saptune/saptune JSON.adoc
-
-- [saptune 3.1.1 - Do I Need to Update?](blogs/pages/saptune%203.1.1%20-%20Do%20I%20Need%20to%20Update?.html)
+- [saptune 3.1.1 - Do I Need to Update?](blogs/pages/saptune%203.1.1%20-%20Do%20I%20Need%20to%20Update%3F.html)
 - [saptune 3.1.2 - Bugfixing and Note Updates](blogs/pages/saptune%203.1.2%20-%20Bugfixing%20and%20Note%20Updates.html)
 
 
