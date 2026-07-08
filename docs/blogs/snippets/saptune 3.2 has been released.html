@@ -1,7 +1,225 @@
 {% extends "base.html.template" %}
 
 {% block content %}
-<p id="author">March 22, 2024 | By: Sören Schmidt</p>
+<p id="author">August 25, 2025 | By: Sören Schmidt</p>
+Last Friday <code>saptune 3.2</code> appeared in the repositories of:
+<ul>
+    <li>SUSE Linux Enterprise Server for SAP Applications 12 SP5</li>
+    <li>SUSE Linux Enterprise Server for SAP Applications 15 SP3</li>
+    <li>SUSE Linux Enterprise Server for SAP Applications 15 SP4</li>
+    <li>SUSE Linux Enterprise Server for SAP Applications 15 SP5</li>
+    <li>SUSE Linux Enterprise Server for SAP Applications 15 SP6</li>
+    <li>SUSE Linux Enterprise Server for SAP Applications 15 SP7</li>
+</ul>
+Time to talk about what's in it!
+
+<h2>New Things</h2>
+
+<h3>Verify</h3>
+
+We learned, that there is some confusion about how to verify Notes and Solutions. Therefore we introduce new commands to make it more obvious:
+<ul>
+    <li><code>saptune note verify applied</code></li>
+    <li><code>saptune solution verify applied</code></li>
+</ul>
+and as short version for <code>saptune note verify applied</code>:
+<ul>
+    <li><code>saptune verify applied</code></li>
+</ul>
+What are the differences between the new and old commands?
+
+<table>
+    <tr>
+        <th></th><th><code>verify</code></th><th><code>verify applied</code></th>
+    </tr>
+    <tr>
+        <td><code>saptune note</code></td><td>All enabled Notes (regardless if applied or not) are verified.</td><td>All applied Notes are verified.</td>
+    </tr>
+    <tr>
+        <td><code>saptune note</code></td><td>Only for an enabled Solution all enabled Notes of that Solution gets verified.</td><td>Only for an applied Solution all applied Notes of that Solution gets verified.</td>
+    </tr>
+
+</table>
+
+Usually enabled Notes are also applied except you have rebooted your system with a disabled <code>saptune.service</code>, but enabled Notes.
+</br></br>
+<img src="media/saptune_verify_applied.png" alt="saptune verify applied"/>
+
+<h3>Configure</h3>
+The next change is about the configuration file <code>/etc/sysconfig/saptune</code>.
+</br></br>
+Most certainly, you have never touched that file. It contains internal states, but some rarely used options can be configured only by editing that file.
+With 3.2 this file should not be edited anymore directly. With SLES 16 we go a step further and move it away from <code>/etc</code>.
+</br></br>
+This requires a new set of configuration commands to allow to make changes, when it makes sense.
+These commands have safeguards to prevent ending up with an unworkable configuration.
+</br></br>
+<code>saptune configure OPTION VALUE</code> - sets <code>OPTION</code> to <code>VALUE</code> after sanity check
+</br></br>
+<code>saptune configure show</code> - shows the content of the saptune configuration file
+</br></br>
+<code>saptune configure reset</code> - resets the configuration to the installation default (after confirmation)
+</br></br>
+<img src="media/saptune_configure.png" alt="saptune configure"/>
+</br></br>
+Check out the man page `man 8 saptune` for the supported options.
+
+<h3>Refresh</h3>
+To reapply a tuning - after changing an Override, Note or Solution - you have to revert and re-apply the entire tuning. This introduces a short tuning gap. We have been asked several times in the past, if we get rid of it.
+This endeavor proved more difficult then expected due to the complexity of the features `saptune` already has, so we have to deliver this feature stepwise. The first implementation of
+</br></br>
+<code>saptune note refresh</code>
+</br></br>
+comes with 3.2, but is still marked as experimental and you have to manually confirm the action!
+It can only refresh changes in Notes (and their Overrides) and only a few sections. The man page <code>saptune(8)</code> contains an overview.
+</br></br>
+<img src="media/saptune_refresh.png" alt="saptune refresh"/>
+
+<h2>New Options</h2>
+
+<h3><code>--force-color</code></h3>
+Colored output can now be forced with <code>--force-color</code>
+Normally the terminal detection disables coloring on output redirect. This new option enforces it.
+</br></br>
+<img src="media/saptune_force_color.png" alt="saptune --force-color"/>
+
+
+<h3><code>--fun</code></h3>
+Work life can sometimes be dull, so we introduce some fun to brighten the day.</br>
+In the tradition of the good ol' easter eggs, some hidden features will try to put a smile on your face.</br>
+To not interrupt workflows and causing the exact opposite, the new option <code>--fun</code> must be used to bring them to light.</br>
+The first one are some appropriate smileys for the compliance status in verify:
+</br></br>
+<img src="media/saptune_fun.png" alt="saptune --fun"/>
+</br></br>
+Others will follow in future versions. ;-)
+
+<h3>JSON support for `saptune check`</h3>
+Primarily to enhance the integration into Trento, the `saptune_check` script now supports the option `--json`, what also means, that `–-format json` is now supported for `saptune check`.
+</br></br>
+<img src="media/saptune_check_json.png" alt="saptune_check --json"/>
+
+<h2>New Tags</h2>
+
+We also introduced two new tags:
+<ul>
+    <li><code>virt</code></br>
+  Virtualization type as reported by <code>/usr/bin/systemd-detect-virt</code> or an abstract virtualization class defined as <code>vm</code>, <code>chroot</code>, <code>container</code> or <code>bare-metal</code>.</li>
+    <li><code>pmu_name</code></br>
+   CPU platform (must match the content of <code>/sys/devices/cpu/caps/pmu_name</code>)</li>
+</ul>
+Immediately we made use of <code>virt</code> in SAP Note "2205917 - SAP HANA DB: Recommended OS settings for SLES 12 / SLES for SAP Applications 12" and "2684254 - SAP HANA DB: Recommended OS settings for SLES 15 / SLES for SAP Applications 15":
+</br></br>
+<img src="media/virt-tag.png" alt="virt tag in 2205917/2684254"/>
+</br></br>
+The CPU tuning now will only be part on x86_64 bare metal systems. This addresses a recent request to not show CPU tuning on virtual machines on verify. Until now <code>saptune</code> has internally detected the impossibility of tuning CPUs under certain circumstances and explained it by warnings and footnotes. Some customers were worried even though.
+</br></br>
+Limiting the tuning to bare-metal went a bit to far ignoring the fact, that onAWS and GCP some instance types do allow CPU tuning. This was rectified with 3.2.1 (see <a href="saptune 3.2.1 - cloudy, cloudy.html">saptune 3.2.1 - cloudy, cloudy</a>)
+</br></br>
+This also means, that on virtual machines or on IBM Power systems, CPU tuning is not shown on verify including their GRUB counterparts:
+</br></br>
+<img src="media/saptune_note_verify_on_vm.png" alt="saptune note verify 2684254 on a virtual machine"/>
+
+The screenshot also shows a second improvement. As you know, some tunings can be done by different ways, namely:
+<ul>
+    <li>C-state settings: <code>force_latency</code> versus <code>grub:intel_idle.max_cstate</code>/<code>grub:processor.max_cstate</code></li>
+    <li>NUMA balancing: <code>kernel.numa_balancing</code> versus <code>grub:numa_balancing</code></li>
+    <li>Transparent Huge Pages: <code>THP</code> versus <code>grub:transparent_hugepage</code></li>
+</ul>
+Before 3.2 missing GRUB entries have been listed as non-compliant (theoretically correct), but the overall compliance was met, if the alternatives have tuned the system. This caused confusion. Now the GRUB entries are marked with <code>-</code> if the counterpart is tuning the setting.
+
+<h2>Man Page Additions</h2>
+
+Two man pages have been added:
+<ul>
+    <li><code>saptune-solution(5)</code></li>
+    <li><code>saptune(7)</code></li>
+</ul>
+With the feature set for Solutions growing, it was time for a dedicated man page.
+</br>
+In <code>saptune(7)</code> we will collect general information about <code>saptune</code>. For now it only contains an outlook to the behavior on the upcoming SLE 16.
+
+
+<h2>Time To Say Good Bye!</h2>
+
+When new things come, old ones have to go.
+</br>
+Some are finally gone now and some others are marked as deprecated.
+</br>
+<strong>Now is the time to check and update workflows and scripts!</strong>
+
+<h3><code>saptune daemon</code></h3>
+Ok, that is not a new one. For some version (== years) the commands <code>saptune daemon start|stop|status</code> are marked as deprecated and internally are redirected to their <code>saptune service</code> replacements. Now it gets serious.
+In 3.2 for the upcoming SLE 16 the commands are removed and will not work anymore!
+
+<h3><code>saptune note|solution simulate</code></h3>
+The <code>simulate</code> commands are not really necessary and were rarely used. They are marked as deprecated now and in 3.2 for the upcoming SLE 16 they are removed and will not work anymore!
+
+<h3>saptune v1 file format</h3>
+This should harm nobody. <code>saptune</code> warns for quite some time if the old deprecated format is found, but kept working.</br>
+In 3.2 for the upcoming SLE 16 support is removed and v1 custom Notes are ignored!</br>
+For your own custom Notes, the fix is quite simple: Just add a <code>[VERSION]</code> section.
+
+<h3>ASE Solution, SAP Notes 1680803 and 1805750</h3>
+After removing almost any OS tuning in their guides, we talked to the responsible SAP department and came to the conclusion, that the OS defaults on SLES are more then sufficient by now and additional tuning is not required anymore. With 3.2 we deprecate:
+
+<ul>
+    <li>"1680803 - SYB: SAP Adaptive Server Enterprise - Best Practice for SAP Business Suite and SAP BW",
+    <li>"1805750 - SYB: Usage of HugePages on Linux Systems with SAP Sybase ASE" and the</li>
+    <li>"ASE" Solution</li>
+</ul>
+In 3.2 for the upcoming SLE 16 all are removed and will not available anymore!
+
+<h3>SAP Note 1771258</h3>
+Another SAP Note that falls victim to progress. Setting limits via <code>limits.conf</code> only works for SAP instances started by SysV init scripts. For instances started by <code>systemd</code>, the limits must be set via a drop-in for the service unit and the <code>nofile</code> limit mentioned in the SAP Note is already set to the recommended value in the shipped one.
+Therefore we have deprecated the SAP Note "1771258 - Linux: User and system resource limits" and the <code>LIMIT</code> feature itself.
+</br></br>
+In 3.2 for the upcoming SLE 16 it is removed and not available anymore! SLE 16 has no SysV support anyway and SAP systems must be started by `systemd`.
+</br></br>
+For SLES 12 and 15 it will not be removed as long SysV-based SAP software is supported.
+
+
+<h2>Security</h2>
+
+To make <code>saptune</code> more secure, we started to tighten <code>saptune.service</code> as  the first step. The <code>[Service]</code> section now contains some security settings of <code>systemd</code>:
+
+<pre>
+ProtectSystem=full
+ReadWritePaths=/etc/systemd/system/
+ProtectHome=true
+PrivateDevices=true
+ProtectHostname=true
+ProtectClock=true
+ProtectKernelTunables=false
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=false
+MountAPIVFS=no
+RestrictRealtime=true</pre>
+
+This should not impact the functionality of <code>saptune</code> at all!
+
+
+<h2>Documentation Rework</h2>
+
+The <code>saptune</code> chapter in the SLES for SAP application Guide has been complemented with the changes in 3.2. Additionally some chapters got enhancements due to customer feedback too.
+</br></br>
+The update Guide will be available very early in September.
+</br></br>
+These are most of the changes. A complete list can be found - as always - in the RPM changelog.
+As we do with ever no release, all shipped SAP Notes have been updated with their latest versions.
+</br></br>
+Above several times changes in SLE 16 are mentioned. Closer to its release, a separate blog post will introduce the changes in regards to <code>saptune</code> and <code>sapconf</code>!
+</br></br>
+
+Enjoy!
+
+
+
+
+
+
+
 
 
 {% endblock content %}
