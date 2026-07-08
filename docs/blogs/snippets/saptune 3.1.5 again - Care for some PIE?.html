@@ -1,0 +1,27 @@
+{% extends "base.html.template" %}
+
+{% block content %}
+<p id="author">April 10, 2025 | By: Sören Schmidt</p>
+
+You may have noticed, that again 3.1.5 appeared in the repositories for SLES for SAP Applications 12 SP5 and 15 SP3-6.
+<ul>
+<li>12 SP5: 3.1.5-4.39.2</li>
+<li></li>15 SP3: 3.1.5-150100.8.51.2</li>
+<li></li>15 SP4: 3.1.5-150400.15.22.2</li>
+<li></li>15 SP5: 3.1.5-150400.15.22.2</li>
+<li></li>15 SP6: 3.1.5-150400.15.22.2</li>
+</ul>
+The packages only differ in the release part (after the dash), meaning that the package has been rebuild.
+</br>
+To increase security, the saptune binary has been recompiled with <code>-buildmode=pie</code> to be loaded into random locations within virtual memory each time it is executed.
+</br>
+Before I try to explain the background, let people do this for me who are better at it: <a href="https://en.wikipedia.org/wiki/Position-independent_code">Position-independent code</a>
+</br>
+Who would have thought that some PIE can be good for you?
+</br>
+That's all.
+</br>
+</br>
+Have a nice day!
+
+{% endblock content %}

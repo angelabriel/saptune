@@ -26,12 +26,10 @@
 - [saptune 3.1 is out](blogs/pages/saptune%203.1%20is%20out.html)
 - [saptune 3.1.1 - Do I Need to Update?](blogs/pages/saptune%203.1.1%20-%20Do%20I%20Need%20to%20Update%3F.html)
 - [saptune 3.1.2 - Bugfixing and Note Updates](blogs/pages/saptune%203.1.2%20-%20Bugfixing%20and%20Note%20Updates.html)
-
-
 - [saptune 3.1.3 - Minor Fixes and a Note Update](blogs/pages/saptune%203.1.3%20-%20Minor%20Fixes%20and%20a%20Note%20Update.html)
-- saptune/saptune 3.1.4 - Just updated SAP Notes.adoc
-- saptune/saptune 3.1.5 - Just (small) Fixes.adoc
-- saptune/saptune 3.1.5 again - Care for some PIE?.adoc
+- [saptune 3.1.4 - Just updated SAP Notes](blogs/pages/saptune%203.1.4%20-%20Just%20updated%20SAP%20Notes.html)
+- [saptune 3.1.5 - Just (small) Fixes](blogs/pages/saptune%203.1.5%20-%20Just%20(small)%20Fixes.html)
+- [saptune 3.1.5 again - Care for some PIE?](blogs/pages/saptune%203.1.5%20again%20-%20Care%20for%20some%20PIE%3F.html)
 - saptune/saptune 3.2 has been released.adoc
 - saptune/saptune 3.2.1 - cloudy, cloudy.adoc
 - saptune/saptune 3.2.2 - THP HotFix.adoc
