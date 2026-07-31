@@ -20,6 +20,7 @@
 | github.com/SUSE/saptune/system/daemon.go | 96.9 | :sunny: |
 | github.com/SUSE/saptune/sap/note/sectService.go | 96.6 | :sunny: |
 | github.com/SUSE/saptune/system/logging.go | 96.1 | :sunny: |
+| github.com/SUSE/saptune/system/login.go | 95.6 | :sunny: |
 | github.com/SUSE/saptune/sap/note/sectLimits.go | 95.5 | :sunny: |
 | github.com/SUSE/saptune/system/argsAndFlags.go | 93.9 | :sunny: |
 | github.com/SUSE/saptune/system/rpm.go | 93.1 | :sunny: |
@@ -29,7 +30,6 @@
 | github.com/SUSE/saptune/txtparser/misc.go | 92.0 | :sunny: |
 | github.com/SUSE/saptune/sap/note/note.go | 91.9 | :sunny: |
 | github.com/SUSE/saptune/system/fs.go | 91.8 | :sunny: |
-| github.com/SUSE/saptune/system/login.go | 91.1 | :sunny: |
 | github.com/SUSE/saptune/system/file.go | 91.1 | :sunny: |
 | github.com/SUSE/saptune/system/system.go | 90.2 | :sunny: |
 | github.com/SUSE/saptune/system/sysctl.go | 89.5 | :sunny: |
