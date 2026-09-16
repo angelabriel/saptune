@@ -24,14 +24,13 @@
 | github.com/SUSE/saptune/system/argsAndFlags.go | 94.5 | :sunny: |
 | github.com/SUSE/saptune/system/daemon.go | 94.2 | :sunny: |
 | github.com/SUSE/saptune/sap/note/note.go | 93.5 | :sunny: |
+| github.com/SUSE/saptune/sap/note/sectBlock.go | 92.8 | :sunny: |
 | github.com/SUSE/saptune/system/fs.go | 92.4 | :sunny: |
 | github.com/SUSE/saptune/txtparser/misc.go | 92.0 | :sunny: |
 | github.com/SUSE/saptune/system/file.go | 91.7 | :sunny: |
 | github.com/SUSE/saptune/system/sysctl.go | 89.8 | :sunny: |
-| github.com/SUSE/saptune/txtparser/section.go | 89.5 | :sunny: |
 | github.com/SUSE/saptune/txtparser/tags.go | 89.3 | :sunny: |
 | github.com/SUSE/saptune/sap/note/sectMem.go | 88.6 | :sunny: |
-| github.com/SUSE/saptune/sap/note/sectBlock.go | 88.3 | :sunny: |
 | github.com/SUSE/saptune/sap/note/sectCPU.go | 87.0 | :sunny: |
 | github.com/SUSE/saptune/actions/table.go | 87.0 | :sunny: |
 | github.com/SUSE/saptune/sap/note/sectPagecache.go | 86.0 | :sunny: |
@@ -39,6 +38,7 @@
 | github.com/SUSE/saptune/sap/note/sectLogin.go | 85.5 | :sunny: |
 | github.com/SUSE/saptune/system/blockdev.go | 85.4 | :sunny: |
 | github.com/SUSE/saptune/system/mem.go | 84.8 | :sunny: |
+| github.com/SUSE/saptune/txtparser/section.go | 84.5 | :sunny: |
 | github.com/SUSE/saptune/actions/footnote.go | 83.7 | :sunny: |
 | github.com/SUSE/saptune/app/solution.go | 81.9 | :sunny: |
 | github.com/SUSE/saptune/sap/note/ini.go | 79.9 | :cloud: |
