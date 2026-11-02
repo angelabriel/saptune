@@ -1,5 +1,6 @@
 | File | Coverage | Status |
 | --- | --- | --- |
+| github.com/SUSE/saptune/txtparser/sysconfig.go | 100.0 | :sunny: |
 | github.com/SUSE/saptune/system/trento.go | 100.0 | :sunny: |
 | github.com/SUSE/saptune/system/service.go | 100.0 | :sunny: |
 | github.com/SUSE/saptune/system/hostname.go | 100.0 | :sunny: |
@@ -13,6 +14,7 @@
 | github.com/SUSE/saptune/sap/note/db.go | 100.0 | :sunny: |
 | github.com/SUSE/saptune/sap/errs.go | 100.0 | :sunny: |
 | github.com/SUSE/saptune/actions/cmdsyntax.go | 100.0 | :sunny: |
+| github.com/SUSE/saptune/txtparser/ini.go | 99.5 | :sunny: |
 | github.com/SUSE/saptune/system/limits.go | 98.8 | :sunny: |
 | github.com/SUSE/saptune/system/sys.go | 97.0 | :sunny: |
 | github.com/SUSE/saptune/sap/note/sectService.go | 96.6 | :sunny: |
@@ -25,9 +27,12 @@
 | github.com/SUSE/saptune/sap/param/io.go | 92.9 | :sunny: |
 | github.com/SUSE/saptune/sap/note/sectBlock.go | 92.5 | :sunny: |
 | github.com/SUSE/saptune/sap/note/note.go | 92.2 | :sunny: |
+| github.com/SUSE/saptune/txtparser/tags.go | 92.0 | :sunny: |
+| github.com/SUSE/saptune/txtparser/misc.go | 92.0 | :sunny: |
 | github.com/SUSE/saptune/system/fs.go | 91.8 | :sunny: |
 | github.com/SUSE/saptune/system/file.go | 91.1 | :sunny: |
 | github.com/SUSE/saptune/system/sysctl.go | 89.5 | :sunny: |
+| github.com/SUSE/saptune/txtparser/section.go | 88.9 | :sunny: |
 | github.com/SUSE/saptune/sap/note/sectMem.go | 87.8 | :sunny: |
 | github.com/SUSE/saptune/sap/note/sectCPU.go | 87.0 | :sunny: |
 | github.com/SUSE/saptune/system/mem.go | 85.7 | :sunny: |
@@ -50,7 +55,7 @@
 | github.com/SUSE/saptune/app/note.go | 69.3 | :cloud: |
 | github.com/SUSE/saptune/actions/footnote.go | 65.4 | :cloud: |
 | github.com/SUSE/saptune/main.go | 59.3 | :cloud: |
-| github.com/SUSE/saptune/actions/serviceacts.go | 51.6 | :cloud: |
+| github.com/SUSE/saptune/actions/serviceacts.go | 51.4 | :cloud: |
 | github.com/SUSE/saptune/actions/solutionacts.go | 40.8 | :fire: |
 | github.com/SUSE/saptune/system/cpu.go | 38.8 | :fire: |
 | github.com/SUSE/saptune/system/json.go | 23.4 | :fire: |
